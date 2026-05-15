@@ -2,12 +2,40 @@ import os
 import sys
 import tempfile
 import extract_msg
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from xhtml2pdf import pisa
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from email import policy
 from email.parser import BytesParser
+
+def clean_microsoft_html(soup):
+    """
+    Deep-sanitizes Microsoft HTML bloat to eliminate strict CSS parser failures.
+    Strips malformed internal <style> blocks, Office XML tags, and conditional comments.
+    """
+    print("[Sanitizer]: Pruning Microsoft syntax artifacts...")
+    
+    # 1. Strip internal <style> blocks containing non-standard Microsoft Word CSS
+    # (Email layouts are robustly preserved via industry-standard inline styles)
+    for s in soup.find_all("style"):
+        s.decompose()
+        
+    # 2. Strip non-standard XML namespaces and MS Office tags (e.g., <o:OfficeDocumentSettings>)
+    # Standard HTML engines cannot interpret these and they disrupt document flow.
+    all_tags = soup.find_all(True)
+    for tag in all_tags:
+        if ":" in tag.name or tag.name.startswith(('o', 'w', 'v', 'x', 'm')):
+            # Instead of deleting the whole tag and losing text content,
+            # we unwrap it so the raw content/subtags remain visible!
+            tag.unwrap()
+            
+    # 3. Eliminate all HTML Comments which house dangerous conditional Office/IE blocks
+    comments = soup.find_all(string=lambda text: isinstance(text, Comment))
+    for comment in comments:
+        comment.extract()
+        
+    return soup
 
 def convert_email_to_pdf():
     """
@@ -122,10 +150,13 @@ def convert_email_to_pdf():
             raise ValueError("File selection was not a recognized .eml or .msg structure.")
 
         # ==========================================================
-        # DOM TRAVERSAL & IMAGE RESOLUTION
+        # DOM SANITIZATION & IMAGE RESOLUTION
         # ==========================================================
-        print(f"[Payload]: Extracted {len(cid_map)} inline assets. Resolving DOM references...")
+        print(f"[Payload]: Extracted {len(cid_map)} inline assets. Initiating DOM traversal...")
         soup = BeautifulSoup(html_body, 'html.parser')
+        
+        # Run enterprise-grade Microsoft Syntax Purge
+        soup = clean_microsoft_html(soup)
         
         image_elements = soup.find_all('img')
         for img in image_elements:
@@ -217,6 +248,9 @@ def convert_email_to_pdf():
         print(f"[Writing]: Delivering PDF binary matrices to {out_pdf}...")
         with open(out_pdf, "wb") as f:
             pisa_status = pisa.CreatePDF(final_html, dest=f)
+            
+        if pisa_status.err:
+            print(f"[Warning]: PDF rendering finished with {pisa_status.err} engine anomalies.")
             
         print("[Success]: Email fully reproduced!")
         
