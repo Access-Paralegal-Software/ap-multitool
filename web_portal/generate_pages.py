@@ -67,6 +67,14 @@ def get_template(state, court, spec, key, data):
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LYF9EC3GQ5"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', 'G-LYF9EC3GQ5');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Professional {data['hook']} optimized for {state} {court} {spec} litigation requirements. Get the 100% offline Access Paralegal Suite.">
