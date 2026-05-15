@@ -34,13 +34,13 @@ KEYGEN_PRODUCT_TOKEN = "prod-1ba5ec8a951c01b0857f24a19726b4effc9eb159f73e164a2c9
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
 
-# UI Aesthetic Branding Colors (Neutral Pure-Platinum & Deep Slate Concept - ZERO BLUE TINT)
-BRAND_ACCENT_GREEN = "#67BE5E"              # Exact Brand Green from Logo Analysis
-BRAND_DEEP_ACCENT = "#4E9146"               # Refined Forest Accent
-BRAND_SILVER_BG = ("#ECECEC", "#121212")    # Light: Clean Matte Silver, Dark: Absolute Jet Black
-BRAND_DARK_TEXT = ("#222222", "#E2E2E2")    # Light: Dense Slate, Dark: Silver White
-BRAND_WHITE_PANEL = ("#F5F5F5", "#1C1C1C")  # Light: Gentle Soft Grey, Dark: Dark Obsidian
-BRAND_BORDER_LIGHT = ("#CCCCCC", "#333333")
+# UI Aesthetic Branding Colors (Luxury Neutral & Glowing Velvet Concept)
+BRAND_ACCENT_GREEN = "#67BE5E"              # Exact Vibrant Logo Green
+BRAND_DEEP_ACCENT = "#4E9146"               # Darkened Emerald
+BRAND_SILVER_BG = ("#EAEAEC", "#1E2222")    # Light: Elegant Matte Silver, Dark: Soft Glowing Velvet Charcoal
+BRAND_DARK_TEXT = ("#222222", "#ECECEC")    # High-Contrast Crisp Typography
+BRAND_WHITE_PANEL = ("#F4F4F5", "#242828")  # Soft Grey Panels for fallback
+BRAND_BORDER_LIGHT = ("#CCCCCC", "#3C4242")
 
 # Mode and Theme Config
 ctk.set_appearance_mode("System")
@@ -100,47 +100,63 @@ class AccessMergerApp(ctk.CTk):
         # --- GLOBAL OS SCALING OVERRIDES ---
         self.option_add('*Menu.font', '{Segoe UI} 12')
 
-        # --- DYNAMIC DUAL-MODE BACKGROUND WATERMARK (MATHEMATICAL EMBLEM EXTRACTION) ---
+        # --- DYNAMIC LUXURY DUAL-MODE WATERMARK & DIAGONAL SLASH ARCHITECT ---
         bg_w, bg_h = 880, 660
         try:
             logo_path = resource_path("logo_small.png")
+            # 1. Pre-extract Logo Emblem
+            emblem = None
             if os.path.exists(logo_path):
-                # Open original 400x400 logo and mathematically isolate green emblem
                 orig = Image.open(logo_path).convert("RGBA")
                 pixels = orig.getdata()
                 new_pixels = []
                 for item in pixels:
                     r, g, b, a = item
-                    # If pixel is dominant green (Logo Graphic)
-                    if g > r + 15 and g > b + 15:
-                        # Blend with soft 25% background opacity to minimize glare
-                        new_pixels.append((r, g, b, int(a * 0.25)))
+                    # Extract vibrant greens
+                    if g > r + 12 and g > b + 12:
+                        new_pixels.append((r, g, b, a))
                     else:
-                        # Remove text/background completely
                         new_pixels.append((0, 0, 0, 0))
-                
                 emblem = orig.copy()
                 emblem.putdata(new_pixels)
+                emblem = emblem.resize((360, 360), Image.Resampling.LANCZOS)
+
+            # 2. Draw Light Mode Canvas
+            light_canvas = Image.new("RGBA", (bg_w, bg_h), "#EAEAEC") # Premium Matte Light Silver
+            l_draw = ImageDraw.Draw(light_canvas)
+            # Sweeps high up: from 30% of the width down to 70% of height on the right side
+            l_draw.polygon([(bg_w * 0.3, 0), (bg_w, 0), (bg_w, bg_h * 0.7)], fill=(103, 190, 94, 70))
+            
+            # 3. Draw Dark Mode Canvas
+            dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#1E2222") # Glowing Velvet Charcoal
+            d_draw = ImageDraw.Draw(dark_canvas)
+            # Deep Glowing Forest Slash
+            d_draw.polygon([(bg_w * 0.3, 0), (bg_w, 0), (bg_w, bg_h * 0.7)], fill=(78, 145, 70, 90))
+
+            # 4. Layer the Brand Emblem inside the Slash Sweep
+            if emblem:
+                # Dynamic blend of the emblem on both canvases at exactly 40% opacity for high impact
+                emb_data = emblem.getdata()
+                emb_alpha = []
+                for r, g, b, a in emb_data:
+                    if a > 0:
+                        emb_alpha.append((r, g, b, int(a * 0.40)))
+                    else:
+                        emb_alpha.append((0, 0, 0, 0))
+                emb_overlay = emblem.copy()
+                emb_overlay.putdata(emb_alpha)
                 
-                # Scale to beautiful watermark size
-                emblem = emblem.resize((400, 400), Image.Resampling.LANCZOS)
-                
-                # Draw on pure neutral light/dark canvases (NO BLUE)
-                light_canvas = Image.new("RGBA", (bg_w, bg_h), "#ECECEC")
-                light_canvas.paste(emblem, (bg_w - 440, bg_h - 440), emblem)
-                
-                dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#121212")
-                dark_canvas.paste(emblem, (bg_w - 440, bg_h - 440), emblem)
-                
-                self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
-                self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
-                self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
-            else:
-                # Solid Fallback
-                self.bg_overlay = ctk.CTkFrame(self, fg_color=BRAND_SILVER_BG)
-                self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
+                # Place proudly near the top-right quadrant so it sweeps behind Tabview
+                light_canvas.paste(emb_overlay, (bg_w - 400, 60), emb_overlay)
+                dark_canvas.paste(emb_overlay, (bg_w - 400, 60), emb_overlay)
+            
+            self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
+            self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
+            self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
         except Exception as e:
-            print(f"Watermark rendering failure: {e}")
+            print(f"Visual rendering fallback: {e}")
+            self.bg_overlay = ctk.CTkFrame(self, fg_color=BRAND_SILVER_BG)
+            self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
 
 
 
@@ -235,7 +251,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Config Panel
         self.left_frame = ctk.CTkFrame(
-            self.merger_container, width=320, fg_color=BRAND_WHITE_PANEL, 
+            self.merger_container, width=320, fg_color="transparent", 
             corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
         )
         self.left_frame.pack(side="left", fill="both", padx=(0, 15))
@@ -318,7 +334,7 @@ class AccessMergerApp(ctk.CTk):
         self.dir_btn.pack(side="right")
 
         self.queue_frame = ctk.CTkScrollableFrame(
-            self.right_frame, fg_color=BRAND_WHITE_PANEL, 
+            self.right_frame, fg_color="transparent", 
             border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
         )
         self.queue_frame.pack(fill="both", expand=True, pady=(0, 15))
@@ -359,7 +375,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Bates Config Panel
         self.bates_left = ctk.CTkFrame(
-            self.bates_container, width=350, fg_color=BRAND_WHITE_PANEL, 
+            self.bates_container, width=350, fg_color="transparent", 
             corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
         )
         self.bates_left.pack(side="left", fill="both", padx=(0, 15))
@@ -466,7 +482,7 @@ class AccessMergerApp(ctk.CTk):
         
         # Left Panel: Smart Filename Protocol
         self.org_left = ctk.CTkFrame(
-            self.org_container, width=420, fg_color=BRAND_WHITE_PANEL, 
+            self.org_container, width=420, fg_color="transparent", 
             corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
         )
         self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
@@ -537,7 +553,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Right Panel: Master Case Tree Builder
         self.org_right = ctk.CTkFrame(
-            self.org_container, width=360, fg_color=BRAND_WHITE_PANEL, 
+            self.org_container, width=360, fg_color="transparent", 
             corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
         )
         self.org_right.pack(side="right", fill="both", expand=True)
@@ -573,7 +589,7 @@ class AccessMergerApp(ctk.CTk):
 
 
         # --- FOOTER COPYRIGHT ---
-        self.footer_frame = ctk.CTkFrame(self, fg_color=BRAND_WHITE_PANEL, corner_radius=0, height=30)
+        self.footer_frame = ctk.CTkFrame(self, fg_color="transparent", corner_radius=0, height=30)
         self.footer_frame.pack(fill="x", side="bottom")
         self.footer_frame.pack_propagate(False)
 
