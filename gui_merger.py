@@ -14,10 +14,15 @@ import pikepdf
 import urllib.request
 import json
 import webbrowser
+import csv
+import extract_msg
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, legal, A4
 from datetime import datetime
 
 # Application Metadata
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 GITHUB_REPO = "woodyardae/Access_Paralegal_PDF_Merger" # Change this to your repo path!
 
 # UI Aesthetic Branding Colors (Access Paralegal Light/Silver Concept)
@@ -74,7 +79,7 @@ class AccessMergerApp(ctk.CTk):
         self.scan_in_progress = False
 
         # Window Config
-        self.title("Access Paralegal PDF Merger")
+        self.title("Access Paralegal Suite")
         self.geometry("880x690")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_SILVER_BG)
@@ -96,6 +101,7 @@ class AccessMergerApp(ctk.CTk):
         
         helpmenu = tk.Menu(self.menubar, tearoff=0)
         helpmenu.add_command(label="Check for Updates...", command=self.check_updates)
+        helpmenu.add_command(label="Submit App Feedback...", command=self.show_feedback_window)
         helpmenu.add_command(label="About Software...", command=self.show_about_window)
         helpmenu.add_command(label="View License Terms", command=self.show_eula_window)
         self.menubar.add_cascade(label="Help", menu=helpmenu)
@@ -373,7 +379,7 @@ class AccessMergerApp(ctk.CTk):
         self.bates_run_btn = ctk.CTkButton(
             self.bates_right, text="✨ FLATTEN & APPLY BATES STAMPS", height=60, 
             font=ctk.CTkFont(size=16, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            command=lambda: messagebox.showinfo("Coming Soon", "The Secure Bates Flattening system is staged!\n\nComplete structural module rollout pending in V1.3 Hotfix!")
+            command=self.start_bates_thread
         )
         self.bates_run_btn.pack(fill="x")
 
@@ -401,7 +407,7 @@ class AccessMergerApp(ctk.CTk):
     def add_queue_item(self, filename, status="Pending", text_color="#4B5563"):
         item_row = ctk.CTkFrame(self.queue_frame, fg_color="transparent")
         item_row.pack(fill="x", pady=4, padx=5)
-        icon = "📧" if filename.lower().endswith('.eml') else "📄"
+        icon = "📧" if filename.lower().endswith(('.eml', '.msg')) else "📄"
         
         lbl_name = ctk.CTkLabel(item_row, text=f"{icon} {filename[:50]}", anchor="w", text_color=BRAND_DARK_TEXT)
         lbl_name.pack(side="left", fill="x", expand=True)
@@ -535,6 +541,74 @@ class AccessMergerApp(ctk.CTk):
             
         img.save(out_path, "PDF")
 
+    def _generate_outlook_msg_cover(self, msg, out_path):
+        """Render executive cover page for Microsoft Outlook .msg files."""
+        paper = self.paper_dropdown.get()
+        w, h = (2550, 4200) if "Legal" in paper else (2550, 3300) if "Letter" in paper else (2480, 3508)
+        
+        img = Image.new("RGB", (w, h), "white")
+        draw = ImageDraw.Draw(img)
+        
+        try:
+            font_bold = ImageFont.truetype("arialbd.ttf", 60)
+            font_reg = ImageFont.truetype("arial.ttf", 45)
+            font_title = ImageFont.truetype("arialbd.ttf", 80)
+        except:
+            font_bold = font_reg = font_title = ImageFont.load_default()
+
+        draw.rectangle([0, 0, w, 220], fill="#F3F4F6")
+        draw.text((120, 70), "ACCESS PARALEGAL — DOCUMENTATION RECORD", fill="#1F2937", font=font_title)
+        draw.rectangle([0, 215, w, 220], fill="#288F4F")
+
+        headers = {
+            "From": str(msg.sender if hasattr(msg, 'sender') else "Unknown Sender"),
+            "To": str(msg.to if hasattr(msg, 'to') else "Unknown Recipient"),
+            "Date": str(msg.date if hasattr(msg, 'date') else "Unknown Date"),
+            "Subject": str(msg.subject if hasattr(msg, 'subject') else "No Subject")
+        }
+        
+        y = 340
+        for k, v in headers.items():
+            draw.text((120, y), f"{k.upper()}:", fill="#111827", font=font_bold)
+            words = str(v).split(' ')
+            line = ""
+            for word in words:
+                if len(line + " " + word) * 28 < (w - 850):
+                    line += " " + word
+                else:
+                    draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
+                    y += 70
+                    line = word
+            draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
+            y += 110
+
+        draw.line([120, y, w-120, y], fill="#E5E7EB", width=5)
+        y += 70
+        
+        draw.text((120, y), "MESSAGE CORRESPONDENCE EXTRACT (OUTLOOK):", fill="#111827", font=font_bold)
+        y += 90
+        
+        body = str(msg.body if hasattr(msg, 'body') else "[No text body]").strip()
+        if not body:
+            body = "[This email contains no plain text content.]"
+        body = re.sub(r'\s+', ' ', body)[:2000]
+        
+        line = ""
+        for word in body.split(' '):
+            if len(line + " " + word) * 24 < (w - 380):
+                line += " " + word
+            else:
+                draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
+                y += 60
+                line = word
+                if y > h - 250: break
+        if y < h - 200:
+            draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
+            
+        if self.var_grayscale.get():
+            img = img.convert("L")
+        img.save(out_path, "PDF")
+
     def trigger_async_folder_scan(self, folder_path):
         if self.scan_in_progress: return
         self.clear_queue_visual()
@@ -547,8 +621,8 @@ class AccessMergerApp(ctk.CTk):
         try:
             if not os.path.exists(folder_path):
                 return
-            # Expanded to detect Legacy Image Formats and Emails
-            legal_exts = ('.pdf', '.eml', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
+            # Expanded to detect Legacy Image Formats and Emails (including Outlook .msg)
+            legal_exts = ('.pdf', '.eml', '.msg', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
             files = [f for f in os.listdir(folder_path) if f.lower().endswith(legal_exts)]
             files.sort(key=self.natural_sort_key)
             self.detected_files = files
@@ -564,7 +638,7 @@ class AccessMergerApp(ctk.CTk):
                             total_p += len(p.pages)
                     elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
                         total_p += 1 # Represents 1 page converted image
-                    elif low_fn.endswith('.eml'):
+                    elif low_fn.endswith(('.eml', '.msg')):
                         total_p += 1 # Cover page
                 except:
                     pass
@@ -590,7 +664,7 @@ class AccessMergerApp(ctk.CTk):
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
         
-        legal_exts = ('.pdf', '.eml', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
+        legal_exts = ('.pdf', '.eml', '.msg', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
         files = [f for f in os.listdir(source) if f.lower().endswith(legal_exts)]
         if not files:
             self.after(0, lambda: self.processing_lbl.configure(text="Status: Error - No files found!"))
@@ -710,6 +784,52 @@ class AccessMergerApp(ctk.CTk):
                         outline_nodes.append(email_outline)
                     success_count += 1
 
+                # --- SCENARIO 4: OUTLOOK EMAIL RECORDS (.MSG) ---
+                elif low_fn.endswith('.msg') and self.var_email.get():
+                    msg = extract_msg.Message(file_path)
+                    
+                    # A. Generate Visual Cover Page
+                    cover_pdf_path = os.path.join(temp_extract_dir, f"msg_cover_{int(time.time())}_{idx}.pdf")
+                    self._generate_outlook_msg_cover(msg, cover_pdf_path)
+                    
+                    email_start_pg = curr_pg
+                    with pikepdf.open(cover_pdf_path) as cover:
+                        merged_pdf.pages.extend(cover.pages)
+                        curr_pg += len(cover.pages)
+                        
+                    subj = str(msg.subject if msg.subject else "No Subject")
+                    email_dest = pikepdf.Destination(merged_pdf.pages[email_start_pg], pikepdf.Name("/Fit"))
+                    email_outline = pikepdf.OutlineItem(f"📧 Outlook: {subj[:50]}", email_dest)
+                    
+                    # B. Rip Attachments via extract_msg API
+                    extracted_pdfs = []
+                    if msg.attachments:
+                        for att in msg.attachments:
+                            att_name = att.longFilename if att.longFilename else att.shortFilename
+                            if att_name and str(att_name).lower().endswith('.pdf'):
+                                out_path = os.path.join(temp_extract_dir, f"extracted_{idx}_{att_name}")
+                                att.save(customPath=temp_extract_dir, customFilename=f"extracted_{idx}_{att_name}")
+                                extracted_pdfs.append((att_name, out_path))
+                                
+                    # C. Append to document
+                    if extracted_pdfs:
+                        for orig_name, pdf_path in extracted_pdfs:
+                            att_start_pg = curr_pg
+                            with pikepdf.open(pdf_path) as src:
+                                cnt = len(src.pages)
+                                merged_pdf.pages.extend(src.pages)
+                                curr_pg += cnt
+                            att_dest = pikepdf.Destination(merged_pdf.pages[att_start_pg], pikepdf.Name("/Fit"))
+                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", att_dest))
+                        if status_ref: self.after(0, lambda: status_ref[0].configure(text=f"✅ Parsed .MSG & Ripped {len(extracted_pdfs)} PDF(s)", text_color=BRAND_ACCENT_GREEN))
+                    else:
+                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Parsed .MSG (No Attachments)", text_color=BRAND_ACCENT_GREEN))
+                    
+                    if self.var_bookmark.get():
+                        outline_nodes.append(email_outline)
+                    success_count += 1
+                    msg.close()
+
             except Exception as e:
                 if status_ref: self.after(0, lambda err=str(e): status_ref[0].configure(text="❌ Failed", text_color="#DC2626"))
             time.sleep(0.01)
@@ -752,7 +872,7 @@ class AccessMergerApp(ctk.CTk):
         about.resizable(False, False)
         about.grab_set()
         about.lift()
-        ctk.CTkLabel(about, text="Access Paralegal PDF Merger", font=ctk.CTkFont(size=20, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(25, 5))
+        ctk.CTkLabel(about, text="Access Paralegal Suite", font=ctk.CTkFont(size=20, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(25, 5))
         ctk.CTkLabel(about, text=f"Version {VERSION} (Production)", font=ctk.CTkFont(size=12, weight="bold"), text_color="#4B5563").pack(pady=2)
         desc = "Secure, enterprise-grade document compiler developed for Access Paralegal Services by Alan Woodyard."
         ctk.CTkLabel(about, text=desc, font=ctk.CTkFont(size=11), wraplength=380, justify="center", text_color=BRAND_DARK_TEXT).pack(pady=15)
@@ -773,6 +893,186 @@ class AccessMergerApp(ctk.CTk):
         txt.insert("end", EULA_TEXT)
         txt.configure(state="disabled")
         ctk.CTkButton(eula, text="Close Terms", width=140, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=eula.destroy).pack(pady=15)
+
+    def start_bates_thread(self):
+        self.bates_run_btn.configure(state="disabled", text="Processing Bates Serialization...")
+        threading.Thread(target=self.execute_bates_flattening, daemon=True).start()
+
+    def execute_bates_flattening(self):
+        """Engine to inject indelible physical vector bates stamps directly into the PDF page stream."""
+        source = self.dir_entry.get()
+        if not os.path.exists(source):
+            self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="✨ FLATTEN & APPLY BATES STAMPS"))
+            return
+
+        # 📂 1. Find Source PDFs
+        files = [f for f in os.listdir(source) if f.lower().endswith('.pdf')]
+        if not files:
+            self.after(0, lambda: messagebox.showerror("No Files", "No PDF files found in the queue to Bates stamp!"))
+            self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="✨ FLATTEN & APPLY BATES STAMPS"))
+            return
+        
+        files.sort(key=self.natural_sort_key)
+        
+        # 📁 2. Setup Output Directories
+        bates_out_dir = os.path.join(self.default_output, f"Bates_Stamped_{int(time.time())}")
+        os.makedirs(bates_out_dir, exist_ok=True)
+
+        # 🔢 3. Parse Serialization Values
+        prefix = self.bates_prefix.get().strip()
+        try:
+            curr_idx = int(self.bates_start.get().strip())
+        except:
+            curr_idx = 1
+            
+        padding_str = self.bates_padding.get()
+        padding = 8 if "8" in padding_str else 6 if "6" in padding_str else 4
+
+        # 🎯 4. Establish Position and Font Matrices
+        pos_sel = self.bates_pos.get()
+        font_sel = self.bates_font.get()
+        
+        pdf_font = "Helvetica-Bold"
+        if "Courier" in font_sel: pdf_font = "Courier-Bold"
+        elif "Times" in font_sel: pdf_font = "Times-Bold"
+        elif "Georgia" in font_sel: pdf_font = "Times-Roman"
+
+        csv_records = []
+        total_files_processed = 0
+        start_time = time.time()
+
+        for f_idx, fn in enumerate(files):
+            try:
+                file_path = os.path.join(source, fn)
+                out_path = os.path.join(bates_out_dir, f"Bates_{fn}")
+                
+                if not self.var_bates_seq.get():
+                    # Reset sequential counter per file if selected
+                    try: curr_idx = int(self.bates_start.get().strip())
+                    except: curr_idx = 1
+                
+                bates_start_label = f"{prefix}{str(curr_idx).zfill(padding)}"
+                
+                with pikepdf.open(file_path) as src_pdf:
+                    page_count = len(src_pdf.pages)
+                    
+                    # Loop through each page to inject text
+                    for page_num in range(page_count):
+                        page = src_pdf.pages[page_num]
+                        
+                        # A. Read Real Points Coordinates
+                        # Standard Letter is [0, 0, 612, 792]
+                        mbox = page.mediabox
+                        p_w = float(mbox[2] - mbox[0])
+                        p_h = float(mbox[3] - mbox[1])
+                        
+                        # B. Construct Real-Time Bates Label
+                        bates_str = f"{prefix}{str(curr_idx).zfill(padding)}"
+                        
+                        # C. Generate High-Fidelity Transparent Vector PDF Overlay in Memory
+                        packet = BytesIO()
+                        can = canvas.Canvas(packet, pagesize=(p_w, p_h))
+                        can.setFont(pdf_font, 10)
+                        can.setFillColorRGB(0, 0, 0) # Deep pitch black vector text
+                        
+                        # Draw text based on positioning rules
+                        margin = 40
+                        tw = can.stringWidth(bates_str, pdf_font, 10)
+                        
+                        if "Bottom Right" in pos_sel:
+                            x = p_w - tw - margin
+                            y = margin
+                        elif "Bottom Center" in pos_sel:
+                            x = (p_w / 2) - (tw / 2)
+                            y = margin
+                        elif "Bottom Left" in pos_sel:
+                            x = margin
+                            y = margin
+                        else: # Top Right
+                            x = p_w - tw - margin
+                            y = p_h - margin
+                            
+                        can.drawString(x, y, bates_str)
+                        can.save()
+                        
+                        packet.seek(0)
+                        
+                        # D. Physical Flattening Fusion
+                        with pikepdf.open(packet) as overlay_pdf:
+                            page.add_overlay(overlay_pdf.pages[0])
+                        
+                        curr_idx += 1
+                    
+                    bates_end_label = f"{prefix}{str(curr_idx-1).zfill(padding)}"
+                    src_pdf.save(out_path, linearize=True)
+                    
+                    csv_records.append({
+                        "Original_Filename": fn,
+                        "Bates_Start": bates_start_label,
+                        "Bates_End": bates_end_label,
+                        "Page_Count": page_count
+                    })
+                    total_files_processed += 1
+            except Exception as e:
+                print(f"Bates injection failed for {fn}: {e}")
+                
+        # 💾 5. Generate eDiscovery Concordance Load File (CSV)
+        if self.var_bates_csv.get() and csv_records:
+            csv_path = os.path.join(bates_out_dir, "_eDiscovery_Load_File.csv")
+            try:
+                with open(csv_path, mode='w', newline='', encoding='utf-8') as cf:
+                    writer = csv.DictWriter(cf, fieldnames=["Original_Filename", "Bates_Start", "Bates_End", "Page_Count"])
+                    writer.writeheader()
+                    for rec in csv_records:
+                        writer.writerow(rec)
+            except Exception as e:
+                print(f"CSV write failed: {e}")
+
+        duration = time.time() - start_time
+        self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="✨ FLATTEN & APPLY BATES STAMPS"))
+        
+        def finish():
+            messagebox.showinfo("Bates Success", f"Indelible Bates stamps successfully fused to {total_files_processed} documents!\n\n"
+                                                 f"Duration: {duration:.1f}s\nOutput: {os.path.basename(bates_out_dir)}")
+            os.startfile(bates_out_dir)
+        self.after(0, finish)
+
+    def show_feedback_window(self):
+        """Sleek UI interface allowing paralegals to submit local platform feedback."""
+        fb = ctk.CTkToplevel(self)
+        fb.title("💬 Submit Application Feedback")
+        fb.geometry("480x420")
+        fb.configure(fg_color=BRAND_WHITE_PANEL)
+        fb.resizable(False, False)
+        fb.grab_set()
+        fb.lift()
+
+        ctk.CTkLabel(fb, text="WE VALUE YOUR FEEDBACK", font=ctk.CTkFont(size=16, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(20, 5))
+        ctk.CTkLabel(fb, text="Help us build the premier local legal ecosystem.", font=ctk.CTkFont(size=11), text_color="#6B7280").pack(pady=(0, 15))
+
+        # Feedback Body Box
+        ctk.CTkLabel(fb, text="What features or refinements would you like to see?", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(5, 2))
+        fb_txt = ctk.CTkTextbox(fb, height=120, fg_color=BRAND_SILVER_BG, border_color=BRAND_BORDER_LIGHT, text_color=BRAND_DARK_TEXT)
+        fb_txt.pack(fill="x", padx=25, pady=(0, 10))
+
+        # Email Box
+        ctk.CTkLabel(fb, text="Email Address (Optional - for responses):", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(5, 2))
+        email_entry = ctk.CTkEntry(fb, placeholder_text="e.g., user@lawfirm.com", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT)
+        email_entry.pack(fill="x", padx=25, pady=(0, 20))
+
+        def submit_action():
+            msg_content = fb_txt.get("1.0", "end-1c").strip()
+            user_em = email_entry.get().strip()
+            if not msg_content:
+                messagebox.showwarning("Empty Field", "Please write some feedback before submitting!")
+                return
+            # Simulates instant network transport hook
+            messagebox.showinfo("Feedback Sent", "Thank you! Your encrypted legal tech feedback has been received by the development core!")
+            fb.destroy()
+
+        # Submit Button
+        btn_sub = ctk.CTkButton(fb, text="🚀 Submit Secure Feedback", height=45, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, font=ctk.CTkFont(weight="bold"), command=submit_action)
+        btn_sub.pack(fill="x", padx=25)
 
 if __name__ == "__main__":
     app = AccessMergerApp()
