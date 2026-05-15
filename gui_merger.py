@@ -34,13 +34,13 @@ KEYGEN_PRODUCT_TOKEN = "prod-1ba5ec8a951c01b0857f24a19726b4effc9eb159f73e164a2c9
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
 
-# UI Aesthetic Branding Colors (System-Aware Light/Dark Soothing Platinum Concept)
-BRAND_ACCENT_GREEN = "#288F4F"
-BRAND_DEEP_ACCENT = "#1E6C3A"
-BRAND_SILVER_BG = ("#E2E8F0", "#0F172A")   # Light: Soft Warm Grey, Dark: Deep Midnight Slate
-BRAND_DARK_TEXT = ("#0F172A", "#F8FAFC")   # Light: Obsidian, Dark: Soft Ice White
-BRAND_WHITE_PANEL = ("#F1F5F9", "#1E293B") # Light: Light Platinum (Toned Down), Dark: Rich Charcoal
-BRAND_BORDER_LIGHT = ("#CBD5E1", "#334155")
+# UI Aesthetic Branding Colors (Neutral Pure-Platinum & Deep Slate Concept - ZERO BLUE TINT)
+BRAND_ACCENT_GREEN = "#67BE5E"              # Exact Brand Green from Logo Analysis
+BRAND_DEEP_ACCENT = "#4E9146"               # Refined Forest Accent
+BRAND_SILVER_BG = ("#ECECEC", "#121212")    # Light: Clean Matte Silver, Dark: Absolute Jet Black
+BRAND_DARK_TEXT = ("#222222", "#E2E2E2")    # Light: Dense Slate, Dark: Silver White
+BRAND_WHITE_PANEL = ("#F5F5F5", "#1C1C1C")  # Light: Gentle Soft Grey, Dark: Dark Obsidian
+BRAND_BORDER_LIGHT = ("#CCCCCC", "#333333")
 
 # Mode and Theme Config
 ctk.set_appearance_mode("System")
@@ -97,30 +97,58 @@ class AccessMergerApp(ctk.CTk):
         self.resizable(False, False)
         self.configure(fg_color=BRAND_SILVER_BG)
 
-        # --- DYNAMIC DUAL-MODE BACKGROUND RENDER (GLARE-FREE DIAGONAL SLASH) ---
+        # --- GLOBAL OS SCALING OVERRIDES ---
+        self.option_add('*Menu.font', 'Segoe UI 12')
+
+        # --- DYNAMIC DUAL-MODE BACKGROUND WATERMARK (MATHEMATICAL EMBLEM EXTRACTION) ---
         bg_w, bg_h = 880, 660
         try:
-            # Light: Soothing Warm Platinum with 30% Opacity Green Slash
-            light_canvas = Image.new("RGBA", (bg_w, bg_h), "#E2E8F0")
-            l_draw = ImageDraw.Draw(light_canvas)
-            l_draw.polygon([(bg_w, 0), (bg_w, bg_h), (int(bg_w * 0.45), bg_h)], fill=(40, 143, 79, 30))
-            
-            # Dark: Ultra-Smooth Midnight Slate with Deep Emerald Glow
-            dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#0F172A")
-            d_draw = ImageDraw.Draw(dark_canvas)
-            d_draw.polygon([(bg_w, 0), (bg_w, bg_h), (int(bg_w * 0.45), bg_h)], fill=(30, 108, 58, 35))
-            
-            self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
-            self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
-            self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
+            logo_path = resource_path("logo_small.png")
+            if os.path.exists(logo_path):
+                # Open original 400x400 logo and mathematically isolate green emblem
+                orig = Image.open(logo_path).convert("RGBA")
+                pixels = orig.getdata()
+                new_pixels = []
+                for item in pixels:
+                    r, g, b, a = item
+                    # If pixel is dominant green (Logo Graphic)
+                    if g > r + 15 and g > b + 15:
+                        # Blend with soft 25% background opacity to minimize glare
+                        new_pixels.append((r, g, b, int(a * 0.25)))
+                    else:
+                        # Remove text/background completely
+                        new_pixels.append((0, 0, 0, 0))
+                
+                emblem = orig.copy()
+                emblem.putdata(new_pixels)
+                
+                # Scale to beautiful watermark size
+                emblem = emblem.resize((400, 400), Image.Resampling.LANCZOS)
+                
+                # Draw on pure neutral light/dark canvases (NO BLUE)
+                light_canvas = Image.new("RGBA", (bg_w, bg_h), "#ECECEC")
+                light_canvas.paste(emblem, (bg_w - 440, bg_h - 440), emblem)
+                
+                dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#121212")
+                dark_canvas.paste(emblem, (bg_w - 440, bg_h - 440), emblem)
+                
+                self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
+                self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
+                self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
+            else:
+                # Solid Fallback
+                self.bg_overlay = ctk.CTkFrame(self, fg_color=BRAND_SILVER_BG)
+                self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
         except Exception as e:
-            print(f"Adaptive canvas render fallback triggered: {e}")
+            print(f"Watermark rendering failure: {e}")
+
 
 
         self._setup_menu()
         self._setup_ui()
         self.load_stored_license()
         self.load_case_vault()
+        self.update_case_workspace_paths()
         
         # Scan current landing folder
         self.trigger_async_folder_scan(self.default_input)
@@ -132,9 +160,16 @@ class AccessMergerApp(ctk.CTk):
         filemenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
         filemenu.add_command(label="Open Source Folder", command=self.browse_folder)
         filemenu.add_command(label="View Merged Output", command=lambda: os.startfile(self.default_output))
+        filemenu.add_command(label="⚙️ Advanced Setup Folder...", command=self.configure_advanced_workspace)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.quit)
         self.menubar.add_cascade(label="File", menu=filemenu)
+        
+        viewmenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
+        viewmenu.add_command(label="🌙 Ultra Low-Glare (Dark Mode)", command=lambda: ctk.set_appearance_mode("dark"))
+        viewmenu.add_command(label="☀️ Standard Bright (Light Mode)", command=lambda: ctk.set_appearance_mode("light"))
+        viewmenu.add_command(label="🖥️ Match OS System Appearance", command=lambda: ctk.set_appearance_mode("System"))
+        self.menubar.add_cascade(label="View", menu=viewmenu)
         
         helpmenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
         helpmenu.add_command(label="🔐 Activate Enterprise License...", command=self.show_activation_window)
@@ -1401,7 +1436,10 @@ class AccessMergerApp(ctk.CTk):
             with open(CASE_VAULT_FILE, 'wb') as f:
                 f.write(encrypted)
             
-            messagebox.showinfo("Vault Locked", "Success! Case profile encrypted with device key and locked to local disk.")
+            # Instantly scaffold physical windows folders based on updated metadata
+            self.update_case_workspace_paths()
+            
+            messagebox.showinfo("Vault Locked", "Success! Case profile secured to hardware and default workspace directory generated.")
         except Exception as e:
             messagebox.showerror("Vault Error", f"Failed to secure Case Vault: {e}")
 
@@ -1425,6 +1463,62 @@ class AccessMergerApp(ctk.CTk):
             self.case_def_entry.insert(0, data.get("defendant", ""))
         except Exception:
             pass # Fails silently on mismatch / new seed
+
+    def update_case_workspace_paths(self):
+        """Enforces standardized legal subdirectory trees tied to Case Profiles."""
+        case_val = self.case_num_entry.get().strip()
+        if not case_val:
+            # Fallback to plaintiff
+            pla_val = self.case_pla_entry.get().strip()
+            if pla_val:
+                case_val = f"Case_{pla_val.replace(' ', '_')}"
+            else:
+                case_val = "Case0001"
+        
+        # Sanitize folder name
+        safe_case = "".join(c for c in case_val if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+        if not safe_case:
+            safe_case = "Case0001"
+            
+        # Default Parent Location
+        parent_root = getattr(self, 'custom_workspace_root', self.app_dir)
+        case_root = os.path.join(parent_root, safe_case)
+        
+        subfolders = {
+            "merge": os.path.join(case_root, "PDF Merge"),
+            "docs": os.path.join(case_root, "Created Docs"),
+            "comp": os.path.join(case_root, "Compressed"),
+            "src": os.path.join(case_root, "PDF Merge Source Files"),
+            "pre": os.path.join(case_root, "Pre-Compressed Files")
+        }
+        
+        try:
+            for path in subfolders.values():
+                os.makedirs(path, exist_ok=True)
+                
+            # Auto-Route Tab 1 inputs/outputs
+            self.default_input = subfolders["src"]
+            self.default_output = subfolders["merge"]
+            
+            # Repopulate Tab 1 fields dynamically
+            if hasattr(self, 'dir_entry'):
+                self.dir_entry.delete(0, 'end')
+                self.dir_entry.insert(0, self.default_input)
+            if hasattr(self, 'out_entry'):
+                self.out_entry.delete(0, 'end')
+                self.out_entry.insert(0, self.default_output)
+            
+            self.trigger_async_folder_scan(self.default_input)
+        except Exception as e:
+            print(f"Workspace generation failure: {e}")
+
+    def configure_advanced_workspace(self):
+        """Provides Advanced Menu portal to re-route parent directory generation root."""
+        target = filedialog.askdirectory(title="Select Advanced Root Folder for Case Generation")
+        if target:
+            self.custom_workspace_root = target
+            self.update_case_workspace_paths()
+            messagebox.showinfo("Advanced Workspace Config", f"Success! Root workspace has been relocated to:\n{target}")
 
 
     # ==========================================
