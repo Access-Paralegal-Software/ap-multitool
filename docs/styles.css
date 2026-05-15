@@ -350,6 +350,84 @@ footer {
     border-top: 1px solid var(--card-border);
 }
 
+/* ================= PRICING LAYOUT ================= */
+
+.pricing {
+    padding: 5rem 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(40, 143, 79, 0.03) 100%);
+}
+
+.pricing-card-wrapper {
+    max-width: 580px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.pricing-card {
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 24px;
+    padding: 3.5rem 3rem;
+    text-align: center;
+    box-shadow: 0 30px 60px -15px rgba(40, 143, 79, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.pricing-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0.35rem 0.85rem;
+    border-radius: 99px;
+    box-shadow: 0 4px 10px rgba(40, 143, 79, 0.3);
+}
+
+.price-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3.75rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 1.5rem 0 0.5rem;
+    line-height: 1;
+}
+
+.price-subtext {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.pricing-features-list {
+    list-style: none;
+    text-align: left;
+    margin: 2rem 0 2.5rem;
+    padding-left: 0;
+}
+
+.pricing-features-list li {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #374151;
+}
+
+.pricing-features-list li::before {
+    content: "✔";
+    color: var(--primary);
+    font-weight: 900;
+    font-size: 1rem;
+}
+
+
 /* ================= DOCUMENTATION & FAQ LAYOUTS ================= */
 
 .search-container {
