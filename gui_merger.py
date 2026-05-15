@@ -408,14 +408,24 @@ class AccessMergerApp(ctk.CTk):
         self.queue_tree.heading("Order", text="#")
         self.queue_tree.column("Order", width=40, anchor="center", stretch=False)
         self.queue_tree.heading("File", text="Document Name")
-        self.queue_tree.column("File", width=250, anchor="w")
+        self.queue_tree.column("File", width=450, anchor="w") # Increased default to 450 for longer names!
         self.queue_tree.heading("Status", text="Status")
         self.queue_tree.column("Status", width=120, anchor="center", stretch=False)
         
-        tree_scroll = ttk.Scrollbar(self.queue_container, orient="vertical", command=self.queue_tree.yview)
-        self.queue_tree.configure(yscrollcommand=tree_scroll.set)
-        tree_scroll.pack(side="right", fill="y", pady=2, padx=(0, 2))
-        self.queue_tree.pack(fill="both", expand=True, padx=2, pady=2)
+        # 🌟 Dual Scrollbar Engine (Grid Integrated for 100% Overflow Prevention)
+        vsb = ttk.Scrollbar(self.queue_container, orient="vertical", command=self.queue_tree.yview)
+        hsb = ttk.Scrollbar(self.queue_container, orient="horizontal", command=self.queue_tree.xview)
+        
+        self.queue_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        
+        # Grid Configuration for perfect fluid expansion
+        self.queue_container.grid_rowconfigure(0, weight=1)
+        self.queue_container.grid_columnconfigure(0, weight=1)
+        
+        # Position elements with seamless precision
+        self.queue_tree.grid(row=0, column=0, sticky="nsew", padx=(2, 0), pady=(2, 0))
+        vsb.grid(row=0, column=1, sticky="ns", pady=(2, 0), padx=(0, 2))
+        hsb.grid(row=1, column=0, sticky="ew", padx=(2, 0), pady=(0, 2))
         
         self.queue_tree.bind("<ButtonPress-1>", self.on_tree_click)
         self.queue_tree.bind("<B1-Motion>", self.on_tree_drag)
