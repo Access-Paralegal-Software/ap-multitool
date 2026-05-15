@@ -946,12 +946,12 @@ class AccessMergerApp(ctk.CTk):
             elif "A4" in paper_val: paper_size = "a4"
 
             header_html = f"""
-            <div style="font-family: Arial, sans-serif; border-bottom: 2px solid #67BE5E; padding-bottom: 12px; margin-bottom: 20px;">
+            <div style="font-family: Arial, sans-serif; padding-bottom: 12px; margin-bottom: 20px;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr><td style="width: 75px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">From:</td><td style="font-size: 12px; color: #000;">{sender}</td></tr>
                     <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Sent:</td><td style="font-size: 12px; color: #000;">{date}</td></tr>
                     <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">To:</td><td style="font-size: 12px; color: #000;">{to}</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Subject:</td><td style="font-size: 13px; font-weight: bold; color: #67BE5E;">{subj}</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Subject:</td><td style="font-size: 13px; font-weight: bold; color: #111827;">{subj}</td></tr>
                 </table>
             </div>
             """
@@ -994,7 +994,7 @@ class AccessMergerApp(ctk.CTk):
 
             proc_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             header_html = f"""
-            <div style="font-family: Arial, sans-serif; border-bottom: 2px solid #67BE5E; padding-bottom: 12px; margin-bottom: 20px;">
+            <div style="font-family: Arial, sans-serif; padding-bottom: 12px; margin-bottom: 20px;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr><td style="width: 100px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Record Type:</td><td style="font-size: 12px; color: #000; font-weight: bold;">Image Asset Portfolio</td></tr>
                     <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">File Name:</td><td style="font-size: 12px; color: #000;">{filename}</td></tr>
@@ -1096,7 +1096,7 @@ class AccessMergerApp(ctk.CTk):
             proc_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
             header_html = f"""
-            <div style="font-family: Arial, sans-serif; border-bottom: 2px solid #67BE5E; padding-bottom: 12px; margin-bottom: 20px;">
+            <div style="font-family: Arial, sans-serif; padding-bottom: 12px; margin-bottom: 20px;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr><td style="width: 100px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Record Type:</td><td style="font-size: 12px; color: #000; font-weight: bold;">Text Records</td></tr>
                     <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">File Name:</td><td style="font-size: 12px; color: #000;">{filename}</td></tr>
