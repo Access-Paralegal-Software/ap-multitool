@@ -124,14 +124,13 @@ class AccessMergerApp(ctk.CTk):
             # 2. Draw Light Mode Canvas
             light_canvas = Image.new("RGBA", (bg_w, bg_h), "#EAEAEC") # Premium Matte Light Silver
             l_draw = ImageDraw.Draw(light_canvas)
-            # Sweeps high up: from 30% of the width down to 70% of height on the right side
-            l_draw.polygon([(bg_w * 0.3, 0), (bg_w, 0), (bg_w, bg_h * 0.7)], fill=(103, 190, 94, 70))
+            # Swept parallel and slightly lower: starts at 42% width, extends to 82% height
+            l_draw.polygon([(bg_w * 0.42, 0), (bg_w, 0), (bg_w, bg_h * 0.82)], fill=(103, 190, 94, 70))
             
             # 3. Draw Dark Mode Canvas
             dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#1E2222") # Glowing Velvet Charcoal
             d_draw = ImageDraw.Draw(dark_canvas)
-            # Deep Glowing Forest Slash
-            d_draw.polygon([(bg_w * 0.3, 0), (bg_w, 0), (bg_w, bg_h * 0.7)], fill=(78, 145, 70, 90))
+            d_draw.polygon([(bg_w * 0.42, 0), (bg_w, 0), (bg_w, bg_h * 0.82)], fill=(78, 145, 70, 90))
 
             # 4. Layer the Brand Emblem inside the Slash Sweep
             if emblem:
@@ -146,9 +145,9 @@ class AccessMergerApp(ctk.CTk):
                 emb_overlay = emblem.copy()
                 emb_overlay.putdata(emb_alpha)
                 
-                # Place proudly near the top-right quadrant so it sweeps behind Tabview
-                light_canvas.paste(emb_overlay, (bg_w - 400, 60), emb_overlay)
-                dark_canvas.paste(emb_overlay, (bg_w - 400, 60), emb_overlay)
+                # Positioned proudly slightly right and down inside the shifted band
+                light_canvas.paste(emb_overlay, (bg_w - 380, 90), emb_overlay)
+                dark_canvas.paste(emb_overlay, (bg_w - 380, 90), emb_overlay)
             
             self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
             self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
@@ -242,6 +241,12 @@ class AccessMergerApp(ctk.CTk):
         self.tab_merger = self.tab_view.add("📦 Document Merger")
         self.tab_bates = self.tab_view.add("⚖️ Bates Stamping & Locking")
         self.tab_organizer = self.tab_view.add("📂 File Room")
+        
+        # Critical Override: Make individual tab window bodies fully transparent 
+        # to let the sweeping background emerald flow completely through!
+        self.tab_merger.configure(fg_color="transparent")
+        self.tab_bates.configure(fg_color="transparent")
+        self.tab_organizer.configure(fg_color="transparent")
 
         # ==========================================
         # TAB 1: DOCUMENT MERGER (MOUNTED CODEBASE)
@@ -307,7 +312,7 @@ class AccessMergerApp(ctk.CTk):
         self.paper_dropdown.pack(padx=20, pady=(0, 10))
 
         # AUDIT STATUS CARD
-        self.audit_panel = ctk.CTkFrame(self.left_frame, fg_color=BRAND_SILVER_BG, corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
+        self.audit_panel = ctk.CTkFrame(self.left_frame, fg_color="transparent", corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
         self.audit_panel.pack(fill="both", expand=True, padx=15, pady=(5, 15))
 
         ctk.CTkLabel(self.audit_panel, text="📄 QUEUE PREVIEW", font=ctk.CTkFont(weight="bold", size=11), text_color=BRAND_ACCENT_GREEN).pack(pady=(10, 5))
@@ -491,7 +496,7 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(self.org_left, text="🔐 ENCRYPTED CASE CONTEXT & PROTOCOL", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 2))
         
         # --- ACTIVE VAULT CONTEXT (Inputs) ---
-        context_frame = ctk.CTkFrame(self.org_left, fg_color=BRAND_SILVER_BG, corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
+        context_frame = ctk.CTkFrame(self.org_left, fg_color="transparent", corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
         context_frame.pack(fill="x", padx=20, pady=6)
         
         lbl_font = ctk.CTkFont(size=11, weight="bold")
