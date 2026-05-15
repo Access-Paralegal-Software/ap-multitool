@@ -89,7 +89,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Window Config
         self.title("Access Paralegal Suite")
-        self.geometry("880x690")
+        self.geometry("880x630")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_SILVER_BG)
 
@@ -101,15 +101,17 @@ class AccessMergerApp(ctk.CTk):
         self.trigger_async_folder_scan(self.default_input)
 
     def _setup_menu(self):
-        self.menubar = tk.Menu(self)
-        filemenu = tk.Menu(self.menubar, tearoff=0)
+        m_font = ("Segoe UI", 10)
+        self.menubar = tk.Menu(self, font=m_font)
+        
+        filemenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
         filemenu.add_command(label="Open Source Folder", command=self.browse_folder)
         filemenu.add_command(label="View Merged Output", command=lambda: os.startfile(self.default_output))
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.quit)
         self.menubar.add_cascade(label="File", menu=filemenu)
         
-        helpmenu = tk.Menu(self.menubar, tearoff=0)
+        helpmenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
         helpmenu.add_command(label="🔐 Activate Enterprise License...", command=self.show_activation_window)
         helpmenu.add_separator()
         helpmenu.add_command(label="Check for Updates...", command=self.check_updates)
@@ -121,7 +123,7 @@ class AccessMergerApp(ctk.CTk):
 
     def _setup_ui(self):
         # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
-        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=BRAND_WHITE_PANEL, border_width=0, height=140)
+        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=BRAND_WHITE_PANEL, border_width=0, height=110)
         self.header_frame.pack(fill="x", pady=0)
         self.header_frame.pack_propagate(False)
 
@@ -132,12 +134,12 @@ class AccessMergerApp(ctk.CTk):
                 pil_img = Image.open(logo_path)
                 w, h = pil_img.size
                 aspect = w / h
-                new_h = 70
+                new_h = 48
                 new_w = int(new_h * aspect)
                 
                 self.logo_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(new_w, new_h))
                 self.logo_lbl = ctk.CTkLabel(self.header_frame, image=self.logo_img, text="")
-                self.logo_lbl.pack(pady=(20, 5))
+                self.logo_lbl.pack(pady=(12, 3))
             except Exception as e:
                 self._fallback_logo()
         else:
@@ -146,10 +148,10 @@ class AccessMergerApp(ctk.CTk):
         self.sub_title = ctk.CTkLabel(
             self.header_frame, 
             text="PROFESSIONAL PDF & EMAIL BUNDLE MERGER", 
-            font=ctk.CTkFont(family="Inter", size=10, weight="bold"),
+            font=ctk.CTkFont(family="Inter", size=9, weight="bold"),
             text_color="#4B5563"
         )
-        self.sub_title.pack(pady=(0, 15))
+        self.sub_title.pack(pady=(0, 8))
 
         self.line = ctk.CTkFrame(self, height=1, fg_color=BRAND_BORDER_LIGHT)
         self.line.pack(fill="x")
@@ -163,6 +165,7 @@ class AccessMergerApp(ctk.CTk):
         
         self.tab_merger = self.tab_view.add("📦 Document Merger")
         self.tab_bates = self.tab_view.add("⚖️ Bates Stamping & Locking")
+        self.tab_organizer = self.tab_view.add("📂 File Room")
 
         # ==========================================
         # TAB 1: DOCUMENT MERGER (MOUNTED CODEBASE)
@@ -394,6 +397,90 @@ class AccessMergerApp(ctk.CTk):
             command=self.start_bates_thread
         )
         self.bates_run_btn.pack(fill="x")
+
+        # ==========================================
+        # TAB 3: FILE ROOM (SMART FILER & ORGANIZER)
+        # ==========================================
+        self.org_container = ctk.CTkFrame(self.tab_organizer, fg_color="transparent")
+        self.org_container.pack(fill="both", expand=True)
+        
+        # Left Panel: Smart Filename Protocol
+        self.org_left = ctk.CTkFrame(
+            self.org_container, width=420, fg_color=BRAND_WHITE_PANEL, 
+            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+        )
+        self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
+        self.org_left.pack_propagate(False)
+        
+        ctk.CTkLabel(self.org_left, text="🔤 SMART FILENAME PROTOCOL", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 3))
+        ctk.CTkLabel(self.org_left, text="Compose legal naming conventions dynamically.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 10))
+        
+        # Row 1
+        ctk.CTkLabel(self.org_left, text="1. Prefix Type:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(2, 0))
+        self.rename_p1 = ctk.CTkComboBox(self.org_left, values=["[Date] YYYY-MM-DD", "[Party] Name", "[DocType] Motion", "[Custom] Text"], state="readonly")
+        self.rename_p1.set("[Date] YYYY-MM-DD")
+        self.rename_p1.pack(fill="x", padx=25, pady=(0, 6))
+        
+        # Row 2
+        ctk.CTkLabel(self.org_left, text="2. Separator:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(2, 0))
+        self.rename_sep = ctk.CTkComboBox(self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], state="readonly")
+        self.rename_sep.set(" - (Space Dash Space)")
+        self.rename_sep.pack(fill="x", padx=25, pady=(0, 6))
+        
+        # Row 3
+        ctk.CTkLabel(self.org_left, text="3. Sub-Component:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(2, 0))
+        self.rename_p2 = ctk.CTkComboBox(self.org_left, values=["[DocType] Motion", "[Party] Name", "[Date] YYYY-MM-DD", "[Custom] Text"], state="readonly")
+        self.rename_p2.set("[DocType] Motion")
+        self.rename_p2.pack(fill="x", padx=25, pady=(0, 6))
+
+        # Dynamic Text Box for [Custom] Overrides
+        ctk.CTkLabel(self.org_left, text="📋 Enter Active Input String:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(8, 0))
+        self.dyn_entry = ctk.CTkEntry(self.org_left, placeholder_text="e.g., Pleading_Response_Defendant", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT)
+        self.dyn_entry.pack(fill="x", padx=25, pady=(0, 15))
+        
+        self.btn_rename = ctk.CTkButton(
+            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=45, 
+            font=ctk.CTkFont(weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            command=self.execute_rename_wizard
+        )
+        self.btn_rename.pack(fill="x", padx=25, pady=5)
+
+        # Right Panel: Master Case Tree Builder
+        self.org_right = ctk.CTkFrame(
+            self.org_container, width=360, fg_color=BRAND_WHITE_PANEL, 
+            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+        )
+        self.org_right.pack(side="right", fill="both", expand=True)
+        self.org_right.pack_propagate(False)
+        
+        ctk.CTkLabel(self.org_right, text="📂 MASTER CASE TREE BUILDER", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 3))
+        ctk.CTkLabel(self.org_right, text="Automate standardized firm architectures.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 10))
+        
+        ctk.CTkLabel(self.org_right, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25)
+        self.tree_dropdown = ctk.CTkComboBox(
+            self.org_right, values=["Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
+            state="readonly", command=self.update_tree_preview
+        )
+        self.tree_dropdown.set("Standard Civil Litigation")
+        self.tree_dropdown.pack(fill="x", padx=25, pady=(0, 10))
+        
+        ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=10, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
+        self.tree_preview = ctk.CTkTextbox(
+            self.org_right, height=105, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, 
+            border_width=1, border_color=BRAND_BORDER_LIGHT, font=ctk.CTkFont(size=11)
+        )
+        self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
+        
+        self.btn_tree = ctk.CTkButton(
+            self.org_right, text="🛠️ SPIN UP FOLDER TREE", height=45, 
+            font=ctk.CTkFont(weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            command=self.execute_tree_builder
+        )
+        self.btn_tree.pack(fill="x", padx=25, pady=5)
+        
+        # Initialize previews
+        self.after(100, lambda: self.update_tree_preview(None))
+
 
         # --- FOOTER COPYRIGHT ---
         self.footer_frame = ctk.CTkFrame(self, fg_color=BRAND_WHITE_PANEL, corner_radius=0, height=30)
@@ -1231,6 +1318,111 @@ class AccessMergerApp(ctk.CTk):
         link_lbl = ctk.CTkLabel(act, text="Don't have a key? Secure your Founder Tier Pass", font=ctk.CTkFont(size=10, underline=True), text_color="#2563EB", cursor="hand2")
         link_lbl.pack(pady=5)
         link_lbl.bind("<Button-1>", lambda e: webbrowser.open("https://www.accessparalegalservices.com/founder-portal"))
+
+    # ==========================================
+    # 📂 FILE ROOM: ACTIVE ENGINE BACKENDS
+    # ==========================================
+    def update_tree_preview(self, choice):
+        """Updates the text blueprint widget when the dropdown model is toggled."""
+        archetype = self.tree_dropdown.get()
+        self.tree_preview.configure(state="normal")
+        self.tree_preview.delete("1.0", "end")
+        
+        if archetype == "Standard Civil Litigation":
+            preview = "📁 Case_Root/\n  ├── 📁 01_Pleadings\n  ├── 📁 02_Discovery\n  ├── 📁 03_Correspondence\n  ├── 📁 04_Court_Orders\n  └── 📁 05_Research"
+        elif archetype == "Trial Notebook Model":
+            preview = "📁 Trial_Notebook/\n  ├── 📁 Exhibits_Plaintiff\n  ├── 📁 Exhibits_Defendant\n  ├── 📁 Witness_Outlines\n  ├── 📁 Jury_Instructions\n  └── 📁 Opening_Closing_Statements"
+        else: # Solo / Freelance Core
+            preview = "📁 Practice_Vault/\n  ├── 📁 Admin_Billing\n  ├── 📁 Client_Intake\n  └── 📁 Outbound_Production"
+            
+        self.tree_preview.insert("1.0", preview)
+        self.tree_preview.configure(state="disabled")
+
+    def execute_tree_builder(self):
+        """Runs physical OS mkdir constructs to generate directory architectures."""
+        base_dir = self.dir_entry.get()
+        if not base_dir or not os.path.exists(base_dir):
+            messagebox.showwarning("No Folder Selected", "Please choose or scan a Source/Target Folder in Tab 1 first!")
+            return
+            
+        archetype = self.tree_dropdown.get()
+        subdirs = []
+        if archetype == "Standard Civil Litigation":
+            subdirs = ["01_Pleadings", "02_Discovery", "03_Correspondence", "04_Court_Orders", "05_Research"]
+        elif archetype == "Trial Notebook Model":
+            subdirs = ["Exhibits_Plaintiff", "Exhibits_Defendant", "Witness_Outlines", "Jury_Instructions", "Opening_Closing_Statements"]
+        else:
+            subdirs = ["Admin_Billing", "Client_Intake", "Outbound_Production"]
+            
+        created = 0
+        for sub in subdirs:
+            try:
+                os.makedirs(os.path.join(base_dir, sub), exist_ok=True)
+                created += 1
+            except: pass
+            
+        messagebox.showinfo("Success", f"Directory Tree Construction Complete!\n\nInstantiated {created} standardized legal folders in:\n{os.path.basename(base_dir)}")
+        try:
+            os.startfile(base_dir)
+        except: pass
+
+    def execute_rename_wizard(self):
+        """Performs programmatic structural batch renaming across matching file filters."""
+        source = self.dir_entry.get()
+        if not source or not os.path.exists(source):
+            messagebox.showwarning("No Folder", "Please select a source folder in Tab 1 first!")
+            return
+            
+        # Parse naming formula parameters
+        prefix = self.rename_p1.get()
+        sub_comp = self.rename_p2.get()
+        raw_sep = self.rename_sep.get()
+        custom_txt = self.dyn_entry.get().strip().replace(" ", "_")
+        
+        # Resolve actual Separator
+        sep = " - "
+        if "_" in raw_sep: sep = "_"
+        elif "." in raw_sep: sep = "."
+        elif "Single" in raw_sep: sep = " "
+        
+        # Map logic triggers
+        def get_value_for_type(t, default_name):
+            if "[Date]" in t:
+                return datetime.now().strftime("%Y-%m-%d")
+            elif "[Party]" in t:
+                return "CLIENT"
+            elif "[DocType]" in t:
+                return "EXHIBIT"
+            elif "[Custom]" in t and custom_txt:
+                return custom_txt
+            return default_name
+            
+        # Target files
+        files = [f for f in os.listdir(source) if os.path.isfile(os.path.join(source, f)) and not f.startswith("~")]
+        if not files:
+            messagebox.showinfo("Queue Empty", "No files detected in source directory.")
+            return
+            
+        if not messagebox.askyesno("Confirm Batch Rename", f"Are you sure you want to batch rename {len(files)} files using the chosen formula?"):
+            return
+            
+        renamed = 0
+        for idx, f in enumerate(files):
+            try:
+                base, ext = os.path.splitext(f)
+                p1_val = get_value_for_type(prefix, "ITEM")
+                p2_val = get_value_for_type(sub_comp, base)
+                
+                # Append counter for uniqueness
+                new_name = f"{p1_val}{sep}{p2_val}_{idx+1:03d}{ext}"
+                
+                os.rename(os.path.join(source, f), os.path.join(source, new_name))
+                renamed += 1
+            except Exception as e:
+                print(f"Rename failure on {f}: {e}")
+                
+        self.trigger_async_folder_scan(source)
+        messagebox.showinfo("Renaming Complete", f"Batch Renaming Loop Succeeded!\n\nRe-formatted and normalized {renamed} filenames.")
 
 if __name__ == "__main__":
     app = AccessMergerApp()
