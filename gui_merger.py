@@ -888,8 +888,11 @@ class AccessMergerApp(ctk.CTk):
                         if payload:
                             ext = ".png"
                             fn = part.get_filename() or ""
-                            if fn.lower().endswith(('.jpg', '.jpeg')): ext = ".jpg"
-                            elif fn.lower().endswith('.gif'): ext = ".gif"
+                            low_fn = fn.lower()
+                            if low_fn.endswith(('.jpg', '.jpeg')): ext = ".jpg"
+                            elif low_fn.endswith('.gif'): ext = ".gif"
+                            elif low_fn.endswith('.bmp'): ext = ".bmp"
+                            elif low_fn.endswith(('.tif', '.tiff')): ext = ".tif"
                             tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=ext)
                             tf.write(payload)
                             tf.close()
@@ -913,8 +916,11 @@ class AccessMergerApp(ctk.CTk):
                         if cid:
                             ext = ".png"
                             orig_name = att.longFilename or att.shortFilename or ""
-                            if orig_name.lower().endswith(('.jpg', '.jpeg')): ext = ".jpg"
-                            elif orig_name.lower().endswith('.gif'): ext = ".gif"
+                            low_orig = orig_name.lower()
+                            if low_orig.endswith(('.jpg', '.jpeg')): ext = ".jpg"
+                            elif low_orig.endswith('.gif'): ext = ".gif"
+                            elif low_orig.endswith('.bmp'): ext = ".bmp"
+                            elif low_orig.endswith(('.tif', '.tiff')): ext = ".tif"
                             tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=ext)
                             tf.write(att.data)
                             tf.close()
@@ -957,6 +963,71 @@ class AccessMergerApp(ctk.CTk):
             if ext_low == '.msg' and msg_obj:
                 try: msg_obj.close()
                 except: pass
+            for tf_path in temp_files:
+                try: os.remove(tf_path)
+                except: pass
+
+    def _render_image_to_pdf(self, file_path, out_path, temp_extract_dir):
+        """Unified high-fidelity image renderer. Encapsulates single and multi-page images in official identification plates."""
+        import datetime
+        temp_files = []
+        try:
+            filename = os.path.basename(file_path)
+            frames = []
+            idx = 0
+            with Image.open(file_path) as img:
+                try:
+                    while True:
+                        tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=f"_{idx}.png")
+                        tm = "L" if self.var_grayscale.get() else "RGB"
+                        img.convert(tm).save(tf.name, "PNG")
+                        tf.close()
+                        temp_files.append(tf.name)
+                        frames.append(tf.name)
+                        idx += 1
+                        img.seek(img.tell() + 1)
+                except EOFError:
+                    pass
+            
+            if not frames:
+                return False
+
+            proc_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            header_html = f"""
+            <div style="font-family: Arial, sans-serif; border-bottom: 2px solid #67BE5E; padding-bottom: 12px; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="width: 100px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Record Type:</td><td style="font-size: 12px; color: #000; font-weight: bold;">Image Asset Portfolio</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">File Name:</td><td style="font-size: 12px; color: #000;">{filename}</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Sub-Frames:</td><td style="font-size: 12px; color: #000;">{len(frames)} Page(s) Total</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Processed:</td><td style="font-size: 12px; color: #000;">{proc_time}</td></tr>
+                </table>
+            </div>
+            """
+            
+            content_html = ""
+            for f_idx, f_path in enumerate(frames):
+                # If multi-page, force logical page break between image frames
+                p_break = "page-break-before: always; margin-top: 0.4in;" if f_idx > 0 else ""
+                content_html += f"""
+                <div style="{p_break} text-align: center;">
+                    <img src="{f_path}" style="max-width: 100%; max-height: 85%; object-fit: contain;">
+                </div>
+                """
+
+            paper_size = "letter"
+            paper_val = self.paper_dropdown.get()
+            if "Legal" in paper_val: paper_size = "legal"
+            elif "A4" in paper_val: paper_size = "a4"
+
+            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Arial, sans-serif; font-size: 11px; color: #333; }}</style></head><body>{header_html}{content_html}</body></html>"""
+            
+            with open(out_path, "wb") as f:
+                pisa.CreatePDF(final_html, dest=f)
+            return True
+        except Exception as e:
+            print(f"Image branded renderer failed: {e}")
+            return False
+        finally:
             for tf_path in temp_files:
                 try: os.remove(tf_path)
                 except: pass
@@ -1014,18 +1085,32 @@ class AccessMergerApp(ctk.CTk):
             pythoncom.CoUninitialize()
 
     def _convert_text_to_pdf(self, file_path, out_path):
-        """Read text streams, escape symbols, and compile securely via xhtml2pdf."""
+        """Read text streams, escape symbols, and compile securely via xhtml2pdf with an Emerald Header plate."""
         import html
+        import datetime
         try:
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
             escaped = html.escape(content)
+            filename = os.path.basename(file_path)
+            proc_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            header_html = f"""
+            <div style="font-family: Arial, sans-serif; border-bottom: 2px solid #67BE5E; padding-bottom: 12px; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="width: 100px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Record Type:</td><td style="font-size: 12px; color: #000; font-weight: bold;">Text Records</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">File Name:</td><td style="font-size: 12px; color: #000;">{filename}</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Processed:</td><td style="font-size: 12px; color: #000;">{proc_time}</td></tr>
+                </table>
+            </div>
+            """
+
             paper_size = "letter"
             paper_val = self.paper_dropdown.get()
             if "Legal" in paper_val: paper_size = "legal"
             elif "A4" in paper_val: paper_size = "a4"
             
-            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Courier, monospace; font-size: 11px; color: #222; line-height: 1.2; }}</style></head><body><pre style='white-space: pre-wrap;'>{escaped}</pre></body></html>"""
+            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Courier, monospace; font-size: 11px; color: #222; line-height: 1.2; }}</style></head><body>{header_html}<pre style='white-space: pre-wrap;'>{escaped}</pre></body></html>"""
             with open(out_path, "wb") as f:
                 pisa.CreatePDF(final_html, dest=f)
             return True
@@ -1191,19 +1276,17 @@ class AccessMergerApp(ctk.CTk):
                 # --- SCENARIO 2: LEGACY IMAGE (TIFF, JPG, PNG) ---
                 elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
                     temp_pdf = os.path.join(temp_extract_dir, f"img_{int(time.time())}_{idx}.pdf")
-                    with Image.open(file_path) as img:
-                        # Convert to grayscale matrix if enabled to reduce byte-size drastically
-                        target_mode = "L" if self.var_grayscale.get() else "RGB"
-                        img.convert(target_mode).save(temp_pdf, "PDF")
-                    
-                    with pikepdf.open(temp_pdf) as src:
-                        merged_pdf.pages.extend(src.pages)
-                        if self.var_bookmark.get():
-                            clean_n, _ = os.path.splitext(fn)
-                            outline_nodes.append(pikepdf.OutlineItem(f"📷 {clean_n}", destination=curr_pg, page_location="Fit"))
-                        curr_pg += 1
-                        success_count += 1
-                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Converted & Combined"))
+                    if self._render_image_to_pdf(file_path, temp_pdf, temp_extract_dir):
+                        with pikepdf.open(temp_pdf) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            if self.var_bookmark.get():
+                                clean_n, _ = os.path.splitext(fn)
+                                outline_nodes.append(pikepdf.OutlineItem(f"📷 {clean_n}", destination=curr_pg, page_location="Fit"))
+                            curr_pg += len(src.pages)
+                            success_count += 1
+                            self.after(0, lambda i=item_id: update_tree_status(i, "✅ Converted & Combined"))
+                    else:
+                        raise ValueError("Image branded renderer failure.")
 
                 # --- SCENARIO 3: EMAIL RECORDS (.EML) ---
                 elif low_fn.endswith('.eml') and self.var_email.get():
@@ -1243,8 +1326,7 @@ class AccessMergerApp(ctk.CTk):
                             pdf_p = raw_p
                             success = True
                         elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
-                            with Image.open(raw_p) as im: im.convert("RGB").save(pdf_p, "PDF")
-                            success = True
+                            success = self._render_image_to_pdf(raw_p, pdf_p, temp_extract_dir)
                         elif att_low.endswith(('.docx', '.doc')):
                             success = self._convert_word_to_pdf(raw_p, pdf_p)
                         elif att_low.endswith(('.xlsx', '.xls', '.csv')):
@@ -1300,8 +1382,7 @@ class AccessMergerApp(ctk.CTk):
                                 pdf_p = raw_p
                                 success = True
                             elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
-                                with Image.open(raw_p) as im: im.convert("RGB").save(pdf_p, "PDF")
-                                success = True
+                                success = self._render_image_to_pdf(raw_p, pdf_p, temp_extract_dir)
                             elif att_low.endswith(('.docx', '.doc')):
                                 success = self._convert_word_to_pdf(raw_p, pdf_p)
                             elif att_low.endswith(('.xlsx', '.xls', '.csv')):
