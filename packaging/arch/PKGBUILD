@@ -1,0 +1,18 @@
+# Maintainer: Alan Woodyard <woodyardae@users.noreply.github.com>
+pkgname=access-paralegal-pdf-merger-bin
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="The premier secure offline legal PDF and Email compiler by Access Paralegal Services."
+arch=('x86_64')
+url="https://github.com/woodyardae/Access_Paralegal_PDF_Merger"
+license=('custom:Proprietary')
+depends=('tk' 'qpdf')
+provides=('access-paralegal-pdf-merger')
+conflicts=('access-paralegal-pdf-merger')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/woodyardae/Access_Paralegal_PDF_Merger/releases/download/v${pkgver}/Access_Paralegal_Linux_x64.tar.gz")
+sha256sums=('SKIP') # Updated automatically during release ingestion
+
+package() {
+    # Install the compiled binary into system path
+    install -Dm755 "${srcdir}/Access_Paralegal_PDF_Merger" "${pkgdir}/usr/bin/access-paralegal-pdf-merger"
+}

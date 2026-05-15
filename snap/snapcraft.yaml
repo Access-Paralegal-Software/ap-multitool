@@ -1,0 +1,33 @@
+name: access-paralegal-pdf-merger
+base: core22
+version: '1.2.0'
+summary: Secure offline legal PDF compiler and Email attachment rip engine.
+description: |
+  The premier offline PDF & Email compiler engineered for modern legal teams.
+  Experience 100% secure local processing, automated 1:1 page auditing, and 
+  lightning-fast email attachment ripping with zero cloud privacy risks.
+  Developed by Access Paralegal Services.
+
+grade: stable
+confinement: strict # Enforces max security sandboxing
+
+apps:
+  access-paralegal-pdf-merger:
+    command: Access_Paralegal_PDF_Merger
+    extensions: [gnome] # Grants native GTK/Tkinter UI support
+    plugs:
+      - home             # Allow access to local files
+      - removable-media  # Allow access to USB drives / external drives
+      - network          # For auto-updates pings only
+
+parts:
+  access-pdf-merger:
+    plugin: python
+    source: .
+    python-packages:
+      - customtkinter
+      - pillow
+      - pikepdf
+    stage-packages:
+      - libqpdf28 # OS library needed by pikepdf
+      - python3-tk
