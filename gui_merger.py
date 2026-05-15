@@ -434,7 +434,7 @@ class AccessMergerApp(ctk.CTk):
         self._drag_start_item = None
         
         btn_frame = ctk.CTkFrame(self.queue_container, fg_color="transparent")
-        btn_frame.pack(fill="x", pady=2)
+        btn_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=2, padx=2)
         ctk.CTkButton(btn_frame, text="Move Up ⬆", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_up).pack(side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Move Down ⬇", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_down).pack(side="left")
         
