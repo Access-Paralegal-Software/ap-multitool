@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Locating Audit Logs FAQ — Access Paralegal Suite</title>
+    <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="../../" class="logo" style="text-decoration: none; color: inherit;">
+                <img src="../../assets/logo.png" alt="Access Paralegal Logo">
+                <span>ACCESS PARALEGAL SUITE</span>
+            </a>
+            <div class="search-container" style="margin: 0; max-width: 300px;">
+                <input type="text" id="faq-search-input" class="search-bar" style="padding: 0.5rem 1rem; font-size: 0.9rem;" placeholder="🔍 Search Support...">
+                <div id="faq-search-results" class="search-results-overlay"></div>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container">
+        <article class="article-layout">
+            <a href="../" class="back-btn">← Back to Support Hub</a>
+            
+            <header class="article-header">
+                <h1>Where is my defensible Merge Audit Log?</h1>
+                <p style="color: #6B7280; font-size: 0.9rem; margin-top: 0.5rem;">Category: File Management • Last Updated May 2026</p>
+            </header>
+
+            <div class="article-body">
+                <p>
+                    Access Paralegal Suite values defensibility. Every single compilation creates a permanent, secure ledger receipt in the form of a **`Merge_Audit_Log.txt`** file.
+                </p>
+
+                <h2>Location of the Log</h2>
+                <p>
+                    The audit log generates dynamically inside the **exact same folder** you designated for your output PDF. For example:
+                </p>
+                <ul>
+                    <li>If your output is: `C:\Cases\Smith_Master_Bundle.pdf`</li>
+                    <li>Your audit log will be: `C:\Cases\Merge_Audit_Log.txt`</li>
+                </ul>
+
+                <p>
+                    Furthermore, upon a successful merge completion, the software automatically triggers your default system text editor to **instantly pop-open the log**, meaning you don't even need to search your hard drive for it.
+                </p>
+
+                <h2>What information is inside?</h2>
+                <ul>
+                    <li>Timestamp of compilation</li>
+                    <li>The exact visual index order sequence</li>
+                    <li>Original filenames processed</li>
+                    <li>Assigned Bates serialization spans (e.g., Exhibit A: 001 - 015)</li>
+                </ul>
+
+                <div class="alert-box">
+                    <strong>⚖️ Admissibility Tip:</strong> Keep the `Merge_Audit_Log.txt` archived alongside your master PDF. If the opposing counsel ever challenges the integrity or ordering of the bundle, you have an instant machine-generated defensible receipt verifying exact original file mappings!
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Copyright &copy; 2026 Access Paralegal Services. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="../../assets/search.js"></script>
+</body>
+</html>

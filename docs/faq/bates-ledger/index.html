@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bates Ledger Behavior FAQ — Access Paralegal Suite</title>
+    <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="../../" class="logo" style="text-decoration: none; color: inherit;">
+                <img src="../../assets/logo.png" alt="Access Paralegal Logo">
+                <span>ACCESS PARALEGAL SUITE</span>
+            </a>
+            <div class="search-container" style="margin: 0; max-width: 300px;">
+                <input type="text" id="faq-search-input" class="search-bar" style="padding: 0.5rem 1rem; font-size: 0.9rem;" placeholder="🔍 Search Support...">
+                <div id="faq-search-results" class="search-results-overlay"></div>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container">
+        <article class="article-layout">
+            <a href="../" class="back-btn">← Back to Support Hub</a>
+            
+            <header class="article-header">
+                <h1>Why did my Bates number not reset to 1 when I opened the app today?</h1>
+                <p style="color: #6B7280; font-size: 0.9rem; margin-top: 0.5rem;">Category: Bates Stamping • Last Updated May 2026</p>
+            </header>
+
+            <div class="article-body">
+                <p>
+                    This is one of our premier **Malpractice Prevention** features. 
+                </p>
+
+                <p>
+                    In most standard PDF programs, if you stamp a sequence today (e.g., `SMITH_001` to `SMITH_050`), and then come back tomorrow to stamp supplementary exhibits, the software defaults back to `1`. If you aren't paying close attention, you might accidentally stamp `SMITH_001` again. In legal proceedings, duplicating a Bates number is a severe error that disrupts record admissibility.
+                </p>
+
+                <h2>Introducing the Persistent Encrypted Ledger</h2>
+                <p>
+                    Access Paralegal Suite contains an embedded, **AES-256 encrypted Bates Registry database**. Whenever you successfully flatten a merged bundle, the software automatically logs the **Prefix** used and the **highest ending index number** you reached.
+                </p>
+
+                <p>
+                    The next time you type `SMITH` into the Bates Prefix field—whether that is 5 minutes later or 6 months later—the software instantly searches its secure local database and **auto-populates the Starting Index to the next logical number** (e.g., `51`).
+                </p>
+
+                <div class="alert-box">
+                    <strong>💡 Safe by Design:</strong> You never have to keep a manual notepad tracking what number you stopped on for each client case. The application safely handles that ledger data 100% locally inside your case vault!
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Copyright &copy; 2026 Access Paralegal Services. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="../../assets/search.js"></script>
+</body>
+</html>

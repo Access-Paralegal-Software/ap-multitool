@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Paralegal Cinematic Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&family=Courier+Prime&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111827;
+            font-family: 'Inter', sans-serif;
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* CUSTOM AI CURSOR */
+        #cursor {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" stroke="white" stroke-width="1.5"><path d="M4.5 3l15 10.5-6 1.5 5 7-2.5 1.5-5-7-3 5.5z"/></svg>');
+            z-index: 9999;
+            top: 500px;
+            left: 800px;
+            transition: all 1s cubic-bezier(0.25, 1, 0.5, 1);
+            pointer-events: none;
+        }
+
+        /* MAIN SIMULATED WINDOW */
+        #window-frame {
+            width: 1100px;
+            height: 640px;
+            background: #F3F4F6;
+            border-radius: 12px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* HEADER BAR */
+        .header {
+            height: 60px;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            color: #111827;
+            font-size: 18px;
+        }
+
+        .logo-dot {
+            width: 24px;
+            height: 24px;
+            background: #288F4F;
+            border-radius: 6px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .red { background: #EF4444; }
+        .yellow { background: #F59E0B; }
+        .green { background: #10B981; }
+
+        /* TAB BAR */
+        .tabs {
+            height: 45px;
+            display: flex;
+            background: #E5E7EB;
+            padding: 5px 20px 0;
+            gap: 5px;
+        }
+
+        .tab {
+            padding: 8px 20px;
+            background: #D1D5DB;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4B5563;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #F3F4F6;
+            color: #111827;
+            border-bottom: 2px solid #288F4F;
+        }
+
+        /* DASHBOARD CONTENT */
+        .content {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* LEFT CONFIG */
+        .panel-left {
+            width: 300px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #D1D5DB;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .checkbox.checked {
+            background: #288F4F;
+            border-color: #288F4F;
+        }
+        .checkbox.checked::after {
+            content: "✓";
+            color: white;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .btn-merge {
+            height: 50px;
+            background: #288F4F;
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: auto;
+            box-shadow: 0 4px 12px rgba(40, 143, 79, 0.2);
+            transition: 0.2s;
+        }
+
+        .btn-merge.hover {
+            background: #1f6f3e;
+            transform: translateY(-1px);
+        }
+
+        .btn-merge.active {
+            transform: scale(0.98);
+        }
+
+        /* RIGHT QUEUE */
+        .panel-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .file-queue {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #E5E7EB;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .queue-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #288F4F;
+            margin-bottom: 10px;
+        }
+
+        .stream-box {
+            flex: 1;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 12px;
+            color: #4B5563;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stream-line {
+            display: flex;
+            justify-content: space-between;
+            animation: slideUp 0.15s forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-section {
+            height: 20px;
+            background: #E5E7EB;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #288F4F;
+            transition: width 0.1s linear;
+        }
+
+        /* SUCCESS OVERLAY */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(17, 24, 39, 0.8);
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .success-card {
+            width: 400px;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transform: translateY(20px);
+            transition: transform 0.5s;
+        }
+
+        /* PDF VIEWER FRAME (HIDDEN INITIALLY) */
+        #pdf-viewer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #525659;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdf-toolbar {
+            height: 45px;
+            background: #323639;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        #pdf-scroller {
+            flex: 1;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+            gap: 30px;
+            scroll-behavior: smooth;
+        }
+
+        /* PAGE MOCKUPS */
+        .pdf-page {
+            width: 600px;
+            min-height: 780px;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            padding: 60px;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-watermark {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 60px;
+            font-weight: 800;
+            color: rgba(0, 0, 0, 0.04);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* PAGE 1: TOC LETTERHEAD */
+        .letterhead {
+            text-align: center;
+            border-bottom: 2px solid #111827;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .lh-firm {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #111827;
+        }
+
+        .lh-address {
+            font-size: 10px;
+            color: #4B5563;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .doc-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            text-decoration: underline;
+            margin-bottom: 25px;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 12px;
+            border-bottom: 1px dotted #9CA3AF;
+        }
+
+        .toc-item span {
+            background: white;
+            padding: 0 4px;
+            position: relative;
+            bottom: -3px;
+        }
+
+        /* SUBSEQUENT PAGES */
+        .legal-text {
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            line-height: 1.8;
+            color: #111827;
+            text-align: justify;
+        }
+
+        .bates-stamp {
+            position: absolute;
+            bottom: 25px;
+            right: 40px;
+            font-family: 'Courier Prime', monospace;
+            font-weight: 900;
+            font-size: 12px;
+            color: #000;
+        }
+
+        .corp-header {
+            border: 1px solid black;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- THE MAGIC CURSOR -->
+    <div id="cursor"></div>
+
+    <!-- WINDOW FRAME -->
+    <div id="window-frame">
+        
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo-area">
+                <div class="logo-dot"></div>
+                <span>ACCESS PARALEGAL — v1.2.5</span>
+            </div>
+            <div class="window-controls">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <div class="tab active" id="tab-merger">📦 Document Merger</div>
+            <div class="tab" id="tab-bates">⚖️ Bates Stamping</div>
+        </div>
+
+        <!-- APP CONTENT -->
+        <div class="content" id="app-content">
+            
+            <!-- PANEL LEFT -->
+            <div class="panel-left">
+                <div class="setting-row">
+                    <div class="checkbox checked"></div>
+                    <span>Create Bookmarks per file</span>
+                </div>
+                <div class="setting-row">
+                    <div class="checkbox checked"></div>
+                    <span>Extract Email Attachments</span>
+                </div>
+                <div class="setting-row" id="chk-gray-row">
+                    <div class="checkbox" id="chk-gray"></div>
+                    <span style="color: #B45309; font-weight: bold;">📉 Grayscale (File Optimizer)</span>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; font-weight: 600; color:#4B5563;">
+                    Page Size: US Letter (8.5 x 11 in)
+                </div>
+
+                <!-- AUDIT PREVIEW -->
+                <div style="background:#F3F4F6; padding: 15px; border-radius:8px; border:1px solid #E5E7EB; margin-top:10px;">
+                    <div style="color: #288F4F; font-size:11px; font-weight:800; margin-bottom:5px;">📄 QUEUE PREVIEW</div>
+                    <div id="stat-files" style="font-size:12px; color:#374151;">Documents: 325 Pending</div>
+                    <div id="stat-pages" style="font-size:12px; color:#374151;">Total Pages: 1,482 est.</div>
+                </div>
+
+                <div class="btn-merge" id="merge-btn">
+                    🚀 COMBINE & MERGE FILES
+                </div>
+            </div>
+
+            <!-- PANEL RIGHT -->
+            <div class="panel-right">
+                <!-- PATH ENTRY -->
+                <div style="background:white; border:1px solid #E5E7EB; border-radius:6px; padding: 10px; font-size:12px; display:flex; justify-content:space-between;">
+                    <span>📁 Source: C:\Cases\LEXINGTON_V_MONSANTO\Exhibits</span>
+                    <span style="color:#6B7280;">Change Folder</span>
+                </div>
+
+                <!-- QUEUE BOX -->
+                <div class="file-queue">
+                    <div class="queue-title">PROCESSING QUEUE TIMELINE</div>
+                    <div class="stream-box" id="stream-box">
+                        <!-- Flying Filenames Go Here -->
+                        <div style="color: #9CA3AF; font-style:italic;">Waiting to compile...</div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; margin-bottom:8px;">
+                        <span id="status-txt">Status: Ready</span>
+                        <span id="counter-txt">0 / 325</span>
+                    </div>
+                    <div class="progress-section">
+                        <div id="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUCCESS OVERLAY -->
+            <div id="overlay">
+                <div class="success-card" id="success-card">
+                    <div style="font-size: 48px; margin-bottom:10px;">🎉</div>
+                    <h2 style="font-family:'Outfit',sans-serif; margin-bottom:10px; color:#111827;">Compilation Successful!</h2>
+                    <p style="font-size:13px; color:#4B5563; margin-bottom:20px;">
+                        Merged 325 files into a court-ready 1,482-page master bundle.<br>
+                        Total file size compressed from 240MB to <b>54MB (77% Save!)</b>.
+                    </p>
+                    <div style="padding:10px 20px; background:#288F4F; color:white; border-radius:6px; font-weight:700; display:inline-block;">
+                        OPEN COMPLETED DOCUMENT
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- PDF VIEWER OVERLAY -->
+        <div id="pdf-viewer">
+            <div class="pdf-toolbar">
+                <div>📄 LEXINGTON_V_MONSANTO_MASTER_BUNDLE.pdf</div>
+                <div>Page 1 of 1482</div>
+                <div>100% | Zoom Out | Zoom In</div>
+            </div>
+            
+            <!-- PDF SCROLL CONTAINER -->
+            <div id="pdf-scroller">
+                
+                <!-- PAGE 1: MASTER TOC -->
+                <div class="pdf-page">
+                    <div class="page-watermark">CONFIDENTIAL</div>
+                    <div class="letterhead">
+                        <div class="lh-firm">LEXINGTON & WOODS LLP</div>
+                        <div class="lh-address">123 JUSTICE BOULEVARD, SUITE 400 • SAN FRANCISCO, CALIFORNIA 94102<br>TEL: (415) 555-0199 • WWW.LEXINGTONWOODS.COM</div>
+                    </div>
+                    <div class="doc-title">MASTER EVIDENCE INDEX</div>
+                    
+                    <div style="font-size: 12px; line-height: 1.6; margin-bottom:20px;">
+                        <b>CASE NO:</b> CIV-2026-0942-LW<br>
+                        <b>MATTER:</b> Lexington Corp. v. Monsanto-Greene Inc.<br>
+                        <b>PREPARED BY:</b> Access Paralegal Services, on behalf of Plaintiffs.
+                    </div>
+
+                    <!-- TOC ITEMS -->
+                    <div class="toc-item"><span>1. Email Correspondence: Subject "Revised Termsheet Approval"</span><span>Page 1</span></div>
+                    <div class="toc-item"><span>&nbsp;&nbsp;📎 Attachment: Final_Termsheet_Draft_V4.pdf</span><span>Page 2</span></div>
+                    <div class="toc-item"><span>2. 📷 DEPOSITION_EXHIBIT_A_-_SITE_PHOTO.JPG</span><span>Page 12</span></div>
+                    <div class="toc-item"><span>3. Corporate Master Services Agreement (Executed)</span><span>Page 13</span></div>
+                    <div class="toc-item"><span>4. Financial Statements FY25 - Q3 Ledger</span><span>Page 88</span></div>
+                    <div class="toc-item"><span>5. Email Correspondence: Subject "Q4 Warning Signs"</span><span>Page 142</span></div>
+                    <div class="toc-item"><span>&nbsp;&nbsp;📎 Attachment: Intern_Audit_Memo.pdf</span><span>Page 143</span></div>
+                    <div class="toc-item"><span>6. Deposition Transcript of Arthur Dent</span><span>Page 201</span></div>
+                    <div class="toc-item"><span>7. Expert Witness Report - Dr. Arnim Zola</span><span>Page 315</span></div>
+                    <div class="toc-item"><span>8. Environmental Assessment Report (2024)</span><span>Page 450</span></div>
+                    <div class="toc-item"><span>9. 📷 SCANNED_MEMO_HANDWRITTEN.PNG</span><span>Page 580</span></div>
+                    
+                    <div class="bates-stamp">AP-000001</div>
+                </div>
+
+                <!-- PAGE 2: EMAIL COVER -->
+                <div class="pdf-page">
+                    <div class="page-watermark">EXHIBIT B</div>
+                    <div style="height: 50px; background:#F3F4F6; border-bottom:2px solid #288F4F; display:flex; align-items:center; padding:0 20px; font-weight:bold; font-size:13px;">
+                        ACCESS PARALEGAL — DOCUMENTATION RECORD
+                    </div>
+                    <div style="font-size: 12px; padding: 20px 0; border-bottom: 1px solid #E5E7EB; line-height: 2;">
+                        <b>FROM:</b> sarah.jenkins@lexington.com<br>
+                        <b>TO:</b> arthur.dent@monsanto-greene.com<br>
+                        <b>DATE:</b> October 12, 2025 14:32:01 EST<br>
+                        <b>SUBJECT:</b> Revised Termsheet Approval
+                    </div>
+                    <div style="font-size: 11px; font-weight:bold; margin-top:20px;">MESSAGE CORRESPONDENCE EXTRACT:</div>
+                    <div style="font-size:11px; color:#4B5563; margin-top:10px; line-height: 1.6;">
+                        Arthur,<br><br>
+                        Please find attached the revised termsheet draft (V4) representing the changes we discussed yesterday evening. We have integrated the structural changes regarding Section 12.4 (Indemnification clauses). Please review at your earliest convenience as we aim to file by Friday afternoon.<br><br>
+                        Regards,<br>
+                        Sarah Jenkins, Lead Counsel
+                    </div>
+                    <div class="bates-stamp">AP-000002</div>
+                </div>
+
+                <!-- PAGE 3: LEGACY DOCUMENT WITH LOREM IPSUM -->
+                <div class="pdf-page">
+                    <div class="page-watermark">CONFIDENTIAL</div>
+                    <div class="corp-header">EXHIBIT 3: CORPORATE MASTER AGREEMENT (EXCERPT)</div>
+                    <div class="legal-text">
+                        1. PURPOSE AND DEFINITIONS.<br>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque id erat facilisis, pretium nisl at, gravida ipsum. Etiam tempor mi eros, in ullamcorper nisi tempus non. Sed pellentesque elementum nulla vitae scelerisque. Nam ut magna vel turpis viverra facilisis eget vitae felis. Duis at rhoncus libero, vel tincidunt nisi. Maecenas non arcu lorem.<br><br>
+                        2. OBLIGATIONS OF THE PARTIES.<br>
+                        Praesent tristique turpis id nisi varius elementum. In hac habitasse platea dictumst. Fusce vestibulum, dolor ut euismod dictum, dolor dui hendrerit erat, sit amet finibus quam ante scelerisque lectus. In commodo nulla sed dolor pellentesque laoreet. Curabitur pulvinar finibus sem eu tempus. Nulla feugiat eros vitae dolor feugiat consequat. Cras sit amet dictum elit.<br><br>
+                        3. TERM AND TERMINATION.<br>
+                        Sed sodales velit dolor, ut pretium mi placerat tincidunt. Ut tristique urna felis, id pulvinar felis aliquet nec. Donec sit amet est egestas, scelerisque eros at, convallis purus. Duis dictum feugiat augue a consequat. Vestibulum a nulla leo. Quisque ac magna ut metus congue molestie. Suspendisse potenti.
+                    </div>
+                    <div class="bates-stamp">AP-000003</div>
+                </div>
+
+                <!-- PAGE 4: MORE LEGAL TEXT -->
+                <div class="pdf-page">
+                    <div class="page-watermark">CONFIDENTIAL</div>
+                    <div class="corp-header">EXHIBIT 3: PAGE 2</div>
+                    <div class="legal-text">
+                        4. CONFIDENTIALITY AND PROPRIETARY RIGHTS.<br>
+                        Cras ac facilisis elit, sed rhoncus purus. Phasellus varius augue ut erat pulvinar euismod. Pellentesque bibendum ante ipsum, nec tempor augue luctus ut. Cras sit amet justo at nunc varius accumsan. In finibus urna id tortor convallis, sit amet sollicitudin metus condimentum. Suspendisse pulvinar, magna vitae laoreet convallis, turpis odio rutrum nisi, vel porta lectus justo id velit.<br><br>
+                        5. LIMITATION OF LIABILITY.<br>
+                        Nunc ac magna nec magna condimentum fermentum a ac lorem. Sed volutpat lorem id diam eleifend elementum. Vestibulum in facilisis eros. Aenean in nisl sit amet nisl convallis tincidunt in eu erat. Nullam eu scelerisque nulla. Etiam eget dictum lacus. Quisque accumsan feugiat scelerisque.<br><br>
+                        6. DISPUTE RESOLUTION.<br>
+                        Mauris in enim tincidunt, interdum eros sit amet, congue dolor. Sed non efficitur ex. Morbi imperdiet leo in nisl sollicitudin consequat. Proin congue nunc leo, eu cursus lectus tempor scelerisque. Phasellus in dui eros. Nam tristique, erat id tristique pharetra, augue metus fermentum ipsum, non finibus enim est nec nisl. Nunc vitae leo in dui molestie lobortis elementum ut ipsum.
+                    </div>
+                    <div class="bates-stamp">AP-000004</div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        const mergeBtn = document.getElementById('merge-btn');
+        const chkGray = document.getElementById('chk-gray');
+        const tabBates = document.getElementById('tab-bates');
+        const tabMerger = document.getElementById('tab-merger');
+        const streamBox = document.getElementById('stream-box');
+        const progressBar = document.getElementById('progress-bar');
+        const statusTxt = document.getElementById('status-txt');
+        const counterTxt = document.getElementById('counter-txt');
+        const overlay = document.getElementById('overlay');
+        const successCard = document.getElementById('success-card');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const pdfScroller = document.getElementById('pdf-scroller');
+
+        // Dummy Filename Database
+        const docNames = [
+            "CORRESPONDENCE_OCT_25.eml", "Ex_A1_Photo.jpg", "Ex_A2_SiteScan.tiff",
+            "Exec_Termsheet_Draft.pdf", "NDA_Signed_Redacted.pdf", "Ledger_2025_Q3.xlsx.pdf",
+            "Memo_Internal_Audit.pdf", "Depo_Arthur_Dent_Vol1.pdf", "Zola_Expert_Report.pdf",
+            "Env_Impact_Study_Final.pdf", "Scanned_Signature_Page.png", "Letter_to_Counsel.eml",
+            "Discovery_Req_Set_1.pdf", "Tax_Returns_2024_Ex.pdf", "Patent_Filing_9021.pdf",
+            "Email_Threat_Assessment.eml", "Attachment_Warning_Sign.pdf", "Bylaws_Lexington.pdf"
+        ];
+
+        // Programmatic Cursor Positioning
+        function moveCursor(x, y, delay = 0) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    cursor.style.left = x + 'px';
+                    cursor.style.top = y + 'px';
+                    setTimeout(resolve, 1000); // wait for transit
+                }, delay);
+            });
+        }
+
+        // CINEMATIC SCENARIO RUNNER
+        async function startMovie() {
+            console.log("Cinematic Scenario Active...");
+
+            // 1. Move cursor to Grayscale Checkbox
+            await moveCursor(220, 260, 1000);
+            
+            // Simulate Click
+            chkGray.classList.add('checked');
+            document.getElementById('stat-pages').innerText = "Total Pages: 1,482 est. (Optimizing Size)";
+            
+            // 2. Move to Bates Tab to check configuration
+            await moveCursor(280, 135, 1000);
+            tabMerger.classList.remove('active');
+            tabBates.classList.add('active');
+            
+            // 3. Move back to Merger Tab
+            await moveCursor(140, 135, 1500);
+            tabBates.classList.remove('active');
+            tabMerger.classList.add('active');
+
+            // 4. Move to big Merge Button
+            await moveCursor(250, 540, 1200);
+            mergeBtn.classList.add('hover');
+            
+            // Click Event
+            setTimeout(() => {
+                mergeBtn.classList.add('active');
+                setTimeout(() => mergeBtn.classList.remove('active'), 200);
+                runCompilation();
+            }, 800);
+        }
+
+        // Simulates flying filenames and progress
+        function runCompilation() {
+            streamBox.innerHTML = ""; // clear
+            statusTxt.innerText = "Status: Compiling Files...";
+            let fileCount = 0;
+            const total = 325;
+            
+            const interval = setInterval(() => {
+                fileCount += Math.floor(Math.random() * 4) + 2;
+                if (fileCount >= total) {
+                    fileCount = total;
+                    clearInterval(interval);
+                    progressBar.style.width = '100%';
+                    counterTxt.innerText = `${total} / ${total}`;
+                    statusTxt.innerText = "Status: Finished!";
+                    setTimeout(showSuccess, 800);
+                } else {
+                    // Update stats
+                    const p = (fileCount / total) * 100;
+                    progressBar.style.width = p + '%';
+                    counterTxt.innerText = `${fileCount} / ${total}`;
+
+                    // Inject random flying file name
+                    const randomName = docNames[Math.floor(Math.random() * docNames.length)];
+                    const mockFile = randomName.replace('.', `_${Math.floor(Math.random()*100)}.`);
+                    
+                    const line = document.createElement('div');
+                    line.className = "stream-line";
+                    line.innerHTML = `<span>📄 Compiling: ${mockFile}</span> <span style="color:#288F4F;">✓ OK</span>`;
+                    streamBox.appendChild(line);
+                    if (streamBox.children.length > 10) {
+                        streamBox.removeChild(streamBox.firstChild);
+                    }
+                }
+            }, 60);
+        }
+
+        // Show Compilation success and transition to scrolling
+        function showSuccess() {
+            overlay.style.opacity = "1";
+            overlay.style.pointerEvents = "auto";
+            successCard.style.transform = "translateY(0)";
+            
+            // Move cursor to open document
+            setTimeout(async () => {
+                await moveCursor(640, 420, 800);
+                // Transition to PDF View
+                pdfViewer.style.opacity = "1";
+                pdfViewer.style.pointerEvents = "auto";
+                
+                // Start scrolling simulation!
+                setTimeout(startSmoothScroll, 1500);
+            }, 500);
+        }
+
+        // Automated smooth scroll down
+        function startSmoothScroll() {
+            let scrollPos = 0;
+            const maxScroll = 2300;
+            const speed = 2; // smooth pan
+
+            const scrollerInterval = setInterval(() => {
+                scrollPos += speed;
+                pdfScroller.scrollTop = scrollPos;
+                if (scrollPos >= maxScroll) {
+                    clearInterval(scrollerInterval);
+                    console.log("Movie complete.");
+                }
+            }, 20);
+        }
+
+        // Auto trigger
+        window.onload = startMovie;
+
+    </script>
+</body>
+</html>

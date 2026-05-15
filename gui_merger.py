@@ -348,11 +348,44 @@ class AccessMergerApp(ctk.CTk):
         )
         self.dir_btn.pack(side="right")
 
-        self.queue_frame = ctk.CTkScrollableFrame(
+        from tkinter import ttk
+        self.queue_container = ctk.CTkFrame(
             self.right_frame, fg_color=("#F5F9F4", "#161E15"), 
             border_width=1, border_color=GLASS_BORDER, corner_radius=8
         )
-        self.queue_frame.pack(fill="both", expand=True, pady=(0, 15))
+        self.queue_container.pack(fill="both", expand=True, pady=(0, 15))
+        
+        style = ttk.Style()
+        style.theme_use("default")
+        bg_col = "#F5F9F4" if ctk.get_appearance_mode() == "Light" else "#161E15"
+        fg_col = "#222222" if ctk.get_appearance_mode() == "Light" else "#ECECEC"
+        style.configure("Treeview", background=bg_col, foreground=fg_col, fieldbackground=bg_col, rowheight=28, borderwidth=0)
+        style.map("Treeview", background=[("selected", BRAND_ACCENT_GREEN)], foreground=[("selected", "white")])
+        style.configure("Treeview.Heading", font=("Segoe UI", 11, "bold"))
+        
+        self.queue_tree = ttk.Treeview(self.queue_container, columns=("Order", "File", "Status"), show="headings", selectmode="extended")
+        self.queue_tree.heading("Order", text="#")
+        self.queue_tree.column("Order", width=40, anchor="center", stretch=False)
+        self.queue_tree.heading("File", text="Document Name")
+        self.queue_tree.column("File", width=250, anchor="w")
+        self.queue_tree.heading("Status", text="Status")
+        self.queue_tree.column("Status", width=120, anchor="center", stretch=False)
+        
+        tree_scroll = ttk.Scrollbar(self.queue_container, orient="vertical", command=self.queue_tree.yview)
+        self.queue_tree.configure(yscrollcommand=tree_scroll.set)
+        tree_scroll.pack(side="right", fill="y", pady=2, padx=(0, 2))
+        self.queue_tree.pack(fill="both", expand=True, padx=2, pady=2)
+        
+        self.queue_tree.bind("<ButtonPress-1>", self.on_tree_click)
+        self.queue_tree.bind("<B1-Motion>", self.on_tree_drag)
+        self.queue_tree.bind("<ButtonRelease-1>", self.on_tree_drop)
+        self.queue_tree.bind("<Double-1>", self.on_tree_double_click)
+        self._drag_start_item = None
+        
+        btn_frame = ctk.CTkFrame(self.queue_container, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=2)
+        ctk.CTkButton(btn_frame, text="Move Up ⬆", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_up).pack(side="left", padx=5)
+        ctk.CTkButton(btn_frame, text="Move Down ⬇", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_down).pack(side="left")
         
         self.status_bar_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
         self.status_bar_frame.pack(fill="x", pady=(0, 10))
@@ -403,6 +436,7 @@ class AccessMergerApp(ctk.CTk):
         self.bates_prefix = ctk.CTkEntry(self.bates_left, placeholder_text="e.g., EXHIBIT-A-", width=310)
         self.bates_prefix.pack(padx=20, pady=(0, 10))
         self.bates_prefix.insert(0, "AP-")
+        self.bates_prefix.bind("<FocusOut>", self._on_bates_prefix_focusout)
 
         # Dual columns for start index and padding
         self.num_grid = ctk.CTkFrame(self.bates_left, fg_color="transparent")
@@ -620,20 +654,67 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(self.header_frame, text="SERVICES", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=0)
 
     def clear_queue_visual(self):
-        for widget in self.queue_frame.winfo_children():
-            widget.destroy()
+        for item in self.queue_tree.get_children():
+            self.queue_tree.delete(item)
 
     def add_queue_item(self, filename, status="Pending", text_color="#4B5563"):
-        item_row = ctk.CTkFrame(self.queue_frame, fg_color="transparent")
-        item_row.pack(fill="x", pady=4, padx=5)
         icon = "📧" if filename.lower().endswith(('.eml', '.msg')) else "📄"
+        idx = len(self.queue_tree.get_children()) + 1
+        item = self.queue_tree.insert("", "end", values=(str(idx), f"{icon} {filename}", status))
+        return item
+
+    def on_tree_click(self, event):
+        self._drag_start_item = self.queue_tree.identify_row(event.y)
         
-        lbl_name = ctk.CTkLabel(item_row, text=f"{icon} {filename[:50]}", anchor="w", text_color=BRAND_DARK_TEXT)
-        lbl_name.pack(side="left", fill="x", expand=True)
-        
-        lbl_status = ctk.CTkLabel(item_row, text=status, font=ctk.CTkFont(size=11, weight="bold"), text_color=text_color)
-        lbl_status.pack(side="right")
-        return lbl_status
+    def on_tree_drag(self, event):
+        pass
+
+    def on_tree_drop(self, event):
+        target_item = self.queue_tree.identify_row(event.y)
+        if self._drag_start_item and target_item and self._drag_start_item != target_item:
+            selected = self.queue_tree.selection()
+            if self._drag_start_item not in selected:
+                selected = (self._drag_start_item,)
+            target_idx = self.queue_tree.index(target_item)
+            for item in selected:
+                self.queue_tree.move(item, '', target_idx)
+            self.reindex_queue()
+            
+    def on_tree_double_click(self, event):
+        region = self.queue_tree.identify_region(event.x, event.y)
+        if region == "cell":
+            col = self.queue_tree.identify_column(event.x)
+            if col == "#1":
+                item = self.queue_tree.identify_row(event.y)
+                if item:
+                    dialog = ctk.CTkInputDialog(text="Enter new numerical order position:", title="Reorder")
+                    val = dialog.get_input()
+                    if val and val.isdigit():
+                        new_idx = max(0, min(int(val) - 1, len(self.queue_tree.get_children()) - 1))
+                        self.queue_tree.move(item, '', new_idx)
+                        self.reindex_queue()
+
+    def move_item_up(self):
+        selected = self.queue_tree.selection()
+        for item in selected:
+            idx = self.queue_tree.index(item)
+            if idx > 0:
+                self.queue_tree.move(item, '', idx - 1)
+        self.reindex_queue()
+
+    def move_item_down(self):
+        selected = reversed(self.queue_tree.selection())
+        total = len(self.queue_tree.get_children())
+        for item in selected:
+            idx = self.queue_tree.index(item)
+            if idx < total - 1:
+                self.queue_tree.move(item, '', idx + 1)
+        self.reindex_queue()
+
+    def reindex_queue(self):
+        for idx, item in enumerate(self.queue_tree.get_children()):
+            vals = self.queue_tree.item(item, 'values')
+            self.queue_tree.item(item, values=(str(idx + 1), vals[1], vals[2]))
 
     def browse_folder(self):
         folder = filedialog.askdirectory(initialdir=self.dir_entry.get() or self.default_input)
@@ -872,9 +953,16 @@ class AccessMergerApp(ctk.CTk):
             self.scan_in_progress = False
 
     def start_merge_thread(self):
+        if not self.queue_tree.get_children():
+            return
+        answer = messagebox.askyesno("Confirm Order", "Please ensure the documents in the list are in the exact order you want them merged.\n\nProceed with merge?")
+        if not answer:
+            return
         self.run_btn.configure(state="disabled", text="Processing...")
         self.p_bar.set(0)
-        self.clear_queue_visual()
+        for item in self.queue_tree.get_children():
+            vals = self.queue_tree.item(item, 'values')
+            self.queue_tree.item(item, values=(vals[0], vals[1], "Processing..."))
         threading.Thread(target=self.execute_audit_merge, daemon=True).start()
 
     def execute_audit_merge(self):
@@ -883,15 +971,20 @@ class AccessMergerApp(ctk.CTk):
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
         
-        legal_exts = ('.pdf', '.eml', '.msg', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
-        files = [f for f in os.listdir(source) if f.lower().endswith(legal_exts)]
-        if not files:
+        tree_items = self.queue_tree.get_children()
+        ordered_files = []
+        for item in tree_items:
+            vals = self.queue_tree.item(item, 'values')
+            fname = vals[1][2:] # Strip icon and space
+            ordered_files.append((fname, item))
+            
+        if not ordered_files:
             self.after(0, lambda: self.processing_lbl.configure(text="Status: Error - No files found!"))
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
             
         # --- 🚦 ENFORCE V1.4.0 LICENSE GATING LIMITS ---
-        if not self.check_gate_limit("merge_count", len(files)):
+        if not self.check_gate_limit("merge_count", len(ordered_files)):
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
             
@@ -899,8 +992,6 @@ class AccessMergerApp(ctk.CTk):
             if not self.check_gate_limit("advanced_compression"):
                 self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
                 return
-
-        files.sort(key=self.natural_sort_key)
         start_t = time.time()
         merged_pdf = pikepdf.Pdf.new()
         
@@ -914,17 +1005,20 @@ class AccessMergerApp(ctk.CTk):
         
         temp_extract_dir = os.path.join(source, "_volta_temp_attachments")
         os.makedirs(temp_extract_dir, exist_ok=True)
-        total_items = len(files)
+        total_items = len(ordered_files)
 
-        for idx, fn in enumerate(files, 1):
+        def update_tree_status(item_id, text):
+            vals = self.queue_tree.item(item_id, 'values')
+            self.queue_tree.item(item_id, values=(vals[0], vals[1], text))
+
+        for idx, (fn, item_id) in enumerate(ordered_files, 1):
             self.after(0, lambda p=idx/total_items: self.p_bar.set(p))
             self.after(0, lambda f=fn: self.processing_lbl.configure(text=f"Compiling: {f[:30]}..."))
             self.after(0, lambda: self.count_lbl.configure(text=f"Item {idx} of {total_items}"))
             
-            status_ref = []
-            self.after(0, lambda: status_ref.append(self.add_queue_item(fn, "Processing...", BRAND_ACCENT_GREEN)))
+            self.after(0, lambda i=item_id: update_tree_status(i, "Processing..."))
             
-            time.sleep(0.05)
+            time.sleep(0.01)
             
             try:
                 file_path = os.path.join(source, fn)
@@ -941,7 +1035,7 @@ class AccessMergerApp(ctk.CTk):
                             outline_nodes.append(pikepdf.OutlineItem(clean_n, dest))
                         curr_pg += cnt
                         success_count += 1
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Combined", text_color=BRAND_ACCENT_GREEN))
+                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Combined"))
                 
                 # --- SCENARIO 2: LEGACY IMAGE (TIFF, JPG, PNG) ---
                 elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
@@ -959,7 +1053,7 @@ class AccessMergerApp(ctk.CTk):
                             outline_nodes.append(pikepdf.OutlineItem(f"📷 {clean_n}", dest))
                         curr_pg += 1
                         success_count += 1
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Converted & Combined", text_color=BRAND_ACCENT_GREEN))
+                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Converted & Combined"))
 
                 # --- SCENARIO 3: EMAIL RECORDS (.EML) ---
                 elif low_fn.endswith('.eml') and self.var_email.get():
@@ -1005,9 +1099,9 @@ class AccessMergerApp(ctk.CTk):
                             att_dest = pikepdf.Destination(merged_pdf.pages[att_start_pg], pikepdf.Name("/Fit"))
                             email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", att_dest))
                         
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text=f"✅ Rendered Body & Ripped {len(extracted_pdfs)} PDF(s)", text_color=BRAND_ACCENT_GREEN))
+                        self.after(0, lambda i=item_id, l=len(extracted_pdfs): update_tree_status(i, f"✅ Ripped {l} PDF(s)"))
                     else:
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Rendered Body (No Attachments)", text_color=BRAND_ACCENT_GREEN))
+                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Rendered Body"))
                     
                     if self.var_bookmark.get():
                         outline_nodes.append(email_outline)
@@ -1088,7 +1182,8 @@ class AccessMergerApp(ctk.CTk):
             self.after(0, lambda: self.processing_lbl.configure(text="🎉 Portfolio Complete!"))
             self.after(0, lambda: self.count_lbl.configure(text=""))
             self.after(0, lambda: messagebox.showinfo("Success", f"Successfully combined {success_count} items into a single master PDF!\n\nDuration: {elapsed:.1f}s"))
-            os.startfile(self.default_output)
+            file_names = [f[0] for f in ordered_files]
+            self.after(0, lambda: self.generate_audit_log("PDF Merge & Combine", self.default_output, file_names, elapsed))
         except Exception as e:
             self.after(0, lambda: self.processing_lbl.configure(text="Error: Compile failed!"))
             self.after(0, lambda err=str(e): messagebox.showerror("Fatal Error", f"Failed saving: {err}"))
@@ -1124,6 +1219,15 @@ class AccessMergerApp(ctk.CTk):
         txt.insert("end", EULA_TEXT)
         txt.configure(state="disabled")
         ctk.CTkButton(eula, text="Close Terms", width=140, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=eula.destroy).pack(pady=15)
+
+    def _on_bates_prefix_focusout(self, event):
+        prefix = self.bates_prefix.get().strip()
+        matter_name = self.case_num_entry.get().strip() or "Default_Matter"
+        if hasattr(self, "bates_registry") and matter_name in self.bates_registry:
+            last_num = self.bates_registry[matter_name].get(prefix)
+            if last_num is not None:
+                self.bates_start.delete(0, 'end')
+                self.bates_start.insert(0, str(last_num))
 
     def start_bates_thread(self):
         if not self.check_gate_limit("bates_stamping"):
@@ -1262,13 +1366,50 @@ class AccessMergerApp(ctk.CTk):
                 print(f"CSV write failed: {e}")
 
         duration = time.time() - start_time
+        
+        # 🔒 Update Bates Registry Ledger securely
+        matter_name = self.case_num_entry.get().strip() or "Default_Matter"
+        if not hasattr(self, "bates_registry"):
+            self.bates_registry = {}
+        if matter_name not in self.bates_registry:
+            self.bates_registry[matter_name] = {}
+        self.bates_registry[matter_name][prefix] = curr_idx
+        self.save_case_vault()
+        
         self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="✨ FLATTEN & APPLY BATES STAMPS"))
         
         def finish():
             messagebox.showinfo("Bates Success", f"Indelible Bates stamps successfully fused to {total_files_processed} documents!\n\n"
                                                  f"Duration: {duration:.1f}s\nOutput: {os.path.basename(bates_out_dir)}")
-            os.startfile(bates_out_dir)
+            file_names = [f for f in files]
+            details = "\n".join([f"  {r['Original_Filename']} : {r['Bates_Start']} to {r['Bates_End']}" for r in csv_records])
+            self.generate_audit_log("Bates Stamping", bates_out_dir, file_names, duration, details)
         self.after(0, finish)
+
+    def generate_audit_log(self, operation, out_dir, files, duration, details=""):
+        try:
+            log_path = os.path.join(out_dir, "Merge_Audit_Log.txt")
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write("="*60 + "\n")
+                f.write("  ACCESS PARALEGAL SUITE - SECURE AUDIT LOG\n")
+                f.write("="*60 + "\n\n")
+                f.write(f"Operation: {operation}\n")
+                f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Duration:  {duration:.1f} seconds\n")
+                f.write(f"Matter:    {self.case_num_entry.get().strip() or 'Default'}\n")
+                f.write(f"Output:    {out_dir}\n\n")
+                f.write("="*60 + "\n")
+                f.write("FILES PROCESSED (IN ORDER):\n")
+                for i, fn in enumerate(files, 1):
+                    f.write(f"  {i:03d}. {fn}\n")
+                f.write("\n" + "="*60 + "\n")
+                if details:
+                    f.write(f"DETAILS:\n{details}\n\n")
+                f.write("  *** Processed securely offline via Access Paralegal Suite ***\n")
+            
+            os.startfile(log_path)
+        except Exception as e:
+            print(f"Audit log failure: {e}")
 
     def show_feedback_window(self):
         """Sleek UI interface allowing paralegals to submit local platform feedback."""
@@ -1457,7 +1598,8 @@ class AccessMergerApp(ctk.CTk):
             data = {
                 "case_num": self.case_num_entry.get().strip(),
                 "plaintiff": self.case_pla_entry.get().strip(),
-                "defendant": self.case_def_entry.get().strip()
+                "defendant": self.case_def_entry.get().strip(),
+                "bates_registry": getattr(self, "bates_registry", {})
             }
             raw_json = json.dumps(data)
             
@@ -1486,6 +1628,8 @@ class AccessMergerApp(ctk.CTk):
             cipher = Fernet(self.get_crypto_key())
             decrypted = cipher.decrypt(encrypted).decode()
             data = json.loads(decrypted)
+            
+            self.bates_registry = data.get("bates_registry", {})
             
             self.case_num_entry.delete(0, 'end')
             self.case_num_entry.insert(0, data.get("case_num", ""))
