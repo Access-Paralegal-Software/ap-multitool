@@ -967,70 +967,27 @@ class AccessMergerApp(ctk.CTk):
                 try: os.remove(tf_path)
                 except: pass
 
-    def _render_image_to_pdf(self, file_path, out_path, temp_extract_dir):
-        """Unified high-fidelity image renderer. Encapsulates single and multi-page images in official identification plates."""
-        import datetime
-        temp_files = []
+    def _convert_image_to_pdf(self, file_path, out_path):
+        """RAW conversion of single/multi-frame images to a pure, unbranded PDF preserving all file data."""
         try:
-            filename = os.path.basename(file_path)
-            frames = []
-            idx = 0
             with Image.open(file_path) as img:
+                pages = []
                 try:
                     while True:
-                        tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=f"_{idx}.png")
+                        # Obey grayscale toggle if checked to optimize file size natively
                         tm = "L" if self.var_grayscale.get() else "RGB"
-                        img.convert(tm).save(tf.name, "PNG")
-                        tf.close()
-                        temp_files.append(tf.name)
-                        frames.append(tf.name)
-                        idx += 1
+                        pages.append(img.convert(tm))
                         img.seek(img.tell() + 1)
                 except EOFError:
-                    pass
-            
-            if not frames:
-                return False
-
-            proc_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            header_html = f"""
-            <div style="font-family: Arial, sans-serif; padding-bottom: 12px; margin-bottom: 20px;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr><td style="width: 100px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Record Type:</td><td style="font-size: 12px; color: #000; font-weight: bold;">Image Asset Portfolio</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">File Name:</td><td style="font-size: 12px; color: #000;">{filename}</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Sub-Frames:</td><td style="font-size: 12px; color: #000;">{len(frames)} Page(s) Total</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Processed:</td><td style="font-size: 12px; color: #000;">{proc_time}</td></tr>
-                </table>
-            </div>
-            """
-            
-            content_html = ""
-            for f_idx, f_path in enumerate(frames):
-                # If multi-page, force logical page break between image frames
-                p_break = "page-break-before: always; margin-top: 0.4in;" if f_idx > 0 else ""
-                content_html += f"""
-                <div style="{p_break} text-align: center;">
-                    <img src="{f_path}" style="max-width: 100%; max-height: 85%; object-fit: contain;">
-                </div>
-                """
-
-            paper_size = "letter"
-            paper_val = self.paper_dropdown.get()
-            if "Legal" in paper_val: paper_size = "legal"
-            elif "A4" in paper_val: paper_size = "a4"
-
-            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Arial, sans-serif; font-size: 11px; color: #333; }}</style></head><body>{header_html}{content_html}</body></html>"""
-            
-            with open(out_path, "wb") as f:
-                pisa.CreatePDF(final_html, dest=f)
-            return True
-        except Exception as e:
-            print(f"Image branded renderer failed: {e}")
+                    pass # End of frames reached
+                
+                if pages:
+                    pages[0].save(out_path, "PDF", save_all=True, append_images=pages[1:])
+                    return True
             return False
-        finally:
-            for tf_path in temp_files:
-                try: os.remove(tf_path)
-                except: pass
+        except Exception as e:
+            print(f"RAW Image conversion failure: {e}")
+            return False
 
     def _convert_word_to_pdf(self, file_path, out_path):
         """Leverage win32com background automation to natively export DOCX to PDF."""
@@ -1085,32 +1042,20 @@ class AccessMergerApp(ctk.CTk):
             pythoncom.CoUninitialize()
 
     def _convert_text_to_pdf(self, file_path, out_path):
-        """Read text streams, escape symbols, and compile securely via xhtml2pdf with an Emerald Header plate."""
+        """Read text streams, escape symbols, and compile securely via xhtml2pdf with NO extra headers."""
         import html
-        import datetime
         try:
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
                 content = f.read()
             escaped = html.escape(content)
-            filename = os.path.basename(file_path)
-            proc_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            header_html = f"""
-            <div style="font-family: Arial, sans-serif; padding-bottom: 12px; margin-bottom: 20px;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr><td style="width: 100px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Record Type:</td><td style="font-size: 12px; color: #000; font-weight: bold;">Text Records</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">File Name:</td><td style="font-size: 12px; color: #000;">{filename}</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Processed:</td><td style="font-size: 12px; color: #000;">{proc_time}</td></tr>
-                </table>
-            </div>
-            """
-
             paper_size = "letter"
             paper_val = self.paper_dropdown.get()
             if "Legal" in paper_val: paper_size = "legal"
             elif "A4" in paper_val: paper_size = "a4"
             
-            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Courier, monospace; font-size: 11px; color: #222; line-height: 1.2; }}</style></head><body>{header_html}<pre style='white-space: pre-wrap;'>{escaped}</pre></body></html>"""
+            # Compile pure raw typewriter text without any added margins or titles
+            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Courier, monospace; font-size: 11px; color: #222; line-height: 1.2; }}</style></head><body><pre style='white-space: pre-wrap;'>{escaped}</pre></body></html>"""
             with open(out_path, "wb") as f:
                 pisa.CreatePDF(final_html, dest=f)
             return True
@@ -1276,7 +1221,7 @@ class AccessMergerApp(ctk.CTk):
                 # --- SCENARIO 2: LEGACY IMAGE (TIFF, JPG, PNG) ---
                 elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
                     temp_pdf = os.path.join(temp_extract_dir, f"img_{int(time.time())}_{idx}.pdf")
-                    if self._render_image_to_pdf(file_path, temp_pdf, temp_extract_dir):
+                    if self._convert_image_to_pdf(file_path, temp_pdf):
                         with pikepdf.open(temp_pdf) as src:
                             merged_pdf.pages.extend(src.pages)
                             if self.var_bookmark.get():
@@ -1326,7 +1271,7 @@ class AccessMergerApp(ctk.CTk):
                             pdf_p = raw_p
                             success = True
                         elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
-                            success = self._render_image_to_pdf(raw_p, pdf_p, temp_extract_dir)
+                            success = self._convert_image_to_pdf(raw_p, pdf_p)
                         elif att_low.endswith(('.docx', '.doc')):
                             success = self._convert_word_to_pdf(raw_p, pdf_p)
                         elif att_low.endswith(('.xlsx', '.xls', '.csv')):
@@ -1382,7 +1327,7 @@ class AccessMergerApp(ctk.CTk):
                                 pdf_p = raw_p
                                 success = True
                             elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
-                                success = self._render_image_to_pdf(raw_p, pdf_p, temp_extract_dir)
+                                success = self._convert_image_to_pdf(raw_p, pdf_p)
                             elif att_low.endswith(('.docx', '.doc')):
                                 success = self._convert_word_to_pdf(raw_p, pdf_p)
                             elif att_low.endswith(('.xlsx', '.xls', '.csv')):
