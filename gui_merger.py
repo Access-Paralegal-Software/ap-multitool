@@ -128,8 +128,9 @@ class AccessMergerApp(ctk.CTk):
 
         # Window Config
         self.title("Access Paralegal Suite")
-        self.geometry("960x780")
-        self.resizable(False, False)
+        self.geometry("960x760")
+        self.resizable(True, True)
+        self.minsize(920, 600)
         self.configure(fg_color=BRAND_SILVER_BG)
 
         # --- GLOBAL OS SCALING OVERRIDES ---
@@ -196,6 +197,18 @@ class AccessMergerApp(ctk.CTk):
 
         self._setup_menu()
         self._setup_ui()
+        
+        # 💫 Dynamic Screen Layout Responsiveness (Real-Time Background Scaling)
+        def on_screen_rescale(event):
+            if event.widget == self:
+                cw = self.winfo_width()
+                ch = self.winfo_height()
+                if hasattr(self, "adaptive_bg_img"):
+                    self.adaptive_bg_img.configure(size=(cw, ch))
+                if hasattr(self, "header_image"):
+                    self.header_image.configure(size=(cw, 80))
+        self.bind("<Configure>", on_screen_rescale)
+
         self.load_stored_license()
         self.load_case_vault()
         self.update_case_workspace_paths()
@@ -235,8 +248,8 @@ class AccessMergerApp(ctk.CTk):
     def _setup_ui(self):
         drop_font = ctk.CTkFont(family="Segoe UI", size=16)
 
-        # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
-        self.header_frame = ctk.CTkFrame(self, corner_radius=0, border_width=0, height=110)
+        # --- HEADER BAR (SILVER SKINNER TEXTURED BANNER) ---
+        self.header_frame = ctk.CTkFrame(self, corner_radius=0, border_width=0, height=80)
         self.header_frame.pack(fill="x", pady=0)
         self.header_frame.pack_propagate(False)
 
@@ -246,10 +259,24 @@ class AccessMergerApp(ctk.CTk):
             self.header_lbl.pack(fill="both", expand=True)
         else:
             self.header_frame.configure(fg_color=GLASS_HEADER)
-            self._fallback_logo()
 
         self.line = ctk.CTkFrame(self, height=1, fg_color=BRAND_BORDER_LIGHT)
         self.line.pack(fill="x")
+
+        # 💎 Premium Overhanging Suite Emblem (Overlaps skinner banner onto tabs!)
+        logo_path = resource_path("logo_small.png")
+        if os.path.exists(logo_path):
+            try:
+                logo_pil = Image.open(logo_path).convert("RGBA")
+                lh = 90 # Expanded emblem height for elegant overlap
+                lw = int(lh * (logo_pil.width / logo_pil.height))
+                logo_res = logo_pil.resize((lw, lh), Image.Resampling.LANCZOS)
+                
+                self.logo_ctk_img = ctk.CTkImage(light_image=logo_res, dark_image=logo_res, size=(lw, lh))
+                self.logo_floating_lbl = ctk.CTkLabel(self, image=self.logo_ctk_img, text="")
+                self.logo_floating_lbl.place(relx=0.5, y=60, anchor="center")
+            except Exception as e:
+                print(f"Logo overlay render fail: {e}")
 
         # --- DUAL-MODULE TABBED DASHBOARD ---
         self.tab_view = ctk.CTkTabview(
@@ -665,61 +692,41 @@ class AccessMergerApp(ctk.CTk):
 
     def _render_textured_header(self):
         """
-        Dynamically composite the logo on top of a tiled, emerald-caustics water texture,
-        producing custom Light and Dark Mode images for the header.
+        Dynamically composite the luxury tiled caustics water texture for an edge-to-edge
+        80px-tall skinnier banner, producing seamless Light and Dark Mode images.
         """
         try:
-            logo_path = resource_path("logo_small.png")
             tex_path = resource_path("water_texture.png")
-            
-            if not os.path.exists(logo_path) or not os.path.exists(tex_path):
+            if not os.path.exists(tex_path):
                 return None
 
-            bw, bh = 960, 110
+            bw, bh = 1400, 80 # Skinner 80px height, ultra-wide ranges
             
-            # Load original assets
-            logo = Image.open(logo_path).convert("RGBA")
             tex = Image.open(tex_path).convert("RGBA")
 
-            # Scale logo to 95px height, maintaining aspect
-            logo_aspect = logo.width / logo.height
-            lh = 95
-            lw = int(lh * logo_aspect)
-            logo_resized = logo.resize((lw, lh), Image.Resampling.LANCZOS)
-
-            # Tile texture banner (smallish water ripples repeating)
-            tex_tile = tex.resize((110, 110), Image.Resampling.LANCZOS)
+            # Tile texture banner (smallish 80x80 water ripples repeating)
+            tex_tile = tex.resize((80, 80), Image.Resampling.LANCZOS)
             tiled_banner = Image.new("RGBA", (bw, bh))
-            for x in range(0, bw, 110):
+            for x in range(0, bw, 80):
                 tiled_banner.paste(tex_tile, (x, 0))
 
-            # 1. Composite Light Header (#ECF9EB)
+            # 1. Light Header Composite
             light_bg = Image.new("RGBA", (bw, bh), (236, 249, 235, 255))
             tex_light = tiled_banner.copy()
             r, g, b, a = tex_light.split()
-            new_a_light = a.point(lambda p: int(p * 0.15)) # Light opacity 15%
+            new_a_light = a.point(lambda p: int(p * 0.15))
             tex_light.putalpha(new_a_light)
-            light_base = Image.alpha_composite(light_bg, tex_light)
+            light_final = Image.alpha_composite(light_bg, tex_light)
 
-            # 2. Composite Dark Header (#162E15)
+            # 2. Dark Header Composite
             dark_bg = Image.new("RGBA", (bw, bh), (22, 46, 21, 255))
             tex_dark = tiled_banner.copy()
             r, g, b, a = tex_dark.split()
-            new_a_dark = a.point(lambda p: int(p * 0.20)) # Dark opacity 20%
+            new_a_dark = a.point(lambda p: int(p * 0.20))
             tex_dark.putalpha(new_a_dark)
-            dark_base = Image.alpha_composite(dark_bg, tex_dark)
+            dark_final = Image.alpha_composite(dark_bg, tex_dark)
 
-            # 3. Center logo layers
-            lx = (bw - lw) // 2
-            ly = (bh - lh) // 2
-            logo_overlay = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))
-            logo_overlay.paste(logo_resized, (lx, ly), mask=logo_resized)
-
-            # Final Merges
-            light_final = Image.alpha_composite(light_base, logo_overlay)
-            dark_final = Image.alpha_composite(dark_base, logo_overlay)
-
-            return ctk.CTkImage(light_image=light_final, dark_image=dark_final, size=(bw, bh))
+            return ctk.CTkImage(light_image=light_final, dark_image=dark_final, size=(960, 80))
         except Exception as e:
             print(f"[Header Rendering Error]: {e}")
             return None
