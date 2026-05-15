@@ -1291,9 +1291,19 @@ class AccessMergerApp(ctk.CTk):
             try: os.rmdir(temp_extract_dir)
             except: pass
 
-            self.after(0, lambda: self.processing_lbl.configure(text="🎉 Portfolio Complete!"))
-            self.after(0, lambda: self.count_lbl.configure(text=""))
-            self.after(0, lambda: messagebox.showinfo("Success", f"Successfully combined {success_count} items into a single master PDF!\n\nDuration: {elapsed:.1f}s"))
+            def on_success():
+                self.processing_lbl.configure(text="🎉 Portfolio Complete!")
+                self.count_lbl.configure(text="")
+                msg = (
+                    f"Successfully combined {success_count} items into a single master PDF!\n\n"
+                    f"File Saved: {out_name}\n"
+                    f"Folder: {self.default_output}\n\n"
+                    "Would you like to open the output folder to view the file?"
+                )
+                if messagebox.askyesno("Success", msg):
+                    try: os.startfile(self.default_output)
+                    except: pass
+            self.after(0, on_success)
             file_names = [f[0] for f in ordered_files]
             self.after(0, lambda: self.generate_audit_log("PDF Merge & Combine", self.default_output, file_names, elapsed))
         except Exception as e:
@@ -1496,8 +1506,15 @@ class AccessMergerApp(ctk.CTk):
         self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="✨ FLATTEN & APPLY BATES STAMPS"))
         
         def finish():
-            messagebox.showinfo("Bates Success", f"Indelible Bates stamps successfully fused to {total_files_processed} documents!\n\n"
-                                                 f"Duration: {duration:.1f}s\nOutput: {os.path.basename(bates_out_dir)}")
+            msg = (
+                f"Indelible Bates stamps successfully fused to {total_files_processed} documents!\n\n"
+                f"Duration: {duration:.1f}s\n"
+                f"Saved to: {bates_out_dir}\n\n"
+                "Would you like to open the stamped output folder now?"
+            )
+            if messagebox.askyesno("Bates Success", msg):
+                try: os.startfile(bates_out_dir)
+                except: pass
             file_names = [f for f in files]
             details = "\n".join([f"  {r['Original_Filename']} : {r['Bates_Start']} to {r['Bates_End']}" for r in csv_records])
             self.generate_audit_log("Bates Stamping", bates_out_dir, file_names, duration, details)
