@@ -128,7 +128,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Window Config
         self.title("Access Paralegal Suite")
-        self.geometry("880x660")
+        self.geometry("960x780")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_SILVER_BG)
 
@@ -136,7 +136,7 @@ class AccessMergerApp(ctk.CTk):
         self.option_add('*Menu.font', '{Segoe UI} 18')
 
         # --- DYNAMIC LUXURY DUAL-MODE WATERMARK & DIAGONAL SLASH ARCHITECT ---
-        bg_w, bg_h = 880, 660
+        bg_w, bg_h = 960, 780
         try:
             logo_path = resource_path("logo_small.png")
             # 1. Pre-extract Logo Emblem
@@ -279,7 +279,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Config Panel
         self.left_frame = ctk.CTkFrame(
-            self.merger_container, width=320, fg_color=GLASS_LEFT, 
+            self.merger_container, width=360, fg_color=GLASS_LEFT, 
             corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.left_frame.pack(side="left", fill="both", padx=(0, 15))
@@ -437,7 +437,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Bates Config Panel
         self.bates_left = ctk.CTkFrame(
-            self.bates_container, width=350, fg_color=GLASS_LEFT, 
+            self.bates_container, width=380, fg_color=GLASS_LEFT, 
             corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.bates_left.pack(side="left", fill="both", padx=(0, 15))
@@ -675,7 +675,7 @@ class AccessMergerApp(ctk.CTk):
             if not os.path.exists(logo_path) or not os.path.exists(tex_path):
                 return None
 
-            bw, bh = 880, 110
+            bw, bh = 960, 110
             
             # Load original assets
             logo = Image.open(logo_path).convert("RGBA")
@@ -1920,13 +1920,13 @@ class AccessMergerApp(ctk.CTk):
         """Dynamic blueprint architect allowing user to customize default case folder structures."""
         win = ctk.CTkToplevel(self)
         win.title("🛠️ Advanced Case File-Tree Architect")
-        win.geometry("600x580")
+        win.geometry("620x640")
         win.resizable(False, False)
         win.transient(self)
         win.grab_set()
         
-        x = self.winfo_x() + (self.winfo_width() - 600) // 2
-        y = self.winfo_y() + (self.winfo_height() - 580) // 2
+        x = self.winfo_x() + (self.winfo_width() - 620) // 2
+        y = self.winfo_y() + (self.winfo_height() - 640) // 2
         win.geometry(f"+{x}+{y}")
         
         ctk.CTkLabel(win, text="CASE FILE TREE ARCHITECT", font=ctk.CTkFont(size=18, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 2))
@@ -1945,18 +1945,7 @@ class AccessMergerApp(ctk.CTk):
         # Use Textbox for visualizing editable paths
         tree_box = ctk.CTkTextbox(txt_container, font=ctk.CTkFont(family="Consolas", size=12), fg_color="transparent", text_color=BRAND_DARK_TEXT)
         tree_box.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        # Populate the list Box initially
-        def refresh_box():
-            tree_box.configure(state="normal")
-            tree_box.delete("1.0", "end")
-            sorted_struct = sorted(self.custom_case_structure, key=str.lower)
-            for p in sorted_struct:
-                tree_box.insert("end", f" •  {p}\n")
-            tree_box.configure(state="disabled")
-            
-        refresh_box()
-        
+
         # Controls area
         controls_frame = ctk.CTkFrame(main_frame, fg_color=GLASS_LEFT, corner_radius=8, border_width=1, border_color=GLASS_BORDER)
         controls_frame.pack(fill="x", pady=5, ipady=10)
@@ -1978,31 +1967,59 @@ class AccessMergerApp(ctk.CTk):
         opt_presets = ctk.CTkOptionMenu(row1, values=presets_pool, variable=preset_var, width=280, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
         opt_presets.pack(side="left", padx=(10, 10))
         
-        def add_selected_preset():
-            val = preset_var.get()
-            if val and val != "Add Preset Subfolder...":
-                # Ensure root is present
-                root_name = val.split('/')[0]
-                if root_name not in self.custom_case_structure:
-                    self.custom_case_structure.append(root_name)
-                if val not in self.custom_case_structure:
-                    self.custom_case_structure.append(val)
-                    refresh_box()
-                    
-        btn_add_p = ctk.CTkButton(row1, text="+ Add Preset", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=add_selected_preset, width=120)
-        btn_add_p.pack(side="right", padx=(0, 10))
-        
         # Custom path input row
         row2 = ctk.CTkFrame(controls_frame, fg_color="transparent")
         row2.pack(fill="x", pady=5, padx=15)
         
         ent_custom = ctk.CTkEntry(row2, placeholder_text="CustomName (e.g. Subpoenas)", width=280, fg_color=BRAND_WHITE_PANEL, text_color=BRAND_DARK_TEXT, border_color=BRAND_BORDER_LIGHT)
         ent_custom.pack(side="left", padx=(10, 10))
-        
+
+        # DELETE PATH ROW (New Functional Upgrade!)
+        row3 = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        row3.pack(fill="x", pady=5, padx=15)
+
+        remove_var = ctk.StringVar(value="Select Folder to Remove...")
+        opt_remove = ctk.CTkOptionMenu(
+            row3, values=["Select Folder to Remove..."], variable=remove_var, width=280, 
+            fg_color=BRAND_WHITE_PANEL, text_color="#BE123C", button_color="#E11D48", button_hover_color="#BE123C"
+        )
+        opt_remove.pack(side="left", padx=(10, 10))
+
+        # Master Refresher Function
+        def refresh_box():
+            tree_box.configure(state="normal")
+            tree_box.delete("1.0", "end")
+            sorted_struct = sorted(list(set(self.custom_case_structure)), key=str.lower)
+            for p in sorted_struct:
+                tree_box.insert("end", f" •  {p}\n")
+            tree_box.configure(state="disabled")
+            
+            # Re-sync removal dropdown list
+            if sorted_struct:
+                opt_remove.configure(values=sorted_struct)
+            else:
+                opt_remove.configure(values=["Select Folder to Remove..."])
+            remove_var.set("Select Folder to Remove...")
+
+        def add_selected_preset():
+            val = preset_var.get()
+            if val and val != "Add Preset Subfolder...":
+                root_name = val.split('/')[0]
+                if root_name not in self.custom_case_structure:
+                    self.custom_case_structure.append(root_name)
+                if val not in self.custom_case_structure:
+                    self.custom_case_structure.append(val)
+                refresh_box()
+                # Temporary visual feedback
+                btn_add_p.configure(text="✓ Added!", fg_color="#16A34A")
+                win.after(1000, lambda: btn_add_p.configure(text="+ Add Preset", fg_color=BRAND_ACCENT_GREEN))
+
+        btn_add_p = ctk.CTkButton(row1, text="+ Add Preset", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=add_selected_preset, width=120)
+        btn_add_p.pack(side="right", padx=(0, 10))
+
         def add_custom_path():
             txt = ent_custom.get().strip()
             if txt:
-                # Ask which primary category to attach it to
                 cat_win = ctk.CTkToplevel(win)
                 cat_win.title("Select Parent Folder")
                 cat_win.geometry("300x220")
@@ -2027,11 +2044,28 @@ class AccessMergerApp(ctk.CTk):
                     cat_win.destroy()
                     ent_custom.delete(0, "end")
                     refresh_box()
+                    btn_add_c.configure(text="✓ Added!", fg_color="#16A34A")
+                    win.after(1000, lambda: btn_add_c.configure(text="+ Custom Folder", fg_color=BRAND_ACCENT_GREEN))
                     
                 ctk.CTkButton(cat_win, text="Attach Folder", fg_color=BRAND_ACCENT_GREEN, command=do_commit).pack(pady=15)
-                
+
         btn_add_c = ctk.CTkButton(row2, text="+ Custom Folder", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=add_custom_path, width=120)
         btn_add_c.pack(side="right", padx=(0, 10))
+
+        def remove_selected_path():
+            val = remove_var.get()
+            if val and val != "Select Folder to Remove...":
+                if val in self.custom_case_structure:
+                    self.custom_case_structure.remove(val)
+                    refresh_box()
+                    btn_remove.configure(text="✓ Removed!", fg_color="#16A34A")
+                    win.after(1000, lambda: btn_remove.configure(text="❌ Remove Folder", fg_color="#E11D48"))
+
+        btn_remove = ctk.CTkButton(row3, text="❌ Remove Folder", font=ctk.CTkFont(size=12, weight="bold"), fg_color="#E11D48", hover_color="#BE123C", command=remove_selected_path, width=120)
+        btn_remove.pack(side="right", padx=(0, 10))
+
+        # Populate list and dropdowns initially
+        refresh_box()
         
         # Clear / Reset actions
         actions_row = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -2042,13 +2076,21 @@ class AccessMergerApp(ctk.CTk):
                 self.custom_case_structure = ["Correspondence", "Correspondence/Client Correspondence", "Correspondence/Opposing Counsel", "Correspondence/Court Correspondence", "Correspondence/{Date}", "Discovery", "Discovery/Written Discovery", "Discovery/Document Production", "Discovery/Depositions", "Discovery/Experts", "Pleadings", "Pleadings/Motions", "Pleadings/Orders", "Pleadings/Briefs & Memoranda", "Client Documents", "Client Documents/Intake & Retainer", "Client Documents/Financial Records", "Research", "Research/Caselaw", "Research/Fact Research", "Trial", "Trial/Exhibits"]
                 refresh_box()
                 
-        btn_reset = ctk.CTkButton(actions_row, text="🔄 Reset to Factory Blueprint", font=ctk.CTkFont(size=11), fg_color="#E11D48", hover_color="#BE123C", command=reset_defaults)
+        btn_reset = ctk.CTkButton(actions_row, text="🔄 Reset to Defaults", font=ctk.CTkFont(size=11), fg_color="#374151", hover_color="#1F2937", command=reset_defaults)
         btn_reset.pack(side="left")
+
+        def clear_all():
+            if messagebox.askyesno("Clear Hierarchy", "Delete all folders? You will start with an empty case blueprint."):
+                self.custom_case_structure = []
+                refresh_box()
+
+        btn_clear = ctk.CTkButton(actions_row, text="🗑️ Clear All", font=ctk.CTkFont(size=11), fg_color="#B91C1C", hover_color="#991B1B", command=clear_all, width=100)
+        btn_clear.pack(side="left", padx=15)
         
         btn_done = ctk.CTkButton(
             actions_row, text="🔒 Save Blueprint & Exit", 
             font=ctk.CTkFont(size=13, weight="bold"), 
-            fg_color="#374151", hover_color="#1F2937", text_color="white",
+            fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, text_color="white",
             command=win.destroy
         )
         btn_done.pack(side="right")
