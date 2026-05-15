@@ -236,35 +236,17 @@ class AccessMergerApp(ctk.CTk):
         drop_font = ctk.CTkFont(family="Segoe UI", size=16)
 
         # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
-        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=GLASS_HEADER, border_width=0, height=110)
+        self.header_frame = ctk.CTkFrame(self, corner_radius=0, border_width=0, height=110)
         self.header_frame.pack(fill="x", pady=0)
         self.header_frame.pack_propagate(False)
 
-        # Load Bundled Company Logo
-        logo_path = resource_path("logo_small.png")
-        if os.path.exists(logo_path):
-            try:
-                pil_img = Image.open(logo_path)
-                w, h = pil_img.size
-                aspect = w / h
-                new_h = 48
-                new_w = int(new_h * aspect)
-                
-                self.logo_img = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(new_w, new_h))
-                self.logo_lbl = ctk.CTkLabel(self.header_frame, image=self.logo_img, text="")
-                self.logo_lbl.pack(pady=(12, 3))
-            except Exception as e:
-                self._fallback_logo()
+        self.header_image = self._render_textured_header()
+        if self.header_image:
+            self.header_lbl = ctk.CTkLabel(self.header_frame, image=self.header_image, text="")
+            self.header_lbl.pack(fill="both", expand=True)
         else:
+            self.header_frame.configure(fg_color=GLASS_HEADER)
             self._fallback_logo()
-
-        self.sub_title = ctk.CTkLabel(
-            self.header_frame, 
-            text="PROFESSIONAL PDF & EMAIL BUNDLE MERGER", 
-            font=ctk.CTkFont(family="Inter", size=13, weight="bold"),
-            text_color="#4B5563"
-        )
-        self.sub_title.pack(pady=(0, 8))
 
         self.line = ctk.CTkFrame(self, height=1, fg_color=BRAND_BORDER_LIGHT)
         self.line.pack(fill="x")
@@ -680,6 +662,67 @@ class AccessMergerApp(ctk.CTk):
             text_color="#6B7280"
         )
         self.copy_lbl.pack(pady=4)
+
+    def _render_textured_header(self):
+        """
+        Dynamically composite the logo on top of a tiled, emerald-caustics water texture,
+        producing custom Light and Dark Mode images for the header.
+        """
+        try:
+            logo_path = resource_path("logo_small.png")
+            tex_path = resource_path("water_texture.png")
+            
+            if not os.path.exists(logo_path) or not os.path.exists(tex_path):
+                return None
+
+            bw, bh = 880, 110
+            
+            # Load original assets
+            logo = Image.open(logo_path).convert("RGBA")
+            tex = Image.open(tex_path).convert("RGBA")
+
+            # Scale logo to 95px height, maintaining aspect
+            logo_aspect = logo.width / logo.height
+            lh = 95
+            lw = int(lh * logo_aspect)
+            logo_resized = logo.resize((lw, lh), Image.Resampling.LANCZOS)
+
+            # Tile texture banner (smallish water ripples repeating)
+            tex_tile = tex.resize((110, 110), Image.Resampling.LANCZOS)
+            tiled_banner = Image.new("RGBA", (bw, bh))
+            for x in range(0, bw, 110):
+                tiled_banner.paste(tex_tile, (x, 0))
+
+            # 1. Composite Light Header (#ECF9EB)
+            light_bg = Image.new("RGBA", (bw, bh), (236, 249, 235, 255))
+            tex_light = tiled_banner.copy()
+            r, g, b, a = tex_light.split()
+            new_a_light = a.point(lambda p: int(p * 0.15)) # Light opacity 15%
+            tex_light.putalpha(new_a_light)
+            light_base = Image.alpha_composite(light_bg, tex_light)
+
+            # 2. Composite Dark Header (#162E15)
+            dark_bg = Image.new("RGBA", (bw, bh), (22, 46, 21, 255))
+            tex_dark = tiled_banner.copy()
+            r, g, b, a = tex_dark.split()
+            new_a_dark = a.point(lambda p: int(p * 0.20)) # Dark opacity 20%
+            tex_dark.putalpha(new_a_dark)
+            dark_base = Image.alpha_composite(dark_bg, tex_dark)
+
+            # 3. Center logo layers
+            lx = (bw - lw) // 2
+            ly = (bh - lh) // 2
+            logo_overlay = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))
+            logo_overlay.paste(logo_resized, (lx, ly), mask=logo_resized)
+
+            # Final Merges
+            light_final = Image.alpha_composite(light_base, logo_overlay)
+            dark_final = Image.alpha_composite(dark_base, logo_overlay)
+
+            return ctk.CTkImage(light_image=light_final, dark_image=dark_final, size=(bw, bh))
+        except Exception as e:
+            print(f"[Header Rendering Error]: {e}")
+            return None
 
     def _fallback_logo(self):
         ctk.CTkLabel(self.header_frame, text="ACCESS PARALEGAL", font=ctk.CTkFont(size=24, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(25, 0))
