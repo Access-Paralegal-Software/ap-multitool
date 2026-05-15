@@ -98,7 +98,7 @@ class AccessMergerApp(ctk.CTk):
         self.configure(fg_color=BRAND_SILVER_BG)
 
         # --- GLOBAL OS SCALING OVERRIDES ---
-        self.option_add('*Menu.font', 'Segoe UI 12')
+        self.option_add('*Menu.font', '{Segoe UI} 12')
 
         # --- DYNAMIC DUAL-MODE BACKGROUND WATERMARK (MATHEMATICAL EMBLEM EXTRACTION) ---
         bg_w, bg_h = 880, 660
@@ -1042,6 +1042,8 @@ class AccessMergerApp(ctk.CTk):
         final_dest = os.path.join(self.default_output, out_name)
 
         try:
+            # Lazy JIT Directory Creation: Only build the Merge subfolder when writing output!
+            os.makedirs(self.default_output, exist_ok=True)
             merged_pdf.save(final_dest, linearize=True, compress_streams=self.var_compress.get())
             merged_pdf.close()
             elapsed = time.time() - start_t
@@ -1493,8 +1495,9 @@ class AccessMergerApp(ctk.CTk):
         }
         
         try:
-            for path in subfolders.values():
-                os.makedirs(path, exist_ok=True)
+            # ONLY create active Source files drop zone and parent case root on startup
+            # Do NOT pre-generate empty output / compression directories until they're actively used
+            os.makedirs(subfolders["src"], exist_ok=True)
                 
             # Auto-Route Tab 1 inputs/outputs
             self.default_input = subfolders["src"]
