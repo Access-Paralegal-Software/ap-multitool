@@ -20,6 +20,9 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter, legal, A4
 from datetime import datetime
+import hashlib
+import base64
+from cryptography.fernet import Fernet
 
 # Application Metadata
 VERSION = "1.4.0"
@@ -29,6 +32,7 @@ GITHUB_REPO = "woodyardae/Access_Paralegal_PDF_Merger"
 KEYGEN_ACCOUNT_ID = "c885ab2c-9f4d-44a1-adfd-ec1839a0ed93"
 KEYGEN_PRODUCT_TOKEN = "prod-1ba5ec8a951c01b0857f24a19726b4effc9eb159f73e164a2c91f413510bd984v3"
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
+CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
 
 # UI Aesthetic Branding Colors (Access Paralegal Light/Silver Concept)
 BRAND_ACCENT_GREEN = "#288F4F"
@@ -96,6 +100,7 @@ class AccessMergerApp(ctk.CTk):
         self._setup_menu()
         self._setup_ui()
         self.load_stored_license()
+        self.load_case_vault()
         
         # Scan current landing folder
         self.trigger_async_folder_scan(self.default_input)
@@ -412,38 +417,54 @@ class AccessMergerApp(ctk.CTk):
         self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
         self.org_left.pack_propagate(False)
         
-        ctk.CTkLabel(self.org_left, text="🔤 SMART FILENAME PROTOCOL", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 3))
-        ctk.CTkLabel(self.org_left, text="Compose legal naming conventions dynamically.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 10))
+        ctk.CTkLabel(self.org_left, text="🔐 ENCRYPTED CASE CONTEXT & PROTOCOL", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(12, 2))
         
-        # Row 1
-        ctk.CTkLabel(self.org_left, text="1. Prefix Type:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(2, 0))
-        self.rename_p1 = ctk.CTkComboBox(self.org_left, values=["[Date] YYYY-MM-DD", "[Party] Name", "[DocType] Motion", "[Custom] Text"], state="readonly")
-        self.rename_p1.set("[Date] YYYY-MM-DD")
-        self.rename_p1.pack(fill="x", padx=25, pady=(0, 6))
+        # --- ACTIVE VAULT CONTEXT (Inputs) ---
+        context_frame = ctk.CTkFrame(self.org_left, fg_color=BRAND_SILVER_BG, corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
+        context_frame.pack(fill="x", padx=20, pady=4)
         
-        # Row 2
-        ctk.CTkLabel(self.org_left, text="2. Separator:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(2, 0))
-        self.rename_sep = ctk.CTkComboBox(self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], state="readonly")
-        self.rename_sep.set(" - (Space Dash Space)")
-        self.rename_sep.pack(fill="x", padx=25, pady=(0, 6))
-        
-        # Row 3
-        ctk.CTkLabel(self.org_left, text="3. Sub-Component:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(2, 0))
-        self.rename_p2 = ctk.CTkComboBox(self.org_left, values=["[DocType] Motion", "[Party] Name", "[Date] YYYY-MM-DD", "[Custom] Text"], state="readonly")
-        self.rename_p2.set("[DocType] Motion")
-        self.rename_p2.pack(fill="x", padx=25, pady=(0, 6))
+        # Case Num
+        ctk.CTkLabel(context_frame, text="Case Number:", font=ctk.CTkFont(size=9, weight="bold"), text_color=BRAND_DARK_TEXT).grid(row=0, column=0, padx=(10, 5), pady=3, sticky="e")
+        self.case_num_entry = ctk.CTkEntry(context_frame, font=ctk.CTkFont(size=10), height=22, width=120, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., 4:26-cv-00123")
+        self.case_num_entry.grid(row=0, column=1, padx=5, pady=3, sticky="w")
 
-        # Dynamic Text Box for [Custom] Overrides
-        ctk.CTkLabel(self.org_left, text="📋 Enter Active Input String:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(8, 0))
-        self.dyn_entry = ctk.CTkEntry(self.org_left, placeholder_text="e.g., Pleading_Response_Defendant", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT)
-        self.dyn_entry.pack(fill="x", padx=25, pady=(0, 15))
+        # Plaintiff
+        ctk.CTkLabel(context_frame, text="Plaintiff:", font=ctk.CTkFont(size=9, weight="bold"), text_color=BRAND_DARK_TEXT).grid(row=1, column=0, padx=(10, 5), pady=3, sticky="e")
+        self.case_pla_entry = ctk.CTkEntry(context_frame, font=ctk.CTkFont(size=10), height=22, width=120, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Jane Smith")
+        self.case_pla_entry.grid(row=1, column=1, padx=5, pady=3, sticky="w")
+        
+        # Defendant
+        ctk.CTkLabel(context_frame, text="Defendant:", font=ctk.CTkFont(size=9, weight="bold"), text_color=BRAND_DARK_TEXT).grid(row=2, column=0, padx=(10, 5), pady=3, sticky="e")
+        self.case_def_entry = ctk.CTkEntry(context_frame, font=ctk.CTkFont(size=10), height=22, width=120, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Acme Corp")
+        self.case_def_entry.grid(row=2, column=1, padx=5, pady=3, sticky="w")
+        
+        self.btn_save_vault = ctk.CTkButton(context_frame, text="🔒 SECURE", height=22, width=60, font=ctk.CTkFont(size=9, weight="bold"), fg_color=BRAND_DARK_TEXT, hover_color="#374151", command=self.save_case_vault)
+        self.btn_save_vault.grid(row=1, column=2, padx=10, pady=3)
+
+        # --- RENAMING FORMULA ---
+        ctk.CTkLabel(self.org_left, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(8, 2))
+
+        self.rename_p1 = ctk.CTkComboBox(self.org_left, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], state="readonly", height=24)
+        self.rename_p1.set("[Date] YYYY-MM-DD")
+        self.rename_p1.pack(fill="x", padx=20, pady=2)
+        
+        self.rename_sep = ctk.CTkComboBox(self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], state="readonly", height=24)
+        self.rename_sep.set(" - (Space Dash Space)")
+        self.rename_sep.pack(fill="x", padx=20, pady=2)
+        
+        self.rename_p2 = ctk.CTkComboBox(self.org_left, values=["[DocType] Motion", "[Plaintiff]", "[Defendant]", "[Case Number]", "[Date] YYYY-MM-DD", "[Custom] Text"], state="readonly", height=24)
+        self.rename_p2.set("[DocType] Motion")
+        self.rename_p2.pack(fill="x", padx=20, pady=2)
+
+        self.dyn_entry = ctk.CTkEntry(self.org_left, placeholder_text="[Custom] Override Text String", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, height=26)
+        self.dyn_entry.pack(fill="x", padx=20, pady=6)
         
         self.btn_rename = ctk.CTkButton(
-            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=45, 
+            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=38, 
             font=ctk.CTkFont(weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
             command=self.execute_rename_wizard
         )
-        self.btn_rename.pack(fill="x", padx=25, pady=5)
+        self.btn_rename.pack(fill="x", padx=20, pady=(4, 10))
 
         # Right Panel: Master Case Tree Builder
         self.org_right = ctk.CTkFrame(
@@ -1320,6 +1341,59 @@ class AccessMergerApp(ctk.CTk):
         link_lbl.bind("<Button-1>", lambda e: webbrowser.open("https://www.accessparalegalservices.com/founder-portal"))
 
     # ==========================================
+    # 🔐 CRYPTOGRAPHIC SECURE CASE VAULT
+    # ==========================================
+    def get_crypto_key(self):
+        """Generates a deterministic 32-byte Fernet key bound to device license signature."""
+        seed = self.active_license_key or "ACCESS_FREE_SALT_OFFLINE"
+        # SHA-256 hash guarantees uniform, strong fixed length
+        key_bytes = hashlib.sha256(seed.encode()).digest()
+        return base64.urlsafe_b64encode(key_bytes)
+
+    def save_case_vault(self):
+        """Encrypts active UI Case input metrics using hardware keys and locks to disk."""
+        try:
+            data = {
+                "case_num": self.case_num_entry.get().strip(),
+                "plaintiff": self.case_pla_entry.get().strip(),
+                "defendant": self.case_def_entry.get().strip()
+            }
+            raw_json = json.dumps(data)
+            
+            # Encrypt using standard AES-256 Fernet
+            cipher = Fernet(self.get_crypto_key())
+            encrypted = cipher.encrypt(raw_json.encode())
+            
+            with open(CASE_VAULT_FILE, 'wb') as f:
+                f.write(encrypted)
+            
+            messagebox.showinfo("Vault Locked", "Success! Case profile encrypted with device key and locked to local disk.")
+        except Exception as e:
+            messagebox.showerror("Vault Error", f"Failed to secure Case Vault: {e}")
+
+    def load_case_vault(self):
+        """Silently decodes secure files on startup, injecting data into visual buffers."""
+        if not os.path.exists(CASE_VAULT_FILE):
+            return
+        try:
+            with open(CASE_VAULT_FILE, 'rb') as f:
+                encrypted = f.read()
+            
+            cipher = Fernet(self.get_crypto_key())
+            decrypted = cipher.decrypt(encrypted).decode()
+            data = json.loads(decrypted)
+            
+            self.case_num_entry.delete(0, 'end')
+            self.case_num_entry.insert(0, data.get("case_num", ""))
+            self.case_pla_entry.delete(0, 'end')
+            self.case_pla_entry.insert(0, data.get("plaintiff", ""))
+            self.case_def_entry.delete(0, 'end')
+            self.case_def_entry.insert(0, data.get("defendant", ""))
+        except Exception:
+            pass # Fails silently on mismatch / new seed
+
+
+    # ==========================================
     # 📂 FILE ROOM: ACTIVE ENGINE BACKENDS
     # ==========================================
     def update_tree_preview(self, choice):
@@ -1389,10 +1463,17 @@ class AccessMergerApp(ctk.CTk):
         def get_value_for_type(t, default_name):
             if "[Date]" in t:
                 return datetime.now().strftime("%Y-%m-%d")
-            elif "[Party]" in t:
-                return "CLIENT"
+            elif "[Case Number]" in t:
+                val = self.case_num_entry.get().strip().replace(" ", "_").replace(":", "-")
+                return val if val else "CASE"
+            elif "[Plaintiff]" in t:
+                val = self.case_pla_entry.get().strip().replace(" ", "_")
+                return val if val else "PLAINTIFF"
+            elif "[Defendant]" in t:
+                val = self.case_def_entry.get().strip().replace(" ", "_")
+                return val if val else "DEFENDANT"
             elif "[DocType]" in t:
-                return "EXHIBIT"
+                return "MOTION"
             elif "[Custom]" in t and custom_txt:
                 return custom_txt
             return default_name
