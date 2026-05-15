@@ -93,7 +93,7 @@ class AccessMergerApp(ctk.CTk):
 
         # Window Config
         self.title("Access Paralegal Suite")
-        self.geometry("880x630")
+        self.geometry("880x660")
         self.resizable(False, False)
         self.configure(fg_color=BRAND_SILVER_BG)
 
@@ -106,7 +106,7 @@ class AccessMergerApp(ctk.CTk):
         self.trigger_async_folder_scan(self.default_input)
 
     def _setup_menu(self):
-        m_font = ("Segoe UI", 10)
+        m_font = ("Segoe UI", 12)
         self.menubar = tk.Menu(self, font=m_font)
         
         filemenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
@@ -417,51 +417,65 @@ class AccessMergerApp(ctk.CTk):
         self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
         self.org_left.pack_propagate(False)
         
-        ctk.CTkLabel(self.org_left, text="🔐 ENCRYPTED CASE CONTEXT & PROTOCOL", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(12, 2))
+        ctk.CTkLabel(self.org_left, text="🔐 ENCRYPTED CASE CONTEXT & PROTOCOL", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 2))
         
         # --- ACTIVE VAULT CONTEXT (Inputs) ---
         context_frame = ctk.CTkFrame(self.org_left, fg_color=BRAND_SILVER_BG, corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
-        context_frame.pack(fill="x", padx=20, pady=4)
+        context_frame.pack(fill="x", padx=20, pady=6)
+        
+        lbl_font = ctk.CTkFont(size=11, weight="bold")
+        ent_font = ctk.CTkFont(size=12)
         
         # Case Num
-        ctk.CTkLabel(context_frame, text="Case Number:", font=ctk.CTkFont(size=9, weight="bold"), text_color=BRAND_DARK_TEXT).grid(row=0, column=0, padx=(10, 5), pady=3, sticky="e")
-        self.case_num_entry = ctk.CTkEntry(context_frame, font=ctk.CTkFont(size=10), height=22, width=120, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., 4:26-cv-00123")
-        self.case_num_entry.grid(row=0, column=1, padx=5, pady=3, sticky="w")
+        ctk.CTkLabel(context_frame, text="Case Number:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=0, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.case_num_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., 4:26-cv-00123")
+        self.case_num_entry.grid(row=0, column=1, padx=5, pady=6, sticky="w")
 
         # Plaintiff
-        ctk.CTkLabel(context_frame, text="Plaintiff:", font=ctk.CTkFont(size=9, weight="bold"), text_color=BRAND_DARK_TEXT).grid(row=1, column=0, padx=(10, 5), pady=3, sticky="e")
-        self.case_pla_entry = ctk.CTkEntry(context_frame, font=ctk.CTkFont(size=10), height=22, width=120, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Jane Smith")
-        self.case_pla_entry.grid(row=1, column=1, padx=5, pady=3, sticky="w")
+        ctk.CTkLabel(context_frame, text="Plaintiff:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=1, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.case_pla_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Jane Smith")
+        self.case_pla_entry.grid(row=1, column=1, padx=5, pady=6, sticky="w")
         
         # Defendant
-        ctk.CTkLabel(context_frame, text="Defendant:", font=ctk.CTkFont(size=9, weight="bold"), text_color=BRAND_DARK_TEXT).grid(row=2, column=0, padx=(10, 5), pady=3, sticky="e")
-        self.case_def_entry = ctk.CTkEntry(context_frame, font=ctk.CTkFont(size=10), height=22, width=120, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Acme Corp")
-        self.case_def_entry.grid(row=2, column=1, padx=5, pady=3, sticky="w")
+        ctk.CTkLabel(context_frame, text="Defendant:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=2, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.case_def_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Acme Corp")
+        self.case_def_entry.grid(row=2, column=1, padx=5, pady=6, sticky="w")
         
-        self.btn_save_vault = ctk.CTkButton(context_frame, text="🔒 SECURE", height=22, width=60, font=ctk.CTkFont(size=9, weight="bold"), fg_color=BRAND_DARK_TEXT, hover_color="#374151", command=self.save_case_vault)
-        self.btn_save_vault.grid(row=1, column=2, padx=10, pady=3)
+        self.btn_save_vault = ctk.CTkButton(context_frame, text="🔒 SECURE", height=32, width=70, font=ctk.CTkFont(size=11, weight="bold"), fg_color=BRAND_DARK_TEXT, hover_color="#374151", command=self.save_case_vault)
+        self.btn_save_vault.grid(row=1, column=2, padx=12, pady=6)
 
         # --- RENAMING FORMULA ---
-        ctk.CTkLabel(self.org_left, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(8, 2))
+        ctk.CTkLabel(self.org_left, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(10, 4))
 
-        self.rename_p1 = ctk.CTkComboBox(self.org_left, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], state="readonly", height=24)
+        drop_font = ctk.CTkFont(size=13)
+        
+        self.rename_p1 = ctk.CTkComboBox(
+            self.org_left, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+        )
         self.rename_p1.set("[Date] YYYY-MM-DD")
-        self.rename_p1.pack(fill="x", padx=20, pady=2)
+        self.rename_p1.pack(fill="x", padx=20, pady=3)
         
-        self.rename_sep = ctk.CTkComboBox(self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], state="readonly", height=24)
+        self.rename_sep = ctk.CTkComboBox(
+            self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+        )
         self.rename_sep.set(" - (Space Dash Space)")
-        self.rename_sep.pack(fill="x", padx=20, pady=2)
+        self.rename_sep.pack(fill="x", padx=20, pady=3)
         
-        self.rename_p2 = ctk.CTkComboBox(self.org_left, values=["[DocType] Motion", "[Plaintiff]", "[Defendant]", "[Case Number]", "[Date] YYYY-MM-DD", "[Custom] Text"], state="readonly", height=24)
+        self.rename_p2 = ctk.CTkComboBox(
+            self.org_left, values=["[DocType] Motion", "[Plaintiff]", "[Defendant]", "[Case Number]", "[Date] YYYY-MM-DD", "[Custom] Text"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+        )
         self.rename_p2.set("[DocType] Motion")
-        self.rename_p2.pack(fill="x", padx=20, pady=2)
+        self.rename_p2.pack(fill="x", padx=20, pady=3)
 
-        self.dyn_entry = ctk.CTkEntry(self.org_left, placeholder_text="[Custom] Override Text String", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, height=26)
-        self.dyn_entry.pack(fill="x", padx=20, pady=6)
+        self.dyn_entry = ctk.CTkEntry(self.org_left, font=drop_font, placeholder_text="[Custom] Override Text String", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, height=38)
+        self.dyn_entry.pack(fill="x", padx=20, pady=8)
         
         self.btn_rename = ctk.CTkButton(
-            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=38, 
-            font=ctk.CTkFont(weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=45, 
+            font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
             command=self.execute_rename_wizard
         )
         self.btn_rename.pack(fill="x", padx=20, pady=(4, 10))
@@ -477,18 +491,18 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(self.org_right, text="📂 MASTER CASE TREE BUILDER", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 3))
         ctk.CTkLabel(self.org_right, text="Automate standardized firm architectures.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 10))
         
-        ctk.CTkLabel(self.org_right, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25)
+        ctk.CTkLabel(self.org_right, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25)
         self.tree_dropdown = ctk.CTkComboBox(
             self.org_right, values=["Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
-            state="readonly", command=self.update_tree_preview
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font, command=self.update_tree_preview
         )
         self.tree_dropdown.set("Standard Civil Litigation")
-        self.tree_dropdown.pack(fill="x", padx=25, pady=(0, 10))
+        self.tree_dropdown.pack(fill="x", padx=25, pady=(0, 12))
         
-        ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=10, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
+        ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
         self.tree_preview = ctk.CTkTextbox(
             self.org_right, height=105, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, 
-            border_width=1, border_color=BRAND_BORDER_LIGHT, font=ctk.CTkFont(size=11)
+            border_width=1, border_color=BRAND_BORDER_LIGHT, font=ctk.CTkFont(size=13)
         )
         self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
         
