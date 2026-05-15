@@ -42,11 +42,11 @@ BRAND_DARK_TEXT = ("#222222", "#ECECEC")    # High-Contrast Crisp Typography
 BRAND_WHITE_PANEL = ("#F4F4F5", "#242828")  # Soft Grey Panels for fallback
 BRAND_BORDER_LIGHT = ("#CCCCCC", "#3C4242")
 
-# --- THE "EXECUTIVE GLEAM" LUXURY PALETTE ---
-# 100% Elegant obsidian slate panels to match the charcoal base they reside upon
-GLASS_HEADER = ("#F3F6F3", "#242A2A")       # Crystal-polished glass banner
-GLASS_LEFT = ("#EBECEF", "#212525")         # Sleek, deep professional slate
-GLASS_RIGHT = ("#EBECEF", "#212525")        # Unified slate (resides over charcoal base)
+# --- THE "MULTI-LAYER FROSTED GLASS" PALETTE ---
+# Explicitly tuned to Alan's Layering Specifications to simulate multi-pane glass depth
+GLASS_HEADER = ("#D3ECD0", "#2A4E27")       # Frosted Green Glass (88% sits directly over the Green Slash)
+GLASS_LEFT = ("#ECEEF0", "#222727")         # Clear Slate Glass (100% sits over the Charcoal base)
+GLASS_RIGHT = ("#DBEBDB", "#233627")        # Clear Jade-Slate Glass (simulates partial Green Slash overlap)
 GLASS_BORDER = ("#BFE2BD", "#5DA652")       # High-specular bright emerald "Gleam" edge
 
 # Mode and Theme Config
@@ -349,7 +349,7 @@ class AccessMergerApp(ctk.CTk):
         self.dir_btn.pack(side="right")
 
         self.queue_frame = ctk.CTkScrollableFrame(
-            self.right_frame, fg_color=("#FFFFFF", "#141616"), 
+            self.right_frame, fg_color=("#F5F9F4", "#161E15"), 
             border_width=1, border_color=GLASS_BORDER, corner_radius=8
         )
         self.queue_frame.pack(fill="both", expand=True, pady=(0, 15))
@@ -586,7 +586,7 @@ class AccessMergerApp(ctk.CTk):
         
         ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
         self.tree_preview = ctk.CTkTextbox(
-            self.org_right, height=105, fg_color=("#FFFFFF", "#141616"), text_color=BRAND_DARK_TEXT, 
+            self.org_right, height=105, fg_color=("#F5F9F4", "#161E15"), text_color=BRAND_DARK_TEXT, 
             border_width=1, border_color=GLASS_BORDER, font=ctk.CTkFont(size=13)
         )
         self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
