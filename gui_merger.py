@@ -44,7 +44,7 @@ BRAND_BORDER_LIGHT = ("#CCCCCC", "#3C4242")
 
 # --- THE "MULTI-LAYER FROSTED GLASS" PALETTE ---
 # Explicitly tuned to Alan's Layering Specifications to simulate multi-pane glass depth
-GLASS_HEADER = ("#D3ECD0", "#2A4E27")       # Frosted Green Glass (88% sits directly over the Green Slash)
+GLASS_HEADER = ("#ECF9EB", "#2A4E27")       # Pristine Emerald Mint (Prevents washed-out appearance)
 GLASS_LEFT = ("#ECEEF0", "#222727")         # Clear Slate Glass (100% sits over the Charcoal base)
 GLASS_RIGHT = ("#DBEBDB", "#233627")        # Clear Jade-Slate Glass (simulates partial Green Slash overlap)
 GLASS_BORDER = ("#BFE2BD", "#5DA652")       # High-specular bright emerald "Gleam" edge
@@ -97,6 +97,34 @@ class AccessMergerApp(ctk.CTk):
         # Pro / Licensing State
         self.is_pro_activated = False
         self.active_license_key = ""
+        
+        # Global Application Preferences
+        self.custom_workspace_root = self.app_dir
+        self.safeguard_files_var = tk.BooleanVar(value=True)
+        self.custom_case_structure = [
+            "Correspondence",
+            "Correspondence/Client Correspondence",
+            "Correspondence/Opposing Counsel",
+            "Correspondence/Court Correspondence",
+            "Correspondence/{Date}",
+            "Discovery",
+            "Discovery/Written Discovery",
+            "Discovery/Document Production",
+            "Discovery/Depositions",
+            "Discovery/Experts",
+            "Pleadings",
+            "Pleadings/Motions",
+            "Pleadings/Orders",
+            "Pleadings/Briefs & Memoranda",
+            "Client Documents",
+            "Client Documents/Intake & Retainer",
+            "Client Documents/Financial Records",
+            "Research",
+            "Research/Caselaw",
+            "Research/Fact Research",
+            "Trial",
+            "Trial/Exhibits"
+        ]
 
         # Window Config
         self.title("Access Paralegal Suite")
@@ -105,7 +133,7 @@ class AccessMergerApp(ctk.CTk):
         self.configure(fg_color=BRAND_SILVER_BG)
 
         # --- GLOBAL OS SCALING OVERRIDES ---
-        self.option_add('*Menu.font', '{Segoe UI} 12')
+        self.option_add('*Menu.font', '{Segoe UI} 18')
 
         # --- DYNAMIC LUXURY DUAL-MODE WATERMARK & DIAGONAL SLASH ARCHITECT ---
         bg_w, bg_h = 880, 660
@@ -176,13 +204,14 @@ class AccessMergerApp(ctk.CTk):
         self.trigger_async_folder_scan(self.default_input)
 
     def _setup_menu(self):
-        m_font = ("Segoe UI", 12)
+        m_font = ("Segoe UI", 18)
         self.menubar = tk.Menu(self, font=m_font)
         
         filemenu = tk.Menu(self.menubar, tearoff=0, font=m_font)
         filemenu.add_command(label="Open Source Folder", command=self.browse_folder)
         filemenu.add_command(label="View Merged Output", command=lambda: os.startfile(self.default_output))
-        filemenu.add_command(label="⚙️ Advanced Setup Folder...", command=self.configure_advanced_workspace)
+        filemenu.add_separator()
+        filemenu.add_command(label="⚙️ Settings & Preferences...", command=self.show_settings_modal)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.quit)
         self.menubar.add_cascade(label="File", menu=filemenu)
@@ -204,7 +233,7 @@ class AccessMergerApp(ctk.CTk):
         self.config(menu=self.menubar)
 
     def _setup_ui(self):
-        drop_font = ctk.CTkFont(family="Segoe UI", size=13)
+        drop_font = ctk.CTkFont(family="Segoe UI", size=16)
 
         # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
         self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=GLASS_HEADER, border_width=0, height=110)
@@ -232,7 +261,7 @@ class AccessMergerApp(ctk.CTk):
         self.sub_title = ctk.CTkLabel(
             self.header_frame, 
             text="PROFESSIONAL PDF & EMAIL BUNDLE MERGER", 
-            font=ctk.CTkFont(family="Inter", size=9, weight="bold"),
+            font=ctk.CTkFont(family="Inter", size=13, weight="bold"),
             text_color="#4B5563"
         )
         self.sub_title.pack(pady=(0, 8))
@@ -245,6 +274,9 @@ class AccessMergerApp(ctk.CTk):
             self, fg_color="transparent", segmented_button_selected_color=BRAND_ACCENT_GREEN,
             segmented_button_selected_hover_color=BRAND_DEEP_ACCENT, text_color=BRAND_DARK_TEXT
         )
+        # Access and elevate the internal segmented tab bar font
+        self.tab_view._segmented_button.configure(font=ctk.CTkFont(size=16, weight="bold"))
+        
         self.tab_view.pack(fill="both", expand=True, padx=25, pady=(10, 10))
         
         self.tab_merger = self.tab_view.add("📦 Document Merger")
@@ -276,44 +308,44 @@ class AccessMergerApp(ctk.CTk):
         self.right_frame.pack(side="right", fill="both", expand=True)
 
         # --- POPULATE LEFT (SETTINGS) ---
-        ctk.CTkLabel(self.left_frame, text="🛠️ COMPILER SETTINGS", font=ctk.CTkFont(weight="bold", size=13), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
+        ctk.CTkLabel(self.left_frame, text="🛠️ COMPILER SETTINGS", font=ctk.CTkFont(weight="bold", size=16), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
 
         self.var_bookmark = tk.BooleanVar(value=True)
         self.chk_bookmark = ctk.CTkCheckBox(
             self.left_frame, text="Create Bookmarks per file", variable=self.var_bookmark, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_bookmark.pack(anchor="w", padx=20, pady=6)
 
         self.var_fit_view = tk.BooleanVar(value=True)
         self.chk_fit_view = ctk.CTkCheckBox(
             self.left_frame, text="Enforce Single-Page Layout", variable=self.var_fit_view, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_fit_view.pack(anchor="w", padx=20, pady=6)
 
         self.var_compress = tk.BooleanVar(value=False)
         self.chk_compress = ctk.CTkCheckBox(
             self.left_frame, text="Optimize Output Size", variable=self.var_compress, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_compress.pack(anchor="w", padx=20, pady=6)
 
         self.var_email = tk.BooleanVar(value=True)
         self.chk_email = ctk.CTkCheckBox(
             self.left_frame, text="Extract Email Attachments", variable=self.var_email, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_email.pack(anchor="w", padx=20, pady=6)
 
         self.var_grayscale = tk.BooleanVar(value=False)
         self.chk_grayscale = ctk.CTkCheckBox(
             self.left_frame, text="📉 Grayscale (Huge File Save!)", variable=self.var_grayscale, 
-            text_color="#B45309", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            text_color="#B45309", font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_grayscale.pack(anchor="w", padx=20, pady=6)
 
-        ctk.CTkLabel(self.left_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
+        ctk.CTkLabel(self.left_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=14, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
         self.paper_dropdown = ctk.CTkOptionMenu(
             self.left_frame, values=["US Letter (8.5 x 11 in)", "US Legal (8.5 x 14 in)", "A4 (International)"], width=260, height=38,
             fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, button_hover_color=BRAND_DEEP_ACCENT,
@@ -325,10 +357,10 @@ class AccessMergerApp(ctk.CTk):
         self.audit_panel = ctk.CTkFrame(self.left_frame, fg_color="transparent", corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
         self.audit_panel.pack(fill="both", expand=True, padx=15, pady=(5, 15))
 
-        ctk.CTkLabel(self.audit_panel, text="📄 QUEUE PREVIEW", font=ctk.CTkFont(weight="bold", size=11), text_color=BRAND_ACCENT_GREEN).pack(pady=(10, 5))
-        self.audit_files_lbl = ctk.CTkLabel(self.audit_panel, text="Documents: Scanning...", font=ctk.CTkFont(size=12), text_color=BRAND_DARK_TEXT)
+        ctk.CTkLabel(self.audit_panel, text="📄 QUEUE PREVIEW", font=ctk.CTkFont(weight="bold", size=14), text_color=BRAND_ACCENT_GREEN).pack(pady=(10, 5))
+        self.audit_files_lbl = ctk.CTkLabel(self.audit_panel, text="Documents: Scanning...", font=ctk.CTkFont(size=15), text_color=BRAND_DARK_TEXT)
         self.audit_files_lbl.pack(anchor="w", padx=15, pady=2)
-        self.audit_pages_lbl = ctk.CTkLabel(self.audit_panel, text="Total Pages: Calculating...", font=ctk.CTkFont(size=12), text_color=BRAND_DARK_TEXT)
+        self.audit_pages_lbl = ctk.CTkLabel(self.audit_panel, text="Total Pages: Calculating...", font=ctk.CTkFont(size=15), text_color=BRAND_DARK_TEXT)
         self.audit_pages_lbl.pack(anchor="w", padx=15, pady=2)
 
         # --- POPULATE RIGHT (VISUAL QUEUE & MERGER) ---
@@ -359,9 +391,9 @@ class AccessMergerApp(ctk.CTk):
         style.theme_use("default")
         bg_col = "#F5F9F4" if ctk.get_appearance_mode() == "Light" else "#161E15"
         fg_col = "#222222" if ctk.get_appearance_mode() == "Light" else "#ECECEC"
-        style.configure("Treeview", background=bg_col, foreground=fg_col, fieldbackground=bg_col, rowheight=28, borderwidth=0)
+        style.configure("Treeview", background=bg_col, foreground=fg_col, fieldbackground=bg_col, rowheight=36, borderwidth=0, font=("Segoe UI", 14))
         style.map("Treeview", background=[("selected", BRAND_ACCENT_GREEN)], foreground=[("selected", "white")])
-        style.configure("Treeview.Heading", font=("Segoe UI", 11, "bold"))
+        style.configure("Treeview.Heading", font=("Segoe UI", 15, "bold"))
         
         self.queue_tree = ttk.Treeview(self.queue_container, columns=("Order", "File", "Status"), show="headings", selectmode="extended")
         self.queue_tree.heading("Order", text="#")
@@ -392,12 +424,12 @@ class AccessMergerApp(ctk.CTk):
         
         self.processing_lbl = ctk.CTkLabel(
             self.status_bar_frame, text="Status: Standing By", 
-            font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT
+            font=ctk.CTkFont(size=15, weight="bold"), text_color=BRAND_DARK_TEXT
         )
         self.processing_lbl.pack(side="left")
 
         self.count_lbl = ctk.CTkLabel(
-            self.status_bar_frame, text="", font=ctk.CTkFont(size=12, weight="normal"), text_color="#4B5563"
+            self.status_bar_frame, text="", font=ctk.CTkFont(size=14, weight="normal"), text_color="#4B5563"
         )
         self.count_lbl.pack(side="right")
 
@@ -410,7 +442,7 @@ class AccessMergerApp(ctk.CTk):
 
         self.run_btn = ctk.CTkButton(
             self.action_frame, text="🚀 COMBINE & MERGE FILES", height=52, 
-            font=ctk.CTkFont(size=16, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            font=ctk.CTkFont(size=19, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
             command=self.start_merge_thread
         )
         self.run_btn.pack(fill="x")
@@ -612,10 +644,10 @@ class AccessMergerApp(ctk.CTk):
         
         ctk.CTkLabel(self.org_right, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25)
         self.tree_dropdown = ctk.CTkComboBox(
-            self.org_right, values=["Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
+            self.org_right, values=["⭐ Custom User Blueprint", "Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
             state="readonly", height=38, font=drop_font, dropdown_font=drop_font, command=self.update_tree_preview
         )
-        self.tree_dropdown.set("Standard Civil Litigation")
+        self.tree_dropdown.set("⭐ Custom User Blueprint")
         self.tree_dropdown.pack(fill="x", padx=25, pady=(0, 12))
         
         ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
@@ -983,9 +1015,35 @@ class AccessMergerApp(ctk.CTk):
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
             
+        # --- 🛑 SAFE SHADOW ISOLATION ENGINE ---
+        import shutil
+        import tempfile
+        is_safeguarded = self.safeguard_files_var.get()
+        working_source = source
+        shadow_dir = None
+        
+        if is_safeguarded:
+            shadow_dir = os.path.join(tempfile.gettempdir(), f"ap_shadow_{int(time.time())}")
+            os.makedirs(shadow_dir, exist_ok=True)
+            self.after(0, lambda: self.processing_lbl.configure(text="🛡️ Preserving originals in Shadow Copy..."))
+            
+            # Clone target files into staging location
+            for (fn, _) in ordered_files:
+                src_p = os.path.join(source, fn)
+                if os.path.exists(src_p):
+                    try:
+                        shutil.copy2(src_p, os.path.join(shadow_dir, fn))
+                    except Exception as ex:
+                        print(f"Safeguard copy fail: {ex}")
+            working_source = shadow_dir
+            
         # --- 🚦 ENFORCE V1.4.0 LICENSE GATING LIMITS ---
         if not self.check_gate_limit("merge_count", len(ordered_files)):
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
+            # Cleanup shadow if we exit early
+            if shadow_dir:
+                try: shutil.rmtree(shadow_dir, ignore_errors=True)
+                except: pass
             return
             
         if self.var_grayscale.get():
@@ -1003,10 +1061,10 @@ class AccessMergerApp(ctk.CTk):
         curr_pg = 0
         success_count = 0
         
-        temp_extract_dir = os.path.join(source, "_volta_temp_attachments")
+        temp_extract_dir = os.path.join(working_source, "_volta_temp_attachments")
         os.makedirs(temp_extract_dir, exist_ok=True)
         total_items = len(ordered_files)
-
+        
         def update_tree_status(item_id, text):
             vals = self.queue_tree.item(item_id, 'values')
             self.queue_tree.item(item_id, values=(vals[0], vals[1], text))
@@ -1021,7 +1079,7 @@ class AccessMergerApp(ctk.CTk):
             time.sleep(0.01)
             
             try:
-                file_path = os.path.join(source, fn)
+                file_path = os.path.join(working_source, fn)
                 low_fn = fn.lower()
                 
                 # --- SCENARIO 1: NATIVE PDF ---
@@ -1187,6 +1245,11 @@ class AccessMergerApp(ctk.CTk):
         except Exception as e:
             self.after(0, lambda: self.processing_lbl.configure(text="Error: Compile failed!"))
             self.after(0, lambda err=str(e): messagebox.showerror("Fatal Error", f"Failed saving: {err}"))
+
+        # --- 🛑 SHADOW ENGINE TEARDOWN ---
+        if shadow_dir:
+            try: shutil.rmtree(shadow_dir, ignore_errors=True)
+            except: pass
 
         self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
 
@@ -1722,13 +1785,231 @@ class AccessMergerApp(ctk.CTk):
         except Exception as e:
             print(f"Workspace generation failure: {e}")
 
-    def configure_advanced_workspace(self):
-        """Provides Advanced Menu portal to re-route parent directory generation root."""
-        target = filedialog.askdirectory(title="Select Advanced Root Folder for Case Generation")
-        if target:
-            self.custom_workspace_root = target
-            self.update_case_workspace_paths()
-            messagebox.showinfo("Advanced Workspace Config", f"Success! Root workspace has been relocated to:\n{target}")
+    def show_settings_modal(self):
+        """Consolidated Premium Settings & Preferences Panel."""
+        win = ctk.CTkToplevel(self)
+        win.title("⚙️ System Preferences & Settings")
+        win.geometry("520x450")
+        win.resizable(False, False)
+        win.transient(self)
+        win.grab_set()
+        
+        # Center over main window
+        x = self.winfo_x() + (self.winfo_width() - 520) // 2
+        y = self.winfo_y() + (self.winfo_height() - 450) // 2
+        win.geometry(f"+{x}+{y}")
+        
+        # --- HEADER ---
+        ctk.CTkLabel(win, text="SYSTEM PREFERENCES", font=ctk.CTkFont(size=18, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 5))
+        ctk.CTkLabel(win, text="Configure core application defaults and data staging.", font=ctk.CTkFont(size=12), text_color="#6B7280").pack(pady=(0, 20))
+        
+        container = ctk.CTkFrame(win, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=30, pady=10)
+        
+        # 1. Appearance Selector
+        f1 = ctk.CTkFrame(container, fg_color="transparent")
+        f1.pack(fill="x", pady=8)
+        ctk.CTkLabel(f1, text="🖥️ Interface Mode:", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_DARK_TEXT).pack(side="left")
+        
+        def change_theme(val):
+            ctk.set_appearance_mode(val)
+            
+        theme_var = ctk.StringVar(value=ctk.get_appearance_mode())
+        theme_opt = ctk.CTkOptionMenu(f1, values=["System", "Light", "Dark"], variable=theme_var, command=change_theme, width=160, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        theme_opt.pack(side="right")
+        
+        # 2. Master Workspace Selection
+        f2 = ctk.CTkFrame(container, fg_color="transparent")
+        f2.pack(fill="x", pady=15)
+        ctk.CTkLabel(f2, text="🗂️ Master Case Folder:", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w")
+        
+        path_frame = ctk.CTkFrame(container, fg_color=BRAND_WHITE_PANEL, height=38, corner_radius=6, border_width=1, border_color=BRAND_BORDER_LIGHT)
+        path_frame.pack(fill="x", pady=(2, 8))
+        path_frame.pack_propagate(False)
+        
+        path_lbl = ctk.CTkLabel(path_frame, text=self.custom_workspace_root, font=ctk.CTkFont(size=12), text_color=BRAND_DARK_TEXT)
+        path_lbl.pack(side="left", padx=10)
+        
+        def pick_new_root():
+            t = filedialog.askdirectory(title="Select Primary Case File Storage Root")
+            if t:
+                self.custom_workspace_root = t
+                path_lbl.configure(text=t)
+                self.update_case_workspace_paths()
+                
+        btn_browse = ctk.CTkButton(f2, text="Relocate", width=80, height=24, font=ctk.CTkFont(size=11, weight="bold"), fg_color="#4B5563", hover_color="#374151", command=pick_new_root)
+        btn_browse.pack(anchor="e", pady=(0, 5))
+        
+        # 3. Data Safeguard Policy Selector
+        f3 = ctk.CTkFrame(container, fg_color=GLASS_LEFT, corner_radius=8, border_width=1, border_color=GLASS_BORDER)
+        f3.pack(fill="x", pady=15, ipady=5)
+        
+        lbl_safe_row = ctk.CTkFrame(f3, fg_color="transparent")
+        lbl_safe_row.pack(fill="x", padx=15, pady=5)
+        
+        sw_safe = ctk.CTkSwitch(lbl_safe_row, text="🛡️ Safeguard Original Files", font=ctk.CTkFont(size=13, weight="bold"), variable=self.safeguard_files_var, text_color=BRAND_DARK_TEXT, progress_color=BRAND_ACCENT_GREEN)
+        sw_safe.pack(side="left")
+        
+        def show_safeguard_tip():
+            messagebox.showinfo("Shadow Staging Security Engine", 
+                                "DATA STAGING ADVISORY:\n\n"
+                                "• SAFE SHADOW STAGING (ON):\n"
+                                "Clones queued files to an isolated temp folder before merging. HIGHLY RECOMMENDED for most applications to preserve source data integrity.\n\n"
+                                "• DIRECT LIVE INGESTION (OFF):\n"
+                                "Reads source files in place. Use with caution on network shares as concurrent operations can trigger file access conflicts.")
+                                
+        btn_tip = ctk.CTkButton(lbl_safe_row, text="❔ Info Note", font=ctk.CTkFont(size=11, weight="bold"), width=65, height=24, fg_color="#6B7280", hover_color="#4B5563", command=show_safeguard_tip)
+        btn_tip.pack(side="left", padx=15)
+        
+        lbl_desc = ctk.CTkLabel(f3, text="Clones documents to shadow isolation first to preserve malpractice safety.", font=ctk.CTkFont(size=11), text_color="#4B5563")
+        lbl_desc.pack(anchor="w", padx=30, pady=(2, 0))
+        
+        # 4. ADVANCED ARCHITECT SUB-PANEL ACCESS
+        btn_advanced = ctk.CTkButton(
+            container, text="🛠️ Open Case Blueprint Architect (Advanced)", 
+            font=ctk.CTkFont(size=13, weight="bold"), height=40, 
+            fg_color="#374151", hover_color="#1F2937", text_color="white",
+            command=lambda: [win.destroy(), self.show_case_architect_modal()]
+        )
+        btn_advanced.pack(fill="x", pady=(20, 0))
+
+    def show_case_architect_modal(self):
+        """Dynamic blueprint architect allowing user to customize default case folder structures."""
+        win = ctk.CTkToplevel(self)
+        win.title("🛠️ Advanced Case File-Tree Architect")
+        win.geometry("600x580")
+        win.resizable(False, False)
+        win.transient(self)
+        win.grab_set()
+        
+        x = self.winfo_x() + (self.winfo_width() - 600) // 2
+        y = self.winfo_y() + (self.winfo_height() - 580) // 2
+        win.geometry(f"+{x}+{y}")
+        
+        ctk.CTkLabel(win, text="CASE FILE TREE ARCHITECT", font=ctk.CTkFont(size=18, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 2))
+        ctk.CTkLabel(win, text="Define a custom hierarchical architecture for automated case creation.", font=ctk.CTkFont(size=12), text_color="#6B7280").pack(pady=(0, 15))
+        
+        main_frame = ctk.CTkFrame(win, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=25, pady=5)
+        
+        # Current Structure Display
+        list_lbl = ctk.CTkLabel(main_frame, text="📂 Current Hierarchy Map (Relative Paths):", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_DARK_TEXT)
+        list_lbl.pack(anchor="w", pady=(0, 5))
+        
+        txt_container = ctk.CTkFrame(main_frame, fg_color=BRAND_WHITE_PANEL, border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=6)
+        txt_container.pack(fill="both", expand=True, pady=(0, 15))
+        
+        # Use Textbox for visualizing editable paths
+        tree_box = ctk.CTkTextbox(txt_container, font=ctk.CTkFont(family="Consolas", size=12), fg_color="transparent", text_color=BRAND_DARK_TEXT)
+        tree_box.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Populate the list Box initially
+        def refresh_box():
+            tree_box.configure(state="normal")
+            tree_box.delete("1.0", "end")
+            sorted_struct = sorted(self.custom_case_structure, key=str.lower)
+            for p in sorted_struct:
+                tree_box.insert("end", f" •  {p}\n")
+            tree_box.configure(state="disabled")
+            
+        refresh_box()
+        
+        # Controls area
+        controls_frame = ctk.CTkFrame(main_frame, fg_color=GLASS_LEFT, corner_radius=8, border_width=1, border_color=GLASS_BORDER)
+        controls_frame.pack(fill="x", pady=5, ipady=10)
+        
+        # Standard Presets Dropdown row
+        row1 = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        row1.pack(fill="x", pady=5, padx=15)
+        
+        presets_pool = [
+            "Correspondence/Client Correspondence", "Correspondence/Opposing Counsel", "Correspondence/{Date}",
+            "Discovery/Written Discovery", "Discovery/Document Production", "Discovery/Depositions", "Discovery/Experts",
+            "Pleadings/Motions", "Pleadings/Orders", "Pleadings/Briefs & Memoranda",
+            "Client Documents/Financial Records", "Client Documents/Medical Records",
+            "Research/Caselaw", "Research/Fact Research",
+            "Trial/Exhibits", "Trial/Jury Instructions", "Trial/Witness Lists"
+        ]
+        
+        preset_var = ctk.StringVar(value="Add Preset Subfolder...")
+        opt_presets = ctk.CTkOptionMenu(row1, values=presets_pool, variable=preset_var, width=280, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        opt_presets.pack(side="left", padx=(10, 10))
+        
+        def add_selected_preset():
+            val = preset_var.get()
+            if val and val != "Add Preset Subfolder...":
+                # Ensure root is present
+                root_name = val.split('/')[0]
+                if root_name not in self.custom_case_structure:
+                    self.custom_case_structure.append(root_name)
+                if val not in self.custom_case_structure:
+                    self.custom_case_structure.append(val)
+                    refresh_box()
+                    
+        btn_add_p = ctk.CTkButton(row1, text="+ Add Preset", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=add_selected_preset, width=120)
+        btn_add_p.pack(side="right", padx=(0, 10))
+        
+        # Custom path input row
+        row2 = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        row2.pack(fill="x", pady=5, padx=15)
+        
+        ent_custom = ctk.CTkEntry(row2, placeholder_text="CustomName (e.g. Subpoenas)", width=280, fg_color=BRAND_WHITE_PANEL, text_color=BRAND_DARK_TEXT, border_color=BRAND_BORDER_LIGHT)
+        ent_custom.pack(side="left", padx=(10, 10))
+        
+        def add_custom_path():
+            txt = ent_custom.get().strip()
+            if txt:
+                # Ask which primary category to attach it to
+                cat_win = ctk.CTkToplevel(win)
+                cat_win.title("Select Parent Folder")
+                cat_win.geometry("300x220")
+                cat_win.transient(win)
+                cat_win.grab_set()
+                
+                ctk.CTkLabel(cat_win, text="Select Parent Node:", font=ctk.CTkFont(size=13, weight="bold")).pack(pady=10)
+                
+                roots = ["Root Level", "Correspondence", "Discovery", "Pleadings", "Research", "Client Documents", "Trial"]
+                r_var = ctk.StringVar(value="Root Level")
+                ctk.CTkOptionMenu(cat_win, values=roots, variable=r_var, width=200, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN).pack(pady=10)
+                
+                def do_commit():
+                    r = r_var.get()
+                    final = txt
+                    if r != "Root Level":
+                        if r not in self.custom_case_structure:
+                            self.custom_case_structure.append(r)
+                        final = f"{r}/{txt}"
+                    if final not in self.custom_case_structure:
+                        self.custom_case_structure.append(final)
+                    cat_win.destroy()
+                    ent_custom.delete(0, "end")
+                    refresh_box()
+                    
+                ctk.CTkButton(cat_win, text="Attach Folder", fg_color=BRAND_ACCENT_GREEN, command=do_commit).pack(pady=15)
+                
+        btn_add_c = ctk.CTkButton(row2, text="+ Custom Folder", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=add_custom_path, width=120)
+        btn_add_c.pack(side="right", padx=(0, 10))
+        
+        # Clear / Reset actions
+        actions_row = ctk.CTkFrame(main_frame, fg_color="transparent")
+        actions_row.pack(fill="x", pady=(10, 0))
+        
+        def reset_defaults():
+            if messagebox.askokcancel("Reset Structure", "Reset case tree to factory default legal hierarchy?"):
+                self.custom_case_structure = ["Correspondence", "Correspondence/Client Correspondence", "Correspondence/Opposing Counsel", "Correspondence/Court Correspondence", "Correspondence/{Date}", "Discovery", "Discovery/Written Discovery", "Discovery/Document Production", "Discovery/Depositions", "Discovery/Experts", "Pleadings", "Pleadings/Motions", "Pleadings/Orders", "Pleadings/Briefs & Memoranda", "Client Documents", "Client Documents/Intake & Retainer", "Client Documents/Financial Records", "Research", "Research/Caselaw", "Research/Fact Research", "Trial", "Trial/Exhibits"]
+                refresh_box()
+                
+        btn_reset = ctk.CTkButton(actions_row, text="🔄 Reset to Factory Blueprint", font=ctk.CTkFont(size=11), fg_color="#E11D48", hover_color="#BE123C", command=reset_defaults)
+        btn_reset.pack(side="left")
+        
+        btn_done = ctk.CTkButton(
+            actions_row, text="🔒 Save Blueprint & Exit", 
+            font=ctk.CTkFont(size=13, weight="bold"), 
+            fg_color="#374151", hover_color="#1F2937", text_color="white",
+            command=win.destroy
+        )
+        btn_done.pack(side="right")
+
 
 
     # ==========================================
@@ -1740,7 +2021,23 @@ class AccessMergerApp(ctk.CTk):
         self.tree_preview.configure(state="normal")
         self.tree_preview.delete("1.0", "end")
         
-        if archetype == "Standard Civil Litigation":
+        if archetype == "⭐ Custom User Blueprint":
+            sorted_c = sorted(self.custom_case_structure, key=str.lower)
+            lines = ["📁 Case_Root (Custom User Build)/"]
+            # Build a tidy visual tree representation
+            roots = [p for p in sorted_c if '/' not in p]
+            for r in roots:
+                lines.append(f"  ├── 📁 {r}")
+                children = [c for c in sorted_c if c.startswith(f"{r}/")]
+                for idx, child in enumerate(children):
+                    subname = child.split('/')[-1]
+                    prefix = "  │   └── 📁" if idx == len(children)-1 else "  │   ├── 📁"
+                    lines.append(f"{prefix} {subname}")
+            
+            preview = "\n".join(lines[:25])
+            if len(lines) > 25:
+                preview += "\n  └── [ + Custom blueprints continued ]"
+        elif archetype == "Standard Civil Litigation":
             preview = "📁 Case_Root/\n  ├── 📁 01_Pleadings\n  ├── 📁 02_Discovery\n  ├── 📁 03_Correspondence\n  ├── 📁 04_Court_Orders\n  └── 📁 05_Research"
         elif archetype == "Trial Notebook Model":
             preview = "📁 Trial_Notebook/\n  ├── 📁 Exhibits_Plaintiff\n  ├── 📁 Exhibits_Defendant\n  ├── 📁 Witness_Outlines\n  ├── 📁 Jury_Instructions\n  └── 📁 Opening_Closing_Statements"
@@ -1759,21 +2056,32 @@ class AccessMergerApp(ctk.CTk):
             
         archetype = self.tree_dropdown.get()
         subdirs = []
-        if archetype == "Standard Civil Litigation":
+        if archetype == "⭐ Custom User Blueprint":
+            subdirs = self.custom_case_structure
+        elif archetype == "Standard Civil Litigation":
             subdirs = ["01_Pleadings", "02_Discovery", "03_Correspondence", "04_Court_Orders", "05_Research"]
         elif archetype == "Trial Notebook Model":
             subdirs = ["Exhibits_Plaintiff", "Exhibits_Defendant", "Witness_Outlines", "Jury_Instructions", "Opening_Closing_Statements"]
         else:
             subdirs = ["Admin_Billing", "Client_Intake", "Outbound_Production"]
             
+        # Dynamic expansion of variables
+        from datetime import datetime
+        curr_date = datetime.now().strftime("%Y-%m-%d")
+        
         created = 0
         for sub in subdirs:
+            # Parse variables like {Date} or {Client Name} safely
+            resolved_sub = sub.replace("{Date}", curr_date)
+            # Fallback safely replacing illegal Windows folder chars
+            resolved_sub = resolved_sub.replace(":", "-").replace("*", "").replace("?", "")
             try:
-                os.makedirs(os.path.join(base_dir, sub), exist_ok=True)
+                os.makedirs(os.path.join(base_dir, resolved_sub), exist_ok=True)
                 created += 1
-            except: pass
+            except Exception as e:
+                print(f"Folder creation failed for {resolved_sub}: {e}")
             
-        messagebox.showinfo("Success", f"Directory Tree Construction Complete!\n\nInstantiated {created} standardized legal folders in:\n{os.path.basename(base_dir)}")
+        messagebox.showinfo("Success", f"Directory Tree Construction Complete!\n\nInstantiated {created} customized legal subfolders in:\n{os.path.basename(base_dir)}")
         try:
             os.startfile(base_dir)
         except: pass

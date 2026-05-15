@@ -87,7 +87,7 @@ TEMPLATES = {
     <form action="#" style="text-align: center; background: #F3F4F6; padding: 1.5rem; border-radius: 8px;">
         <h4 style="margin: 0 0 1rem 0;">Unlock Hyper-Speed Compiling</h4>
         <input type="email" placeholder="Email Address" required style="padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
-        <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Download v1.3.0 Desktop Setup</button>
+        <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Download Access Paralegal Suite (Beta)</button>
     </form>
 </div>""",
 
