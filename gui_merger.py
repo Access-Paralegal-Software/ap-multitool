@@ -108,7 +108,7 @@ class AccessMergerApp(ctk.CTk):
             emblem = None
             if os.path.exists(logo_path):
                 orig = Image.open(logo_path).convert("RGBA")
-                pixels = orig.getdata()
+                pixels = orig.get_flattened_data()
                 new_pixels = []
                 for item in pixels:
                     r, g, b, a = item
@@ -136,7 +136,7 @@ class AccessMergerApp(ctk.CTk):
             # 4. Layer the Brand Emblem inside the Slash Sweep
             if emblem:
                 # Dynamic blend of the emblem on both canvases at exactly 40% opacity for high impact
-                emb_data = emblem.getdata()
+                emb_data = emblem.get_flattened_data()
                 emb_alpha = []
                 for r, g, b, a in emb_data:
                     if a > 0:
