@@ -1,0 +1,60 @@
+name: Cross-Platform Build Master
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags, e.g. v1.2.1
+  workflow_dispatch: # Allow manual triggering from GitHub UI
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            output_name: Access_Paralegal_PDF_Merger.exe
+          - os: macos-latest
+            output_name: Access_Paralegal_PDF_Merger.app
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install System Dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install qpdf
+
+    - name: Install Python Modules
+      run: |
+        python -m pip install --upgrade pip
+        pip install customtkinter pillow pikepdf pyinstaller
+
+    - name: Compile Standalone Binary (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        pyinstaller --noconsole --onefile --add-data="logo_small.png;." --name="Access_Paralegal_PDF_Merger" gui_merger.py
+
+    - name: Compile Standalone Bundle (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        # macOS uses colon separator for add-data
+        pyinstaller --windowed --noconsole --add-data="logo_small.png:." --name="Access_Paralegal_PDF_Merger" gui_merger.py
+        # Compress to zip for distribution
+        cd dist
+        zip -r Access_Paralegal_Mac_Suite.zip Access_Paralegal_PDF_Merger.app
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-build
+        path: |
+          dist/Access_Paralegal_PDF_Merger.exe
+          dist/Access_Paralegal_Mac_Suite.zip
