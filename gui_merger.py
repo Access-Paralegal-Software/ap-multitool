@@ -23,6 +23,9 @@ from datetime import datetime
 import hashlib
 import base64
 from cryptography.fernet import Fernet
+import tempfile
+from bs4 import BeautifulSoup, Comment
+from xhtml2pdf import pisa
 
 # Application Metadata
 VERSION = "1.4.0"
@@ -750,7 +753,13 @@ class AccessMergerApp(ctk.CTk):
             self.queue_tree.delete(item)
 
     def add_queue_item(self, filename, status="Pending", text_color="#4B5563"):
-        icon = "📧" if filename.lower().endswith(('.eml', '.msg')) else "📄"
+        low_fn = filename.lower()
+        if low_fn.endswith(('.eml', '.msg')): icon = "📧"
+        elif low_fn.endswith(('.docx', '.doc')): icon = "📝"
+        elif low_fn.endswith(('.xlsx', '.xls', '.csv')): icon = "📊"
+        elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')): icon = "📷"
+        elif low_fn.endswith('.txt'): icon = "🔤"
+        else: icon = "📄"
         idx = len(self.queue_tree.get_children()) + 1
         item = self.queue_tree.insert("", "end", values=(str(idx), f"{icon} {filename}", status))
         return item
@@ -837,169 +846,192 @@ class AccessMergerApp(ctk.CTk):
                 messagebox.showinfo("Check Updates", "Could not reach the server. Please ensure you are online or visit the website for updates.")
         threading.Thread(target=check, daemon=True).start()
 
-    def _generate_email_cover(self, msg, out_path):
-        # Dynamically set dimensions based on paper dropdown
-        paper = self.paper_dropdown.get()
-        if "Legal" in paper:
-            w, h = 2550, 4200 # 300 DPI Legal
-        elif "Letter" in paper:
-            w, h = 2550, 3300 # 300 DPI Letter
-        else:
-            w, h = 2480, 3508 # 300 DPI A4
+    def _clean_microsoft_html(self, soup):
+        """Scrubs malformed Office syntax and inline styles containing illegal tinycss2 characters."""
+        for s in soup.find_all("style"):
+            s.decompose()
+        for tag in soup.find_all(True):
+            if ":" in tag.name or tag.name.startswith(('o', 'w', 'v', 'x', 'm')):
+                tag.unwrap()
+        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
+        for comment in comments:
+            comment.extract()
+        return soup
 
-        img = Image.new("RGB", (w, h), "white")
-        draw = ImageDraw.Draw(img)
-        
-        # Attempt Native Windows Fonts fallback to default
-        try:
-            font_bold = ImageFont.truetype("arialbd.ttf", 60)
-            font_reg = ImageFont.truetype("arial.ttf", 45)
-            font_title = ImageFont.truetype("arialbd.ttf", 80)
-        except:
-            font_bold = font_reg = font_title = ImageFont.load_default()
-
-        # 🏢 Draw Executive Branding Top Bar
-        draw.rectangle([0, 0, w, 220], fill="#F3F4F6")
-        draw.text((120, 70), "ACCESS PARALEGAL — DOCUMENTATION RECORD", fill="#1F2937", font=font_title)
-        draw.rectangle([0, 215, w, 220], fill="#288F4F")
-
-        # Header Metadata Extraction
-        headers = {
-            "From": str(msg.get('From', 'Unknown Sender')),
-            "To": str(msg.get('To', 'Unknown Recipient')),
-            "Date": str(msg.get('Date', 'Unknown Date')),
-            "Subject": str(msg.get('Subject', 'No Subject'))
-        }
-        
-        y = 340
-        for k, v in headers.items():
-            draw.text((120, y), f"{k.upper()}:", fill="#111827", font=font_bold)
-            # Wrap header values
-            words = v.split(' ')
-            line = ""
-            for word in words:
-                if len(line + " " + word) * 28 < (w - 850):
-                    line += " " + word
-                else:
-                    draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
-                    y += 70
-                    line = word
-            draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
-            y += 110
-
-        draw.line([120, y, w-120, y], fill="#E5E7EB", width=5)
-        y += 70
-        
-        draw.text((120, y), "MESSAGE CORRESPONDENCE EXTRACT:", fill="#111827", font=font_bold)
-        y += 90
-        
-        # Safely parse Text Body
-        body = ""
-        if msg.is_multipart():
-            for part in msg.walk():
-                if part.get_content_type() == "text/plain":
-                    try:
-                        body = part.get_payload(decode=True).decode(errors='replace')
-                    except:
-                        pass
-                    break
-        else:
-            try:
-                body = msg.get_payload(decode=True).decode(errors='replace')
-            except:
-                pass
-        
-        if not body.strip():
-            body = "[This email contains no plain text content or is an HTML-only document.]"
-            
-        body = re.sub(r'\s+', ' ', body)[:2000] # Restrict to first 2000 chars for cover page
-        
-        # Draw Wrapped Body Content
-        line = ""
-        for word in body.split(' '):
-            if len(line + " " + word) * 24 < (w - 380):
-                line += " " + word
-            else:
-                draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
-                y += 60
-                line = word
-                if y > h - 250: break
-        if y < h - 200:
-            draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
-            
-        # Convert to grayscale matrix if checked by paralegal
-        if self.var_grayscale.get():
-            img = img.convert("L")
-            
-        img.save(out_path, "PDF")
-
-    def _generate_outlook_msg_cover(self, msg, out_path):
-        """Render executive cover page for Microsoft Outlook .msg files."""
-        paper = self.paper_dropdown.get()
-        w, h = (2550, 4200) if "Legal" in paper else (2550, 3300) if "Letter" in paper else (2480, 3508)
-        
-        img = Image.new("RGB", (w, h), "white")
-        draw = ImageDraw.Draw(img)
+    def _render_email_to_pdf(self, file_path, out_path, temp_extract_dir):
+        """High-fidelity dual-engine EML/MSG to PDF renderer preserving inline images and CSS layout."""
+        temp_files = []
+        msg_obj = None
+        ext_low = os.path.splitext(file_path)[1].lower()
         
         try:
-            font_bold = ImageFont.truetype("arialbd.ttf", 60)
-            font_reg = ImageFont.truetype("arial.ttf", 45)
-            font_title = ImageFont.truetype("arialbd.ttf", 80)
-        except:
-            font_bold = font_reg = font_title = ImageFont.load_default()
+            subj, sender, to, date, html_body = "No Subject", "Unknown Sender", "Unknown Recipient", "Unknown Date", ""
+            cid_map = {}
 
-        draw.rectangle([0, 0, w, 220], fill="#F3F4F6")
-        draw.text((120, 70), "ACCESS PARALEGAL — DOCUMENTATION RECORD", fill="#1F2937", font=font_title)
-        draw.rectangle([0, 215, w, 220], fill="#288F4F")
-
-        headers = {
-            "From": str(msg.sender if hasattr(msg, 'sender') else "Unknown Sender"),
-            "To": str(msg.to if hasattr(msg, 'to') else "Unknown Recipient"),
-            "Date": str(msg.date if hasattr(msg, 'date') else "Unknown Date"),
-            "Subject": str(msg.subject if hasattr(msg, 'subject') else "No Subject")
-        }
-        
-        y = 340
-        for k, v in headers.items():
-            draw.text((120, y), f"{k.upper()}:", fill="#111827", font=font_bold)
-            words = str(v).split(' ')
-            line = ""
-            for word in words:
-                if len(line + " " + word) * 28 < (w - 850):
-                    line += " " + word
-                else:
-                    draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
-                    y += 70
-                    line = word
-            draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
-            y += 110
-
-        draw.line([120, y, w-120, y], fill="#E5E7EB", width=5)
-        y += 70
-        
-        draw.text((120, y), "MESSAGE CORRESPONDENCE EXTRACT (OUTLOOK):", fill="#111827", font=font_bold)
-        y += 90
-        
-        body = str(msg.body if hasattr(msg, 'body') else "[No text body]").strip()
-        if not body:
-            body = "[This email contains no plain text content.]"
-        body = re.sub(r'\s+', ' ', body)[:2000]
-        
-        line = ""
-        for word in body.split(' '):
-            if len(line + " " + word) * 24 < (w - 380):
-                line += " " + word
-            else:
-                draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
-                y += 60
-                line = word
-                if y > h - 250: break
-        if y < h - 200:
-            draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
+            if ext_low == '.eml':
+                with open(file_path, 'rb') as f:
+                    msg_obj = BytesParser(policy=policy.default).parse(f)
+                subj = str(msg_obj.get('Subject', 'No Subject'))
+                sender = str(msg_obj.get('From', 'Unknown Sender'))
+                to = str(msg_obj.get('To', 'Unknown Recipient'))
+                date = str(msg_obj.get('Date', 'Unknown Date'))
+                body_part = msg_obj.get_body(preferencelist=('html', 'plain'))
+                if body_part:
+                    html_body = body_part.get_content()
+                    if body_part.get_content_type() == 'text/plain':
+                        html_body = f"<html><body><pre style='white-space: pre-wrap; font-family: Arial; font-size: 12px;'>{html_body}</pre></body></html>"
+                for part in msg_obj.walk():
+                    content_id = part.get('Content-ID')
+                    if content_id:
+                        cid = str(content_id).strip('<>').strip()
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            ext = ".png"
+                            fn = part.get_filename() or ""
+                            if fn.lower().endswith(('.jpg', '.jpeg')): ext = ".jpg"
+                            elif fn.lower().endswith('.gif'): ext = ".gif"
+                            tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=ext)
+                            tf.write(payload)
+                            tf.close()
+                            temp_files.append(tf.name)
+                            cid_map[cid] = tf.name
             
-        if self.var_grayscale.get():
-            img = img.convert("L")
-        img.save(out_path, "PDF")
+            elif ext_low == '.msg':
+                msg_obj = extract_msg.Message(file_path)
+                subj = msg_obj.subject or "No Subject"
+                sender = msg_obj.sender or "Unknown Sender"
+                to = msg_obj.to or "Unknown Recipient"
+                date = msg_obj.date or "Unknown Date"
+                if msg_obj.htmlBody:
+                    html_body = msg_obj.htmlBody.decode('utf-8', errors='ignore')
+                elif msg_obj.body:
+                    html_body = f"<html><body><pre style='white-space: pre-wrap; font-family: Arial; font-size: 12px;'>{msg_obj.body}</pre></body></html>"
+                if msg_obj.attachments:
+                    for att in msg_obj.attachments:
+                        cid = att.cid
+                        if not cid and hasattr(att, 'contentId'): cid = att.contentId
+                        if cid:
+                            ext = ".png"
+                            orig_name = att.longFilename or att.shortFilename or ""
+                            if orig_name.lower().endswith(('.jpg', '.jpeg')): ext = ".jpg"
+                            elif orig_name.lower().endswith('.gif'): ext = ".gif"
+                            tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=ext)
+                            tf.write(att.data)
+                            tf.close()
+                            temp_files.append(tf.name)
+                            cid_map[str(cid).strip('<>').strip()] = tf.name
+            
+            soup = BeautifulSoup(html_body, 'html.parser')
+            soup = self._clean_microsoft_html(soup)
+            for img in soup.find_all('img'):
+                src = img.get('src', '')
+                if src.startswith('cid:'):
+                    target_cid = src[4:].strip('<>').strip()
+                    local_path = None
+                    for k, v in cid_map.items():
+                        if target_cid in k or k in target_cid:
+                            local_path = v
+                            break
+                    if local_path: img['src'] = local_path
+
+            paper_size = "letter"
+            paper_val = self.paper_dropdown.get()
+            if "Legal" in paper_val: paper_size = "legal"
+            elif "A4" in paper_val: paper_size = "a4"
+
+            header_html = f"""
+            <div style="font-family: Arial, sans-serif; border-bottom: 2px solid #67BE5E; padding-bottom: 12px; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="width: 75px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">From:</td><td style="font-size: 12px; color: #000;">{sender}</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Sent:</td><td style="font-size: 12px; color: #000;">{date}</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">To:</td><td style="font-size: 12px; color: #000;">{to}</td></tr>
+                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Subject:</td><td style="font-size: 13px; font-weight: bold; color: #67BE5E;">{subj}</td></tr>
+                </table>
+            </div>
+            """
+            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Arial, sans-serif; font-size: 11px; color: #333; line-height: 1.3; }} img {{ max-width: 100%; height: auto; display: block; margin: 10px 0; }} table {{ max-width: 100%; }}</style></head><body>{header_html}<div>{str(soup)}</div></body></html>"""
+            
+            with open(out_path, "wb") as f:
+                pisa.CreatePDF(final_html, dest=f)
+        finally:
+            if ext_low == '.msg' and msg_obj:
+                try: msg_obj.close()
+                except: pass
+            for tf_path in temp_files:
+                try: os.remove(tf_path)
+                except: pass
+
+    def _convert_word_to_pdf(self, file_path, out_path):
+        """Leverage win32com background automation to natively export DOCX to PDF."""
+        import win32com.client
+        import pythoncom
+        pythoncom.CoInitialize()
+        word = None
+        doc = None
+        try:
+            word = win32com.client.DispatchEx("Word.Application")
+            word.Visible = False
+            word.DisplayAlerts = False
+            doc = word.Documents.Open(os.path.abspath(file_path), ReadOnly=True)
+            doc.SaveAs(os.path.abspath(out_path), FileFormat=17) # 17 = wdFormatPDF
+            return True
+        except Exception as e:
+            print(f"Word native export failure: {e}")
+            return False
+        finally:
+            if doc:
+                try: doc.Close(SaveChanges=0)
+                except: pass
+            if word:
+                try: word.Quit()
+                except: pass
+            pythoncom.CoUninitialize()
+
+    def _convert_excel_to_pdf(self, file_path, out_path):
+        """Leverage win32com background automation to natively export spreadsheet data to PDF."""
+        import win32com.client
+        import pythoncom
+        pythoncom.CoInitialize()
+        excel = None
+        wb = None
+        try:
+            excel = win32com.client.DispatchEx("Excel.Application")
+            excel.Visible = False
+            excel.DisplayAlerts = False
+            wb = excel.Workbooks.Open(os.path.abspath(file_path), ReadOnly=True)
+            wb.ExportAsFixedFormat(0, os.path.abspath(out_path)) # 0 = xlTypePDF
+            return True
+        except Exception as e:
+            print(f"Excel native export failure: {e}")
+            return False
+        finally:
+            if wb:
+                try: wb.Close(SaveChanges=False)
+                except: pass
+            if excel:
+                try: excel.Quit()
+                except: pass
+            pythoncom.CoUninitialize()
+
+    def _convert_text_to_pdf(self, file_path, out_path):
+        """Read text streams, escape symbols, and compile securely via xhtml2pdf."""
+        import html
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            escaped = html.escape(content)
+            paper_size = "letter"
+            paper_val = self.paper_dropdown.get()
+            if "Legal" in paper_val: paper_size = "legal"
+            elif "A4" in paper_val: paper_size = "a4"
+            
+            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Courier, monospace; font-size: 11px; color: #222; line-height: 1.2; }}</style></head><body><pre style='white-space: pre-wrap;'>{escaped}</pre></body></html>"""
+            with open(out_path, "wb") as f:
+                pisa.CreatePDF(final_html, dest=f)
+            return True
+        except Exception as e:
+            print(f"Text to PDF engine failure: {e}")
+            return False
 
     def trigger_async_folder_scan(self, folder_path):
         if self.scan_in_progress: return
@@ -1014,7 +1046,7 @@ class AccessMergerApp(ctk.CTk):
             if not os.path.exists(folder_path):
                 return
             # Expanded to detect Legacy Image Formats and Emails (including Outlook .msg)
-            legal_exts = ('.pdf', '.eml', '.msg', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
+            legal_exts = ('.pdf', '.eml', '.msg', '.tif', '.tiff', '.jpg', '.jpeg', '.png', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt')
             files = [f for f in os.listdir(folder_path) if f.lower().endswith(legal_exts)]
             files.sort(key=self.natural_sort_key)
             self.detected_files = files
@@ -1029,9 +1061,11 @@ class AccessMergerApp(ctk.CTk):
                         with pikepdf.open(p_path) as p:
                             total_p += len(p.pages)
                     elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
-                        total_p += 1 # Represents 1 page converted image
+                        total_p += 1 
                     elif low_fn.endswith(('.eml', '.msg')):
-                        total_p += 1 # Cover page
+                        total_p += 1 
+                    elif low_fn.endswith(('.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt')):
+                        total_p += 1
                 except:
                     pass
             
@@ -1173,97 +1207,169 @@ class AccessMergerApp(ctk.CTk):
 
                 # --- SCENARIO 3: EMAIL RECORDS (.EML) ---
                 elif low_fn.endswith('.eml') and self.var_email.get():
-                    with open(file_path, 'rb') as f:
-                        msg = BytesParser(policy=policy.default).parse(f)
-                    
-                    # A. Generate Visual Email Record Page (Cover)
                     cover_pdf_path = os.path.join(temp_extract_dir, f"eml_cover_{int(time.time())}_{idx}.pdf")
-                    self._generate_email_cover(msg, cover_pdf_path)
+                    # Render using high-fidelity xhtml2pdf pipeline
+                    self._render_email_to_pdf(file_path, cover_pdf_path, temp_extract_dir)
                     
                     email_start_pg = curr_pg
-                    
-                    # Insert Cover Page
                     with pikepdf.open(cover_pdf_path) as cover:
                         merged_pdf.pages.extend(cover.pages)
                         curr_pg += len(cover.pages)
                     
-                    # Prepare Outline/Bookmark Node
-                    subj = str(msg.get('Subject', 'No Subject'))
+                    with open(file_path, 'rb') as f:
+                        msg_obj = BytesParser(policy=policy.default).parse(f)
+                    subj = str(msg_obj.get('Subject', 'No Subject'))
                     email_outline = pikepdf.OutlineItem(f"📧 Email: {subj[:50]}", destination=email_start_pg, page_location="Fit")
                     
-                    # B. Rip Attachments
-                    extracted_pdfs = []
-                    for part in msg.iter_attachments():
-                        att_filename = part.get_filename()
-                        if att_filename and att_filename.lower().endswith('.pdf'):
-                            out_path = os.path.join(temp_extract_dir, f"extracted_{idx}_{att_filename}")
-                            with open(out_path, 'wb') as out_f:
-                                out_f.write(part.get_payload(decode=True))
-                            extracted_pdfs.append((att_filename, out_path))
-                    
-                    # C. Append Ripped Attachments to merged document & NEST Bookmarks!
-                    if extracted_pdfs:
-                        for orig_name, pdf_path in extracted_pdfs:
-                            att_start_pg = curr_pg
-                            with pikepdf.open(pdf_path) as src:
-                                cnt = len(src.pages)
-                                merged_pdf.pages.extend(src.pages)
-                                curr_pg += cnt
-                            
-                            # Nest Bookmark directly under the parent email!
-                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", destination=att_start_pg, page_location="Fit"))
+                    # Recursive Attachment Processing Engine
+                    extracted_attachments = []
+                    a_idx = 0
+                    for part in msg_obj.walk():
+                        if part.get_content_maintype() == 'multipart': continue
+                        if part.get('Content-ID'): continue # Skip inline images managed by rendering
+                        fn_att = part.get_filename()
+                        if not fn_att: continue
                         
-                        self.after(0, lambda i=item_id, l=len(extracted_pdfs): update_tree_status(i, f"✅ Ripped {l} PDF(s)"))
-                    else:
-                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Rendered Body"))
-                    
-                    if self.var_bookmark.get():
-                        outline_nodes.append(email_outline)
+                        raw_p = os.path.join(temp_extract_dir, f"raw_{idx}_{a_idx}_{fn_att}")
+                        payload = part.get_payload(decode=True)
+                        if not payload: continue
+                        with open(raw_p, 'wb') as raw_f: raw_f.write(payload)
+                        
+                        pdf_p = os.path.join(temp_extract_dir, f"conv_{idx}_{a_idx}_{fn_att}.pdf")
+                        success = False
+                        att_low = fn_att.lower()
+                        
+                        if att_low.endswith('.pdf'):
+                            pdf_p = raw_p
+                            success = True
+                        elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
+                            with Image.open(raw_p) as im: im.convert("RGB").save(pdf_p, "PDF")
+                            success = True
+                        elif att_low.endswith(('.docx', '.doc')):
+                            success = self._convert_word_to_pdf(raw_p, pdf_p)
+                        elif att_low.endswith(('.xlsx', '.xls', '.csv')):
+                            success = self._convert_excel_to_pdf(raw_p, pdf_p)
+                        elif att_low.endswith('.txt'):
+                            success = self._convert_text_to_pdf(raw_p, pdf_p)
+                            
+                        if success:
+                            extracted_attachments.append((fn_att, pdf_p))
+                        a_idx += 1
+                        
+                    for o_name, p_path in extracted_attachments:
+                        a_start = curr_pg
+                        with pikepdf.open(p_path) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            curr_pg += len(src.pages)
+                        email_outline.children.append(pikepdf.OutlineItem(f"📎 {o_name}", destination=a_start, page_location="Fit"))
+                        
+                    self.after(0, lambda i=item_id: update_tree_status(i, f"✅ Combined with {len(extracted_attachments)} Asset(s)"))
+                    if self.var_bookmark.get(): outline_nodes.append(email_outline)
                     success_count += 1
 
                 # --- SCENARIO 4: OUTLOOK EMAIL RECORDS (.MSG) ---
                 elif low_fn.endswith('.msg') and self.var_email.get():
-                    msg = extract_msg.Message(file_path)
-                    
-                    # A. Generate Visual Cover Page
                     cover_pdf_path = os.path.join(temp_extract_dir, f"msg_cover_{int(time.time())}_{idx}.pdf")
-                    self._generate_outlook_msg_cover(msg, cover_pdf_path)
+                    self._render_email_to_pdf(file_path, cover_pdf_path, temp_extract_dir)
                     
                     email_start_pg = curr_pg
                     with pikepdf.open(cover_pdf_path) as cover:
                         merged_pdf.pages.extend(cover.pages)
                         curr_pg += len(cover.pages)
                         
-                    subj = str(msg.subject if msg.subject else "No Subject")
+                    msg_obj = extract_msg.Message(file_path)
+                    subj = str(msg_obj.subject or "No Subject")
                     email_outline = pikepdf.OutlineItem(f"📧 Outlook: {subj[:50]}", destination=email_start_pg, page_location="Fit")
                     
-                    # B. Rip Attachments via extract_msg API
-                    extracted_pdfs = []
-                    if msg.attachments:
-                        for att in msg.attachments:
-                            att_name = att.longFilename if att.longFilename else att.shortFilename
-                            if att_name and str(att_name).lower().endswith('.pdf'):
-                                out_path = os.path.join(temp_extract_dir, f"extracted_{idx}_{att_name}")
-                                att.save(customPath=temp_extract_dir, customFilename=f"extracted_{idx}_{att_name}")
-                                extracted_pdfs.append((att_name, out_path))
+                    extracted_attachments = []
+                    a_idx = 0
+                    if msg_obj.attachments:
+                        for att in msg_obj.attachments:
+                            if att.cid or getattr(att, 'contentId', None): continue # Skip inline
+                            fn_att = att.longFilename or att.shortFilename
+                            if not fn_att: continue
+                            
+                            raw_p = os.path.join(temp_extract_dir, f"raw_{idx}_{a_idx}_{fn_att}")
+                            with open(raw_p, 'wb') as raw_f: raw_f.write(att.data)
+                            
+                            pdf_p = os.path.join(temp_extract_dir, f"conv_{idx}_{a_idx}_{fn_att}.pdf")
+                            success = False
+                            att_low = str(fn_att).lower()
+                            
+                            if att_low.endswith('.pdf'):
+                                pdf_p = raw_p
+                                success = True
+                            elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
+                                with Image.open(raw_p) as im: im.convert("RGB").save(pdf_p, "PDF")
+                                success = True
+                            elif att_low.endswith(('.docx', '.doc')):
+                                success = self._convert_word_to_pdf(raw_p, pdf_p)
+                            elif att_low.endswith(('.xlsx', '.xls', '.csv')):
+                                success = self._convert_excel_to_pdf(raw_p, pdf_p)
+                            elif att_low.endswith('.txt'):
+                                success = self._convert_text_to_pdf(raw_p, pdf_p)
                                 
-                    # C. Append to document
-                    if extracted_pdfs:
-                        for orig_name, pdf_path in extracted_pdfs:
-                            att_start_pg = curr_pg
-                            with pikepdf.open(pdf_path) as src:
-                                cnt = len(src.pages)
-                                merged_pdf.pages.extend(src.pages)
-                                curr_pg += cnt
-                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", destination=att_start_pg, page_location="Fit"))
-                        self.after(0, lambda i=item_id, l=len(extracted_pdfs): update_tree_status(i, f"✅ Ripped {l} PDF(s)"))
-                    else:
-                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Parsed .MSG"))
+                            if success:
+                                extracted_attachments.append((fn_att, pdf_p))
+                            a_idx += 1
                     
-                    if self.var_bookmark.get():
-                        outline_nodes.append(email_outline)
+                    for o_name, p_path in extracted_attachments:
+                        a_start = curr_pg
+                        with pikepdf.open(p_path) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            curr_pg += len(src.pages)
+                        email_outline.children.append(pikepdf.OutlineItem(f"📎 {o_name}", destination=a_start, page_location="Fit"))
+                        
+                    self.after(0, lambda i=item_id: update_tree_status(i, f"✅ Combined with {len(extracted_attachments)} Asset(s)"))
+                    if self.var_bookmark.get(): outline_nodes.append(email_outline)
                     success_count += 1
-                    msg.close()
+                    try: msg_obj.close()
+                    except: pass
+
+                # --- SCENARIO 5: WORD DOCUMENTS (.DOCX, .DOC) ---
+                elif low_fn.endswith(('.docx', '.doc')):
+                    temp_pdf = os.path.join(temp_extract_dir, f"word_{int(time.time())}_{idx}.pdf")
+                    if self._convert_word_to_pdf(file_path, temp_pdf):
+                        with pikepdf.open(temp_pdf) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            if self.var_bookmark.get():
+                                clean_n, _ = os.path.splitext(fn)
+                                outline_nodes.append(pikepdf.OutlineItem(f"📝 {clean_n}", destination=curr_pg, page_location="Fit"))
+                            curr_pg += len(src.pages)
+                            success_count += 1
+                            self.after(0, lambda i=item_id: update_tree_status(i, "✅ Word Rendered"))
+                    else:
+                        raise ValueError("Word native print automation failed.")
+
+                # --- SCENARIO 6: SPREADSHEETS (.XLSX, .XLS, .CSV) ---
+                elif low_fn.endswith(('.xlsx', '.xls', '.csv')):
+                    temp_pdf = os.path.join(temp_extract_dir, f"excel_{int(time.time())}_{idx}.pdf")
+                    if self._convert_excel_to_pdf(file_path, temp_pdf):
+                        with pikepdf.open(temp_pdf) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            if self.var_bookmark.get():
+                                clean_n, _ = os.path.splitext(fn)
+                                outline_nodes.append(pikepdf.OutlineItem(f"📊 {clean_n}", destination=curr_pg, page_location="Fit"))
+                            curr_pg += len(src.pages)
+                            success_count += 1
+                            self.after(0, lambda i=item_id: update_tree_status(i, "✅ Excel Rendered"))
+                    else:
+                        raise ValueError("Excel native print automation failed.")
+
+                # --- SCENARIO 7: TEXT RECORDS (.TXT) ---
+                elif low_fn.endswith('.txt'):
+                    temp_pdf = os.path.join(temp_extract_dir, f"txt_{int(time.time())}_{idx}.pdf")
+                    if self._convert_text_to_pdf(file_path, temp_pdf):
+                        with pikepdf.open(temp_pdf) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            if self.var_bookmark.get():
+                                clean_n, _ = os.path.splitext(fn)
+                                outline_nodes.append(pikepdf.OutlineItem(f"🔤 {clean_n}", destination=curr_pg, page_location="Fit"))
+                            curr_pg += len(src.pages)
+                            success_count += 1
+                            self.after(0, lambda i=item_id: update_tree_status(i, "✅ Text Compiled"))
+                    else:
+                        raise ValueError("Text parsing engine failure.")
 
             except Exception as e:
                 self.after(0, lambda i=item_id, err=str(e): update_tree_status(i, f"❌ Fail: {err[:30]}"))
