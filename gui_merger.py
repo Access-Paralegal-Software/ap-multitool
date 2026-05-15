@@ -34,16 +34,16 @@ KEYGEN_PRODUCT_TOKEN = "prod-1ba5ec8a951c01b0857f24a19726b4effc9eb159f73e164a2c9
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
 
-# UI Aesthetic Branding Colors (Access Paralegal Light/Silver Concept)
+# UI Aesthetic Branding Colors (System-Aware Light/Dark Soothing Platinum Concept)
 BRAND_ACCENT_GREEN = "#288F4F"
 BRAND_DEEP_ACCENT = "#1E6C3A"
-BRAND_SILVER_BG = "#F3F4F6"
-BRAND_DARK_TEXT = "#1F2937"
-BRAND_WHITE_PANEL = "#FFFFFF"
-BRAND_BORDER_LIGHT = "#E5E7EB"
+BRAND_SILVER_BG = ("#E2E8F0", "#0F172A")   # Light: Soft Warm Grey, Dark: Deep Midnight Slate
+BRAND_DARK_TEXT = ("#0F172A", "#F8FAFC")   # Light: Obsidian, Dark: Soft Ice White
+BRAND_WHITE_PANEL = ("#F1F5F9", "#1E293B") # Light: Light Platinum (Toned Down), Dark: Rich Charcoal
+BRAND_BORDER_LIGHT = ("#CBD5E1", "#334155")
 
 # Mode and Theme Config
-ctk.set_appearance_mode("light")
+ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("green")
 
 EULA_TEXT = """ACCESS PARALEGAL SERVICES — END USER LICENSE AGREEMENT (EULA)
@@ -97,6 +97,26 @@ class AccessMergerApp(ctk.CTk):
         self.resizable(False, False)
         self.configure(fg_color=BRAND_SILVER_BG)
 
+        # --- DYNAMIC DUAL-MODE BACKGROUND RENDER (GLARE-FREE DIAGONAL SLASH) ---
+        bg_w, bg_h = 880, 660
+        try:
+            # Light: Soothing Warm Platinum with 30% Opacity Green Slash
+            light_canvas = Image.new("RGBA", (bg_w, bg_h), "#E2E8F0")
+            l_draw = ImageDraw.Draw(light_canvas)
+            l_draw.polygon([(bg_w, 0), (bg_w, bg_h), (int(bg_w * 0.45), bg_h)], fill=(40, 143, 79, 30))
+            
+            # Dark: Ultra-Smooth Midnight Slate with Deep Emerald Glow
+            dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#0F172A")
+            d_draw = ImageDraw.Draw(dark_canvas)
+            d_draw.polygon([(bg_w, 0), (bg_w, bg_h), (int(bg_w * 0.45), bg_h)], fill=(30, 108, 58, 35))
+            
+            self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
+            self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
+            self.bg_overlay.place(x=0, y=0, relwidth=1, relheight=1)
+        except Exception as e:
+            print(f"Adaptive canvas render fallback triggered: {e}")
+
+
         self._setup_menu()
         self._setup_ui()
         self.load_stored_license()
@@ -128,7 +148,7 @@ class AccessMergerApp(ctk.CTk):
 
     def _setup_ui(self):
         # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
-        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=BRAND_WHITE_PANEL, border_width=0, height=110)
+        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent", border_width=0, height=110)
         self.header_frame.pack(fill="x", pady=0)
         self.header_frame.pack_propagate(False)
 
