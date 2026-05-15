@@ -128,7 +128,7 @@ class AccessMergerApp(ctk.CTk):
         self.sub_title = ctk.CTkLabel(
             self.header_frame, 
             text="PROFESSIONAL PDF & EMAIL BUNDLE MERGER", 
-            font=ctk.CTkFont(family="Inter", size=10, weight="bold", tracking=True),
+            font=ctk.CTkFont(family="Inter", size=10, weight="bold"),
             text_color="#4B5563"
         )
         self.sub_title.pack(pady=(0, 15))
