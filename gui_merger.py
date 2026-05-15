@@ -1466,8 +1466,39 @@ class AccessMergerApp(ctk.CTk):
         except Exception:
             pass # Fails silently on mismatch / new seed
 
+    def get_next_available_default_case(self, parent_root):
+        """Scans active workspace and calculates next available numbered case folder to prevent collisions."""
+        if not os.path.exists(parent_root):
+            return "Case0001"
+        try:
+            existing = os.listdir(parent_root)
+            max_num = 0
+            for item in existing:
+                # Match CaseXXXX pattern
+                if item.startswith("Case") and len(item) > 4:
+                    suffix = item[4:]
+                    num_str = ""
+                    for char in suffix:
+                        if char.isdigit():
+                            num_str += char
+                        else:
+                            break
+                    if num_str:
+                        try:
+                            val = int(num_str)
+                            if val > max_num:
+                                max_num = val
+                        except ValueError:
+                            pass
+            next_val = max_num + 1
+            return f"Case{next_val:04d}"
+        except Exception:
+            return "Case0001"
+
     def update_case_workspace_paths(self):
         """Enforces standardized legal subdirectory trees tied to Case Profiles."""
+        parent_root = getattr(self, 'custom_workspace_root', self.app_dir)
+        
         case_val = self.case_num_entry.get().strip()
         if not case_val:
             # Fallback to plaintiff
@@ -1475,15 +1506,17 @@ class AccessMergerApp(ctk.CTk):
             if pla_val:
                 case_val = f"Case_{pla_val.replace(' ', '_')}"
             else:
-                case_val = "Case0001"
+                # INTELLIGENT AUTO-INCREMENT: Prevents "File Exists" collisions!
+                case_val = self.get_next_available_default_case(parent_root)
+                # Update GUI Entry visually so the user knows exactly where they're working
+                self.case_num_entry.delete(0, 'end')
+                self.case_num_entry.insert(0, case_val)
         
         # Sanitize folder name
         safe_case = "".join(c for c in case_val if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
         if not safe_case:
             safe_case = "Case0001"
             
-        # Default Parent Location
-        parent_root = getattr(self, 'custom_workspace_root', self.app_dir)
         case_root = os.path.join(parent_root, safe_case)
         
         subfolders = {
