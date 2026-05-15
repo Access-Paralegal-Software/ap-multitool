@@ -9,11 +9,12 @@ from email.parser import BytesParser
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 import pikepdf
 import urllib.request
 import json
 import webbrowser
+from datetime import datetime
 
 # Application Metadata
 VERSION = "1.2.0"
@@ -319,6 +320,91 @@ class AccessMergerApp(ctk.CTk):
                 messagebox.showinfo("Check Updates", "Could not reach the server. Please ensure you are online or visit the website for updates.")
         threading.Thread(target=check, daemon=True).start()
 
+    def _generate_email_cover(self, msg, out_path):
+        # Standard High-Res A4 equivalent at 300 DPI
+        w, h = 2480, 3508
+        img = Image.new("RGB", (w, h), "white")
+        draw = ImageDraw.Draw(img)
+        
+        # Attempt Native Windows Fonts fallback to default
+        try:
+            font_bold = ImageFont.truetype("arialbd.ttf", 60)
+            font_reg = ImageFont.truetype("arial.ttf", 45)
+            font_title = ImageFont.truetype("arialbd.ttf", 80)
+        except:
+            font_bold = font_reg = font_title = ImageFont.load_default()
+
+        # 🏢 Draw Executive Branding Top Bar
+        draw.rectangle([0, 0, w, 220], fill="#F3F4F6")
+        draw.text((120, 70), "ACCESS PARALEGAL — DOCUMENTATION RECORD", fill="#1F2937", font=font_title)
+        draw.rectangle([0, 215, w, 220], fill="#288F4F")
+
+        # Header Metadata Extraction
+        headers = {
+            "From": str(msg.get('From', 'Unknown Sender')),
+            "To": str(msg.get('To', 'Unknown Recipient')),
+            "Date": str(msg.get('Date', 'Unknown Date')),
+            "Subject": str(msg.get('Subject', 'No Subject'))
+        }
+        
+        y = 340
+        for k, v in headers.items():
+            draw.text((120, y), f"{k.upper()}:", fill="#111827", font=font_bold)
+            # Wrap header values
+            words = v.split(' ')
+            line = ""
+            for word in words:
+                if len(line + " " + word) * 28 < 1700:
+                    line += " " + word
+                else:
+                    draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
+                    y += 70
+                    line = word
+            draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
+            y += 110
+
+        draw.line([120, y, w-120, y], fill="#E5E7EB", width=5)
+        y += 70
+        
+        draw.text((120, y), "MESSAGE CORRESPONDENCE EXTRACT:", fill="#111827", font=font_bold)
+        y += 90
+        
+        # Safely parse Text Body
+        body = ""
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_type() == "text/plain":
+                    try:
+                        body = part.get_payload(decode=True).decode(errors='replace')
+                    except:
+                        pass
+                    break
+        else:
+            try:
+                body = msg.get_payload(decode=True).decode(errors='replace')
+            except:
+                pass
+        
+        if not body.strip():
+            body = "[This email contains no plain text content or is an HTML-only document.]"
+            
+        body = re.sub(r'\s+', ' ', body)[:2000] # Restrict to first 2000 chars for cover page
+        
+        # Draw Wrapped Body Content
+        line = ""
+        for word in body.split(' '):
+            if len(line + " " + word) * 24 < 2100:
+                line += " " + word
+            else:
+                draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
+                y += 60
+                line = word
+                if y > h - 250: break
+        if y < h - 200:
+            draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
+            
+        img.save(out_path, "PDF")
+
     def trigger_async_folder_scan(self, folder_path):
         if self.scan_in_progress: return
         self.clear_queue_visual()
@@ -331,8 +417,9 @@ class AccessMergerApp(ctk.CTk):
         try:
             if not os.path.exists(folder_path):
                 return
-            exts = ('.pdf', '.eml') if self.var_email.get() else ('.pdf')
-            files = [f for f in os.listdir(folder_path) if f.lower().endswith(exts)]
+            # Expanded to detect Legacy Image Formats and Emails
+            legal_exts = ('.pdf', '.eml', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
+            files = [f for f in os.listdir(folder_path) if f.lower().endswith(legal_exts)]
             files.sort(key=self.natural_sort_key)
             self.detected_files = files
             
@@ -341,11 +428,14 @@ class AccessMergerApp(ctk.CTk):
                 self.after(0, lambda name=fn: self.add_queue_item(name, "Ready"))
                 try:
                     p_path = os.path.join(folder_path, fn)
-                    if fn.lower().endswith('.pdf'):
+                    low_fn = fn.lower()
+                    if low_fn.endswith('.pdf'):
                         with pikepdf.open(p_path) as p:
                             total_p += len(p.pages)
-                    elif fn.lower().endswith('.eml'):
-                        total_p += 1
+                    elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
+                        total_p += 1 # Represents 1 page converted image
+                    elif low_fn.endswith('.eml'):
+                        total_p += 1 # Cover page
                 except:
                     pass
             
@@ -370,8 +460,8 @@ class AccessMergerApp(ctk.CTk):
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
         
-        exts = ('.pdf', '.eml') if self.var_email.get() else ('.pdf')
-        files = [f for f in os.listdir(source) if f.lower().endswith(exts)]
+        legal_exts = ('.pdf', '.eml', '.tif', '.tiff', '.jpg', '.jpeg', '.png') if self.var_email.get() else ('.pdf', '.tif', '.tiff', '.jpg', '.jpeg', '.png')
+        files = [f for f in os.listdir(source) if f.lower().endswith(legal_exts)]
         if not files:
             self.after(0, lambda: self.processing_lbl.configure(text="Status: Error - No files found!"))
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
@@ -388,7 +478,6 @@ class AccessMergerApp(ctk.CTk):
         outline_nodes = []
         curr_pg = 0
         success_count = 0
-        appended_pages = 0
         
         temp_extract_dir = os.path.join(source, "_volta_temp_attachments")
         os.makedirs(temp_extract_dir, exist_ok=True)
@@ -396,17 +485,20 @@ class AccessMergerApp(ctk.CTk):
 
         for idx, fn in enumerate(files, 1):
             self.after(0, lambda p=idx/total_items: self.p_bar.set(p))
-            self.after(0, lambda f=fn: self.processing_lbl.configure(text=f"Processing: {f[:30]}..."))
+            self.after(0, lambda f=fn: self.processing_lbl.configure(text=f"Compiling: {f[:30]}..."))
             self.after(0, lambda: self.count_lbl.configure(text=f"Item {idx} of {total_items}"))
             
             status_ref = []
-            self.after(0, lambda: status_ref.append(self.add_queue_item(fn, "Extracting...", BRAND_ACCENT_GREEN)))
+            self.after(0, lambda: status_ref.append(self.add_queue_item(fn, "Processing...", BRAND_ACCENT_GREEN)))
             
             time.sleep(0.05)
             
             try:
                 file_path = os.path.join(source, fn)
-                if fn.lower().endswith('.pdf'):
+                low_fn = fn.lower()
+                
+                # --- SCENARIO 1: NATIVE PDF ---
+                if low_fn.endswith('.pdf'):
                     with pikepdf.open(file_path) as src:
                         cnt = len(src.pages)
                         merged_pdf.pages.extend(src.pages)
@@ -414,43 +506,87 @@ class AccessMergerApp(ctk.CTk):
                             clean_n, _ = os.path.splitext(fn)
                             dest = pikepdf.Destination(merged_pdf.pages[curr_pg], pikepdf.Name("/Fit"))
                             outline_nodes.append(pikepdf.OutlineItem(clean_n, dest))
-                        appended_pages += cnt
                         curr_pg += cnt
                         success_count += 1
                         if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Combined", text_color=BRAND_ACCENT_GREEN))
                 
-                elif fn.lower().endswith('.eml') and self.var_email.get():
-                    extracted_pdfs = []
+                # --- SCENARIO 2: LEGACY IMAGE (TIFF, JPG, PNG) ---
+                elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
+                    temp_pdf = os.path.join(temp_extract_dir, f"img_{int(time.time())}_{idx}.pdf")
+                    with Image.open(file_path) as img:
+                        img.convert("RGB").save(temp_pdf, "PDF")
+                    
+                    with pikepdf.open(temp_pdf) as src:
+                        merged_pdf.pages.extend(src.pages)
+                        if self.var_bookmark.get():
+                            clean_n, _ = os.path.splitext(fn)
+                            dest = pikepdf.Destination(merged_pdf.pages[curr_pg], pikepdf.Name("/Fit"))
+                            outline_nodes.append(pikepdf.OutlineItem(f"📷 {clean_n}", dest))
+                        curr_pg += 1
+                        success_count += 1
+                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Converted & Combined", text_color=BRAND_ACCENT_GREEN))
+
+                # --- SCENARIO 3: EMAIL RECORDS (.EML) ---
+                elif low_fn.endswith('.eml') and self.var_email.get():
                     with open(file_path, 'rb') as f:
                         msg = BytesParser(policy=policy.default).parse(f)
-                        for part in msg.iter_attachments():
-                            att_filename = part.get_filename()
-                            if att_filename and att_filename.lower().endswith('.pdf'):
-                                out_path = os.path.join(temp_extract_dir, f"extracted_{int(time.time())}_{att_filename}")
-                                with open(out_path, 'wb') as out_f:
-                                    out_f.write(part.get_payload(decode=True))
-                                extracted_pdfs.append(out_path)
                     
+                    # A. Generate Visual Email Record Page (Cover)
+                    cover_pdf_path = os.path.join(temp_extract_dir, f"eml_cover_{int(time.time())}_{idx}.pdf")
+                    self._generate_email_cover(msg, cover_pdf_path)
+                    
+                    email_start_pg = curr_pg
+                    
+                    # Insert Cover Page
+                    with pikepdf.open(cover_pdf_path) as cover:
+                        merged_pdf.pages.extend(cover.pages)
+                        curr_pg += len(cover.pages)
+                    
+                    # Prepare Outline/Bookmark Node
+                    subj = str(msg.get('Subject', 'No Subject'))
+                    email_dest = pikepdf.Destination(merged_pdf.pages[email_start_pg], pikepdf.Name("/Fit"))
+                    email_outline = pikepdf.OutlineItem(f"📧 Email: {subj[:50]}", email_dest)
+                    
+                    # B. Rip Attachments
+                    extracted_pdfs = []
+                    for part in msg.iter_attachments():
+                        att_filename = part.get_filename()
+                        if att_filename and att_filename.lower().endswith('.pdf'):
+                            out_path = os.path.join(temp_extract_dir, f"extracted_{idx}_{att_filename}")
+                            with open(out_path, 'wb') as out_f:
+                                out_f.write(part.get_payload(decode=True))
+                            extracted_pdfs.append((att_filename, out_path))
+                    
+                    # C. Append Ripped Attachments to merged document & NEST Bookmarks!
                     if extracted_pdfs:
-                        for pdf_path in extracted_pdfs:
+                        for orig_name, pdf_path in extracted_pdfs:
+                            att_start_pg = curr_pg
                             with pikepdf.open(pdf_path) as src:
                                 cnt = len(src.pages)
                                 merged_pdf.pages.extend(src.pages)
-                                appended_pages += cnt
                                 curr_pg += cnt
-                        success_count += 1
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text=f"✅ Extracted & Combined ({len(extracted_pdfs)})", text_color=BRAND_ACCENT_GREEN))
+                            
+                            # Nest Bookmark directly under the parent email!
+                            att_dest = pikepdf.Destination(merged_pdf.pages[att_start_pg], pikepdf.Name("/Fit"))
+                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", att_dest))
+                        
+                        if status_ref: self.after(0, lambda: status_ref[0].configure(text=f"✅ Rendered Body & Ripped {len(extracted_pdfs)} PDF(s)", text_color=BRAND_ACCENT_GREEN))
                     else:
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="⚠️ Skipping (No PDFs)", text_color="#9B2C2C"))
+                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Rendered Body (No Attachments)", text_color=BRAND_ACCENT_GREEN))
+                    
+                    if self.var_bookmark.get():
+                        outline_nodes.append(email_outline)
+                    success_count += 1
 
             except Exception as e:
                 if status_ref: self.after(0, lambda err=str(e): status_ref[0].configure(text="❌ Failed", text_color="#DC2626"))
             time.sleep(0.01)
 
         if self.var_bookmark.get() and outline_nodes:
-            with merged_pdf.open_outline() as outline: outline.root.extend(outline_nodes)
+            with merged_pdf.open_outline() as outline: 
+                outline.root.extend(outline_nodes)
 
-        self.after(0, lambda: self.processing_lbl.configure(text="Compiling Master Document..."))
+        self.after(0, lambda: self.processing_lbl.configure(text="Compiling Final Corporate Portfolio..."))
         out_name = f"Access_Merged_Master_{int(time.time())}.pdf"
         final_dest = os.path.join(self.default_output, out_name)
 
@@ -459,18 +595,19 @@ class AccessMergerApp(ctk.CTk):
             merged_pdf.close()
             elapsed = time.time() - start_t
             
+            # Clean extraction directories
             for f in os.listdir(temp_extract_dir):
                 try: os.remove(os.path.join(temp_extract_dir, f))
                 except: pass
             try: os.rmdir(temp_extract_dir)
             except: pass
 
-            self.after(0, lambda: self.processing_lbl.configure(text="🎉 Merge Complete!"))
+            self.after(0, lambda: self.processing_lbl.configure(text="🎉 Portfolio Complete!"))
             self.after(0, lambda: self.count_lbl.configure(text=""))
             self.after(0, lambda: messagebox.showinfo("Success", f"Successfully combined {success_count} items into a single master PDF!\n\nDuration: {elapsed:.1f}s"))
             os.startfile(self.default_output)
         except Exception as e:
-            self.after(0, lambda: self.processing_lbl.configure(text="Error: Save failed!"))
+            self.after(0, lambda: self.processing_lbl.configure(text="Error: Compile failed!"))
             self.after(0, lambda err=str(e): messagebox.showerror("Fatal Error", f"Failed saving: {err}"))
 
         self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
