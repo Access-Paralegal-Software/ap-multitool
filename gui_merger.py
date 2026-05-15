@@ -42,6 +42,13 @@ BRAND_DARK_TEXT = ("#222222", "#ECECEC")    # High-Contrast Crisp Typography
 BRAND_WHITE_PANEL = ("#F4F4F5", "#242828")  # Soft Grey Panels for fallback
 BRAND_BORDER_LIGHT = ("#CCCCCC", "#3C4242")
 
+# --- LUXURY "FROSTED GLASS" SIMULATION SYSTEM ---
+# Blended hex codes calculated to match the underlying Pillow diagonal sweep
+GLASS_HEADER = ("#DCEAD9", "#233D20")      # Glass sitting in the upper sweep zone
+GLASS_LEFT = ("#EBECEF", "#242828")        # Glass sitting over Charcoal base (Left)
+GLASS_RIGHT = ("#D2E6CF", "#203F1D")       # Glass sitting deeply inside Green Sweep (Right)
+GLASS_BORDER = ("#A8C0A6", "#355632")      # Emerald-tinted borders to complete glass illusion
+
 # Mode and Theme Config
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("green")
@@ -200,7 +207,7 @@ class AccessMergerApp(ctk.CTk):
         drop_font = ctk.CTkFont(family="Segoe UI", size=13)
 
         # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
-        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent", border_width=0, height=110)
+        self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=GLASS_HEADER, border_width=0, height=110)
         self.header_frame.pack(fill="x", pady=0)
         self.header_frame.pack_propagate(False)
 
@@ -258,8 +265,8 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Config Panel
         self.left_frame = ctk.CTkFrame(
-            self.merger_container, width=320, fg_color="transparent", 
-            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+            self.merger_container, width=320, fg_color=GLASS_LEFT, 
+            corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.left_frame.pack(side="left", fill="both", padx=(0, 15))
         self.left_frame.pack_propagate(False)
@@ -342,8 +349,8 @@ class AccessMergerApp(ctk.CTk):
         self.dir_btn.pack(side="right")
 
         self.queue_frame = ctk.CTkScrollableFrame(
-            self.right_frame, fg_color="transparent", 
-            border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+            self.right_frame, fg_color=("#EAF4EA", "#183216"), 
+            border_width=1, border_color=GLASS_BORDER, corner_radius=8
         )
         self.queue_frame.pack(fill="both", expand=True, pady=(0, 15))
         
@@ -383,8 +390,8 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Bates Config Panel
         self.bates_left = ctk.CTkFrame(
-            self.bates_container, width=350, fg_color="transparent", 
-            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+            self.bates_container, width=350, fg_color=GLASS_LEFT, 
+            corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.bates_left.pack(side="left", fill="both", padx=(0, 15))
         self.bates_left.pack_propagate(False)
@@ -452,7 +459,7 @@ class AccessMergerApp(ctk.CTk):
         self.bates_right.pack(side="right", fill="both", expand=True)
 
         self.bates_info_box = ctk.CTkFrame(
-            self.bates_right, fg_color="transparent", corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+            self.bates_right, fg_color=GLASS_RIGHT, corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.bates_info_box.pack(fill="both", expand=True, pady=(0, 15))
 
@@ -490,8 +497,8 @@ class AccessMergerApp(ctk.CTk):
         
         # Left Panel: Smart Filename Protocol
         self.org_left = ctk.CTkFrame(
-            self.org_container, width=420, fg_color="transparent", 
-            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+            self.org_container, width=420, fg_color=GLASS_LEFT, 
+            corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
         self.org_left.pack_propagate(False)
@@ -560,8 +567,8 @@ class AccessMergerApp(ctk.CTk):
 
         # Right Panel: Master Case Tree Builder
         self.org_right = ctk.CTkFrame(
-            self.org_container, width=360, fg_color="transparent", 
-            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+            self.org_container, width=360, fg_color=GLASS_RIGHT, 
+            corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.org_right.pack(side="right", fill="both", expand=True)
         self.org_right.pack_propagate(False)
@@ -579,8 +586,8 @@ class AccessMergerApp(ctk.CTk):
         
         ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
         self.tree_preview = ctk.CTkTextbox(
-            self.org_right, height=105, fg_color="transparent", text_color=BRAND_DARK_TEXT, 
-            border_width=1, border_color=BRAND_BORDER_LIGHT, font=ctk.CTkFont(size=13)
+            self.org_right, height=105, fg_color=("#EAF4EA", "#183216"), text_color=BRAND_DARK_TEXT, 
+            border_width=1, border_color=GLASS_BORDER, font=ctk.CTkFont(size=13)
         )
         self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
         
