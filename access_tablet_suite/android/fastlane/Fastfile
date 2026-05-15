@@ -1,0 +1,18 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build Release APK and AAB Bundle"
+  lane :build_release do
+    sh("flutter build appbundle --release")
+    sh("flutter build apk --release")
+  end
+
+  desc "Submit internal testing release to Google Play Console"
+  lane :beta do
+    # Requires API JSON key to function
+    upload_to_play_store(
+      track: 'internal',
+      aab: '../build/app/outputs/bundle/release/app-release.aab'
+    )
+  end
+end

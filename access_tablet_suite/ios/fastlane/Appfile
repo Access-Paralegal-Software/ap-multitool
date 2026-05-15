@@ -1,0 +1,7 @@
+# iOS Fastlane Configuration
+# Fill these fields once your Apple Developer Account is registered!
+
+app_identifier("com.accessparalegal.pdfmerger") # The Bundle ID you register in App Store Connect
+apple_id("") # The Apple ID of your Apple Developer account (e.g. legal@access.com)
+team_id("") # Your Apple Developer Portal Team ID (10-character string)
+itc_team_id("") # App Store Connect Team ID if different from Portal

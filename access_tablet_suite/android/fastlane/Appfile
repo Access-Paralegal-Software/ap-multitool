@@ -1,0 +1,5 @@
+# Fastlane Android Configuration
+# Wait for User Developer Account setup to finalize bindings.
+
+json_key_file("") # Path to Google Play API service account JSON (will configure once you register Console)
+package_name("com.accessparalegal.pdfmerger") # Unique app identifier for the play store

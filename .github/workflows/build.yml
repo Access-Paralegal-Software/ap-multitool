@@ -55,7 +55,8 @@ jobs:
       run: |
         pyinstaller --windowed --noconsole --add-data="logo_small.png:." --name="Access_Paralegal_PDF_Merger" gui_merger.py
         cd dist
-        zip -r Access_Paralegal_Mac_Suite.zip Access_Paralegal_PDF_Merger.app
+        # Premium Upgrade: Package as a standard Apple Disk Image (DMG)
+        hdiutil create -volname "Access Paralegal PDF Merger" -srcfolder Access_Paralegal_PDF_Merger.app -ov -format UDZO Access_Paralegal_Mac_Installer.dmg
 
     - name: Compile Standalone Binary (Linux)
       if: runner.os == 'Linux'
@@ -63,7 +64,21 @@ jobs:
         # Linux uses colon separator for add-data
         pyinstaller --noconsole --onefile --add-data="logo_small.png:." --name="Access_Paralegal_PDF_Merger" gui_merger.py
         cd dist
-        tar -czvf Access_Paralegal_Linux_x64.tar.gz Access_Paralegal_PDF_Merger
+        # Create standard Debian distribution directory structure
+        mkdir -p deb_pkg/DEBIAN
+        mkdir -p deb_pkg/usr/bin
+        cp Access_Paralegal_PDF_Merger deb_pkg/usr/bin/access-paralegal-pdf-merger
+        # Generate Debian Control file
+        echo "Package: access-paralegal-pdf-merger" > deb_pkg/DEBIAN/control
+        echo "Version: 1.2.5" >> deb_pkg/DEBIAN/control
+        echo "Section: base" >> deb_pkg/DEBIAN/control
+        echo "Priority: optional" >> deb_pkg/DEBIAN/control
+        echo "Architecture: amd64" >> deb_pkg/DEBIAN/control
+        echo "Depends: python3-tk, qpdf" >> deb_pkg/DEBIAN/control
+        echo "Maintainer: Alan Woodyard" >> deb_pkg/DEBIAN/control
+        echo "Description: Secure offline PDF and Email attachment compiler." >> deb_pkg/DEBIAN/control
+        # Premium Upgrade: Compile standard Linux Debian Installer (.deb)
+        dpkg-deb --build deb_pkg Access_Paralegal_Linux_Installer.deb
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
@@ -71,5 +86,5 @@ jobs:
         name: ${{ matrix.os }}-build
         path: |
           dist/Access_Paralegal_PDF_Merger.exe
-          dist/Access_Paralegal_Mac_Suite.zip
-          dist/Access_Paralegal_Linux_x64.tar.gz
+          dist/Access_Paralegal_Mac_Installer.dmg
+          dist/Access_Paralegal_Linux_Installer.deb
