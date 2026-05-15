@@ -43,10 +43,10 @@ BRAND_WHITE_PANEL = ("#F4F4F5", "#242828")  # Soft Grey Panels for fallback
 BRAND_BORDER_LIGHT = ("#CCCCCC", "#3C4242")
 
 # --- THE "EXECUTIVE GLEAM" LUXURY PALETTE ---
-# 95% Elegant neutral obsidian glass with an ultra-fine 5% jade tint for premium light-catching depth
+# 100% Elegant obsidian slate panels to match the charcoal base they reside upon
 GLASS_HEADER = ("#F3F6F3", "#242A2A")       # Crystal-polished glass banner
 GLASS_LEFT = ("#EBECEF", "#212525")         # Sleek, deep professional slate
-GLASS_RIGHT = ("#ECF3EC", "#202B21")        # Refined Obsidian Jade (subtle light-catching tint)
+GLASS_RIGHT = ("#EBECEF", "#212525")        # Unified slate (resides over charcoal base)
 GLASS_BORDER = ("#BFE2BD", "#5DA652")       # High-specular bright emerald "Gleam" edge
 
 # Mode and Theme Config
