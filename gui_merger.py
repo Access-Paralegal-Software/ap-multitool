@@ -1149,8 +1149,7 @@ class AccessMergerApp(ctk.CTk):
                         merged_pdf.pages.extend(src.pages)
                         if self.var_bookmark.get():
                             clean_n, _ = os.path.splitext(fn)
-                            dest = pikepdf.Destination(merged_pdf.pages[curr_pg], pikepdf.Name("/Fit"))
-                            outline_nodes.append(pikepdf.OutlineItem(clean_n, dest))
+                            outline_nodes.append(pikepdf.OutlineItem(clean_n, destination=curr_pg, page_location="Fit"))
                         curr_pg += cnt
                         success_count += 1
                         self.after(0, lambda i=item_id: update_tree_status(i, "✅ Combined"))
@@ -1167,8 +1166,7 @@ class AccessMergerApp(ctk.CTk):
                         merged_pdf.pages.extend(src.pages)
                         if self.var_bookmark.get():
                             clean_n, _ = os.path.splitext(fn)
-                            dest = pikepdf.Destination(merged_pdf.pages[curr_pg], pikepdf.Name("/Fit"))
-                            outline_nodes.append(pikepdf.OutlineItem(f"📷 {clean_n}", dest))
+                            outline_nodes.append(pikepdf.OutlineItem(f"📷 {clean_n}", destination=curr_pg, page_location="Fit"))
                         curr_pg += 1
                         success_count += 1
                         self.after(0, lambda i=item_id: update_tree_status(i, "✅ Converted & Combined"))
@@ -1191,8 +1189,7 @@ class AccessMergerApp(ctk.CTk):
                     
                     # Prepare Outline/Bookmark Node
                     subj = str(msg.get('Subject', 'No Subject'))
-                    email_dest = pikepdf.Destination(merged_pdf.pages[email_start_pg], pikepdf.Name("/Fit"))
-                    email_outline = pikepdf.OutlineItem(f"📧 Email: {subj[:50]}", email_dest)
+                    email_outline = pikepdf.OutlineItem(f"📧 Email: {subj[:50]}", destination=email_start_pg, page_location="Fit")
                     
                     # B. Rip Attachments
                     extracted_pdfs = []
@@ -1214,8 +1211,7 @@ class AccessMergerApp(ctk.CTk):
                                 curr_pg += cnt
                             
                             # Nest Bookmark directly under the parent email!
-                            att_dest = pikepdf.Destination(merged_pdf.pages[att_start_pg], pikepdf.Name("/Fit"))
-                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", att_dest))
+                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", destination=att_start_pg, page_location="Fit"))
                         
                         self.after(0, lambda i=item_id, l=len(extracted_pdfs): update_tree_status(i, f"✅ Ripped {l} PDF(s)"))
                     else:
@@ -1239,8 +1235,7 @@ class AccessMergerApp(ctk.CTk):
                         curr_pg += len(cover.pages)
                         
                     subj = str(msg.subject if msg.subject else "No Subject")
-                    email_dest = pikepdf.Destination(merged_pdf.pages[email_start_pg], pikepdf.Name("/Fit"))
-                    email_outline = pikepdf.OutlineItem(f"📧 Outlook: {subj[:50]}", email_dest)
+                    email_outline = pikepdf.OutlineItem(f"📧 Outlook: {subj[:50]}", destination=email_start_pg, page_location="Fit")
                     
                     # B. Rip Attachments via extract_msg API
                     extracted_pdfs = []
@@ -1260,11 +1255,10 @@ class AccessMergerApp(ctk.CTk):
                                 cnt = len(src.pages)
                                 merged_pdf.pages.extend(src.pages)
                                 curr_pg += cnt
-                            att_dest = pikepdf.Destination(merged_pdf.pages[att_start_pg], pikepdf.Name("/Fit"))
-                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", att_dest))
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text=f"✅ Parsed .MSG & Ripped {len(extracted_pdfs)} PDF(s)", text_color=BRAND_ACCENT_GREEN))
+                            email_outline.children.append(pikepdf.OutlineItem(f"📎 Attachment: {orig_name}", destination=att_start_pg, page_location="Fit"))
+                        self.after(0, lambda i=item_id, l=len(extracted_pdfs): update_tree_status(i, f"✅ Ripped {l} PDF(s)"))
                     else:
-                        if status_ref: self.after(0, lambda: status_ref[0].configure(text="✅ Parsed .MSG (No Attachments)", text_color=BRAND_ACCENT_GREEN))
+                        self.after(0, lambda i=item_id: update_tree_status(i, "✅ Parsed .MSG"))
                     
                     if self.var_bookmark.get():
                         outline_nodes.append(email_outline)
@@ -1272,7 +1266,7 @@ class AccessMergerApp(ctk.CTk):
                     msg.close()
 
             except Exception as e:
-                if status_ref: self.after(0, lambda err=str(e): status_ref[0].configure(text="❌ Failed", text_color="#DC2626"))
+                self.after(0, lambda i=item_id, err=str(e): update_tree_status(i, f"❌ Fail: {err[:30]}"))
             time.sleep(0.01)
 
         if self.var_bookmark.get() and outline_nodes:
