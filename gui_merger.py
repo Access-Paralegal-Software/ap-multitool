@@ -22,8 +22,13 @@ from reportlab.lib.pagesizes import letter, legal, A4
 from datetime import datetime
 
 # Application Metadata
-VERSION = "1.3.0"
-GITHUB_REPO = "woodyardae/Access_Paralegal_PDF_Merger" # Change this to your repo path!
+VERSION = "1.4.0"
+GITHUB_REPO = "woodyardae/Access_Paralegal_PDF_Merger"
+
+# Keygen.sh Secure Licensing Constants
+KEYGEN_ACCOUNT_ID = "c885ab2c-9f4d-44a1-adfd-ec1839a0ed93"
+KEYGEN_PRODUCT_TOKEN = "prod-1ba5ec8a951c01b0857f24a19726b4effc9eb159f73e164a2c91f413510bd984v3"
+LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 
 # UI Aesthetic Branding Colors (Access Paralegal Light/Silver Concept)
 BRAND_ACCENT_GREEN = "#288F4F"
@@ -77,6 +82,10 @@ class AccessMergerApp(ctk.CTk):
         self.detected_files = []
         self.total_audit_pages = 0
         self.scan_in_progress = False
+        
+        # Pro / Licensing State
+        self.is_pro_activated = False
+        self.active_license_key = ""
 
         # Window Config
         self.title("Access Paralegal Suite")
@@ -86,6 +95,7 @@ class AccessMergerApp(ctk.CTk):
 
         self._setup_menu()
         self._setup_ui()
+        self.load_stored_license()
         
         # Scan current landing folder
         self.trigger_async_folder_scan(self.default_input)
@@ -100,6 +110,8 @@ class AccessMergerApp(ctk.CTk):
         self.menubar.add_cascade(label="File", menu=filemenu)
         
         helpmenu = tk.Menu(self.menubar, tearoff=0)
+        helpmenu.add_command(label="🔐 Activate Enterprise License...", command=self.show_activation_window)
+        helpmenu.add_separator()
         helpmenu.add_command(label="Check for Updates...", command=self.check_updates)
         helpmenu.add_command(label="Submit App Feedback...", command=self.show_feedback_window)
         helpmenu.add_command(label="About Software...", command=self.show_about_window)
@@ -670,8 +682,18 @@ class AccessMergerApp(ctk.CTk):
             self.after(0, lambda: self.processing_lbl.configure(text="Status: Error - No files found!"))
             self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
             return
-        files.sort(key=self.natural_sort_key)
+            
+        # --- 🚦 ENFORCE V1.4.0 LICENSE GATING LIMITS ---
+        if not self.check_gate_limit("merge_count", len(files)):
+            self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
+            return
+            
+        if self.var_grayscale.get():
+            if not self.check_gate_limit("advanced_compression"):
+                self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
+                return
 
+        files.sort(key=self.natural_sort_key)
         start_t = time.time()
         merged_pdf = pikepdf.Pdf.new()
         
@@ -895,6 +917,8 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkButton(eula, text="Close Terms", width=140, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=eula.destroy).pack(pady=15)
 
     def start_bates_thread(self):
+        if not self.check_gate_limit("bates_stamping"):
+            return
         self.bates_run_btn.configure(state="disabled", text="Processing Bates Serialization...")
         threading.Thread(target=self.execute_bates_flattening, daemon=True).start()
 
@@ -1073,6 +1097,140 @@ class AccessMergerApp(ctk.CTk):
         # Submit Button
         btn_sub = ctk.CTkButton(fb, text="🚀 Submit Secure Feedback", height=45, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, font=ctk.CTkFont(weight="bold"), command=submit_action)
         btn_sub.pack(fill="x", padx=25)
+
+    # ==========================================
+    # 🔒 KEYGEN SECURE ACTIVATION ARCHITECTURE
+    # ==========================================
+    def load_stored_license(self):
+        """Detects and silently parses any locally stored license files during startup."""
+        if os.path.exists(LICENSE_FILE):
+            try:
+                with open(LICENSE_FILE, 'r') as f:
+                    data = json.load(f)
+                    key = data.get("key", "")
+                    if key:
+                        self.active_license_key = key
+                        # Launch asynchronous verification background thread
+                        threading.Thread(target=self._silent_startup_validation, args=(key,), daemon=True).start()
+            except:
+                pass
+
+    def _silent_startup_validation(self, key):
+        """Performs background handshakes to prevent application loop freezing on slow networks."""
+        if self.validate_keygen_license(key):
+            self.is_pro_activated = True
+            self.after(0, self._apply_pro_ui_theme)
+
+    def validate_keygen_license(self, key):
+        """Encapsulated REST API driver sending secure POST validations to Keygen.sh."""
+        url = f"https://api.keygen.sh/v1/accounts/{KEYGEN_ACCOUNT_ID}/licenses/actions/validate-key"
+        body_data = {
+            "meta": {
+                "key": key.strip()
+            }
+        }
+        
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(body_data).encode('utf-8'),
+            headers={
+                "Content-Type": "application/vnd.api+json",
+                "Accept": "application/vnd.api+json",
+                "Authorization": f"Bearer {KEYGEN_PRODUCT_TOKEN}"
+            },
+            method="POST"
+        )
+        
+        try:
+            # Perform deterministic secure SSL handshake with an 8s ceiling
+            with urllib.request.urlopen(req, timeout=8) as response:
+                res_data = json.loads(response.read().decode())
+                meta = res_data.get("meta", {})
+                if meta.get("constant") == "VALID":
+                    return True
+        except Exception as e:
+            print(f"Handshake signature failed: {e}")
+        return False
+
+    def _apply_pro_ui_theme(self):
+        """Elevates standard UI to enterprise aesthetic levels on successful verification."""
+        self.title("Access Paralegal Suite — 🛡️ PRO ENTERPRISE ACTIVE")
+
+    def check_gate_limit(self, action_name, count=0):
+        """Central execution controller preventing access to restricted modules based on tier."""
+        if self.is_pro_activated:
+            return True
+            
+        if action_name == "merge_count" and count > 20:
+            self.show_activation_prompt(f"The Free Tier allows up to 20 documents per batch.\nYour queue contains {count} files.")
+            return False
+        elif action_name == "bates_stamping":
+            self.show_activation_prompt("Indelible Bates Stamping & Serialization is a Pro Enterprise utility.")
+            return False
+        elif action_name == "advanced_compression":
+            self.show_activation_prompt("High-Contrast Grayscale Exhibit Optimization requires Pro Enterprise activation.")
+            return False
+            
+        return True
+
+    def show_activation_prompt(self, reason):
+        """Injects decision dialog to upsell or activate the application."""
+        msg = f"{reason}\n\nWould you like to activate your Lifetime Enterprise License Key right now?"
+        if messagebox.askyesno("🔒 Access Paralegal Suite — Premium Upgrade", msg):
+            self.show_activation_window()
+
+    def show_activation_window(self):
+        """Generates beautiful modal asking for activation keys, verifying via backend hooks."""
+        act = ctk.CTkToplevel(self)
+        act.title("🔐 Enterprise Suite Activation")
+        act.geometry("480x400")
+        act.configure(fg_color=BRAND_WHITE_PANEL)
+        act.resizable(False, False)
+        act.grab_set()
+        act.lift()
+        
+        ctk.CTkLabel(act, text="ACTIVATE YOUR ENTERPRISE SUITE", font=ctk.CTkFont(size=16, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(25, 5))
+        ctk.CTkLabel(act, text="Unlock unlimited batch compiling and permanent Bates numbering.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 20))
+        
+        ctk.CTkLabel(act, text="Enter License Key:", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=35, pady=(10, 2))
+        key_entry = ctk.CTkEntry(act, placeholder_text="XXXX-XXXX-XXXX-XXXX", height=40, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT)
+        key_entry.pack(fill="x", padx=35, pady=(0, 15))
+        if self.active_license_key:
+            key_entry.insert(0, self.active_license_key)
+            
+        status_lbl = ctk.CTkLabel(act, text="", font=ctk.CTkFont(size=11, weight="bold"))
+        status_lbl.pack(pady=5)
+        
+        def attempt_activation():
+            key = key_entry.get().strip()
+            if not key:
+                status_lbl.configure(text="❌ Please enter a valid key string!", text_color="#DC2626")
+                return
+            status_lbl.configure(text="Connecting to Access Security Matrix...", text_color="#2563EB")
+            
+            def thread_task():
+                success = self.validate_keygen_license(key)
+                if success:
+                    self.is_pro_activated = True
+                    self.active_license_key = key
+                    try:
+                        with open(LICENSE_FILE, 'w') as f:
+                            json.dump({"key": key, "stamp": str(datetime.now())}, f)
+                    except: pass
+                    self.after(0, self._apply_pro_ui_theme)
+                    self.after(0, lambda: messagebox.showinfo("Welcome to Enterprise Suite", "Success! Your lifetime license has been fully validated and locked to this terminal."))
+                    self.after(0, act.destroy)
+                else:
+                    self.after(0, lambda: status_lbl.configure(text="❌ Invalid License Key or Network Timeout!", text_color="#DC2626"))
+            
+            threading.Thread(target=thread_task, daemon=True).start()
+
+        btn_act = ctk.CTkButton(act, text="🚀 Activate License Now", height=45, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, font=ctk.CTkFont(weight="bold"), command=attempt_activation)
+        btn_act.pack(fill="x", padx=35, pady=15)
+        
+        link_lbl = ctk.CTkLabel(act, text="Don't have a key? Secure your Founder Tier Pass", font=ctk.CTkFont(size=10, underline=True), text_color="#2563EB", cursor="hand2")
+        link_lbl.pack(pady=5)
+        link_lbl.bind("<Button-1>", lambda e: webbrowser.open("https://www.accessparalegalservices.com/founder-portal"))
 
 if __name__ == "__main__":
     app = AccessMergerApp()
