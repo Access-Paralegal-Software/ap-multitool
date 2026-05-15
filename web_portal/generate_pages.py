@@ -1,7 +1,7 @@
 import os
 import sys
 
-# Define Matrix Dimensions
+# Matrix Dimensions: 50 States x 4 Court Levels x 5 Case Specs x 5 Pain Points = 5,000 pages!
 STATES = [
     "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", 
     "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", 
@@ -13,8 +13,18 @@ STATES = [
 ]
 
 COURTS = [
-    "Federal District Court", "Circuit Court", "Appellate Court", "Supreme Court", 
-    "County Superior Court", "E-Filing ECF System", "PACER Upload Gateway", "Trial Joint Appendix"
+    "Federal District Court", 
+    "County Circuit Court", 
+    "State Supreme Court", 
+    "Appellate Division"
+]
+
+SPECIALTIES = [
+    "Personal Injury",
+    "Family & Divorce Law",
+    "Corporate & Commercial",
+    "Trusts & Estates",
+    "Criminal Defense"
 ]
 
 PAIN_POINTS = {
@@ -50,14 +60,17 @@ PAIN_POINTS = {
     }
 }
 
-def get_template(state, court, key, data):
+# Base URL for Sitemap Generation
+BASE_URL = "https://software.accessparalegalservices.com/pages/"
+
+def get_template(state, court, spec, key, data):
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Professional {data['hook']} built specifically for {state} {court} compliance. Download the 100% offline Access Paralegal Suite.">
-    <title>{state} {court} {data['hook']} Utility | Access Paralegal Suite</title>
+    <meta name="description" content="Professional {data['hook']} optimized for {state} {court} {spec} litigation requirements. Get the 100% offline Access Paralegal Suite.">
+    <title>{state} {court} {spec} {data['hook']} Utility | Access Paralegal Suite</title>
     <style>
         :root {{ --accent: #288F4F; --accent-hover: #1E6C3A; --silver: #F3F4F6; --dark: #1F2937; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--dark); background: var(--silver); margin: 0; padding: 0; }}
@@ -81,34 +94,34 @@ def get_template(state, court, key, data):
 <body>
     <div class="container">
         <div class="hero">
-            <div>🛡️ Engineered for <strong>{state} {court}</strong></div>
+            <div>🛡️ Tailored for <strong>{state} {court} ({spec})</strong></div>
             <h1>The Premier Offline <span>{data['hook']}</span></h1>
             <p class="sub">{data['sub']}</p>
             
             <div class="desc-box">
-                <h3>🚀 Local & Legally Fused</h3>
+                <h3>🚀 Handcrafted for {spec} Practitioners</h3>
                 <p>{data['body']}</p>
-                <p style="font-style:italic; color:#6B7280; font-size:0.9rem;">*100% local sandboxed software. Complies perfectly with state guidelines governing data ethics and PII management.</p>
+                <p style="font-style:italic; color:#6B7280; font-size:0.9rem;">*100% sandboxed. Complies perfectly with {state} standards governing data security, HIPAA, and PII handling in {court} procedures.</p>
             </div>
 
-            <!-- EMAIL CAPTURE & TAGGING -->
+            <!-- EMAIL CAPTURE -->
             <div class="cta-form">
-                <h3>📧 Get the {state} Compliance Setup</h3>
-                <p style="font-size:0.9rem; color:#4B5563; margin-bottom:1.5rem;">Download the installer instantly and get free litigation tips.</p>
-                <form action="#" method="POST" id="email-capture-form">
-                    <input type="hidden" name="tags" value="SEO_{state}_{key}">
+                <h3>📧 Get the {state} Compliance Config</h3>
+                <p style="font-size:0.9rem; color:#4B5563; margin-bottom:1.5rem;">Download the secure client instantly and get exclusive litigation hacks.</p>
+                <form action="#" method="POST">
+                    <input type="hidden" name="tags" value="SEO_{state}_{key}_{spec}">
                     <input type="email" name="email" placeholder="Enter your work email" required><br>
-                    <button type="submit">🔓 Unlock Free Installation</button>
+                    <button type="submit">🔓 Unlock Free 20-Merge Setup</button>
                 </form>
             </div>
         </div>
 
-        <!-- DOWNLOAD BAR ACROSS BOTTOM -->
+        <!-- DOWNLOAD OPTIONS BAR -->
         <div class="dls">
-            <a href="../Access_Paralegal_Setup_v1.3.0.exe" class="dl-card">
+            <a href="../Access_Paralegal_Setup_v1.4.0.exe" class="dl-card">
                 <span class="ico">🪟</span>
                 <h4>Windows Setup</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">v1.3.0 (.exe)</span>
+                <span style="color:#6B7280; font-size:0.85rem;">v1.4.0 (.exe)</span>
             </a>
             <a href="../Access_Paralegal_Mac_Installer.dmg" class="dl-card">
                 <span class="ico">🍏</span>
@@ -124,38 +137,63 @@ def get_template(state, court, key, data):
 
         <div class="footer">
             <p>Copyright &copy; 2026 Access Paralegal Services. All rights reserved.</p>
-            <p>All document manipulation occurs 100% locally. Not affiliated with the {state} State Bar.</p>
+            <p>All operations occur locally on your workstation hardware. Zero third-party servers utilized.</p>
         </div>
     </div>
 </body>
 </html>
 """
 
+def generate_sitemap_xml(filenames):
+    xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for fn in filenames:
+        xml_lines.append('  <url>')
+        xml_lines.append(f'    <loc>{BASE_URL}{fn}</loc>')
+        xml_lines.append('    <changefreq>monthly</changefreq>')
+        xml_lines.append('    <priority>0.8</priority>')
+        xml_lines.append('  </url>')
+    xml_lines.append('</urlset>')
+    return "\n".join(xml_lines)
+
 def main():
     output_dir = "web_portal/pages"
+    # Clean existing pages to avoid bloating
+    if os.path.exists(output_dir):
+        import shutil
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     count = 0
-    print(f"Executing mass matrix generation in {output_dir}...")
+    all_filenames = []
+    print(f"Executing scaled matrix synthesis in {output_dir}...")
     
     for state in STATES:
         for court in COURTS:
-            for key, data in PAIN_POINTS.items():
-                # Generate URL slug
-                slug_state = state.lower().replace(" ", "-")
-                slug_court = court.lower().replace(" ", "-")
-                filename = f"{slug_state}-{slug_court}-{key}.html"
-                filepath = os.path.join(output_dir, filename)
+            for spec in SPECIALTIES:
+                for key, data in PAIN_POINTS.items():
+                    # Generate clean URL slugs
+                    s_slug = state.lower().replace(" ", "-")
+                    c_slug = court.lower().replace(" ", "-")
+                    sp_slug = spec.lower().replace(" ", "-").replace("&", "and")
+                    
+                    filename = f"{s_slug}-{c_slug}-{sp_slug}-{key}.html"
+                    filepath = os.path.join(output_dir, filename)
+                    
+                    html = get_template(state, court, spec, key, data)
+                    
+                    with open(filepath, "w", encoding="utf-8") as f:
+                        f.write(html)
+                    
+                    all_filenames.append(filename)
+                    count += 1
                 
-                html = get_template(state, court, key, data)
+    # Save Sitemap.xml
+    sitemap_content = generate_sitemap_xml(all_filenames)
+    with open("web_portal/sitemap.xml", "w", encoding="utf-8") as sf:
+        sf.write(sitemap_content)
                 
-                with open(filepath, "w", encoding="utf-8") as f:
-                    f.write(html)
-                
-                count += 1
-                
-    print(f"SUCCESS! Programmatically synthesized {count} hyper-targeted SEO landing pages!")
-    print(f"Accessible under 'web_portal/pages/'")
+    print(f"SUCCESS! Synthesized {count} hyper-targeted, scalable SEO landing pages!")
+    print(f"Generated XML sitemap at 'web_portal/sitemap.xml' listing all {count} URLs!")
 
 if __name__ == "__main__":
     main()
