@@ -2,18 +2,16 @@ name: Cross-Platform Build Master
 
 on:
   push:
-    tags:
-      - 'v*' # Trigger on version tags, e.g. v1.2.1
+    branches:
+      - master
   workflow_dispatch: # Allow manual triggering from GitHub UI
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         include:
-          - os: windows-latest
-            output_name: Access_Paralegal_PDF_Merger.exe
           - os: macos-latest
             output_name: Access_Paralegal_PDF_Merger.app
           - os: ubuntu-latest
@@ -29,54 +27,57 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install System Dependencies (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        brew install qpdf
-
     - name: Install System Dependencies (Linux)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libqpdf-dev python3-tk
+        sudo apt-get install -y python3-tk libtk8.6
 
     - name: Install Python Modules
       run: |
         python -m pip install --upgrade pip
-        pip install customtkinter pillow pikepdf pyinstaller
+        pip install customtkinter pymupdf reportlab extract-msg cryptography pillow pyinstaller
 
-    - name: Compile Standalone Binary (Windows)
-      if: runner.os == 'Windows'
+    - name: Get CustomTkinter Path
+      id: tkpath
       run: |
-        pyinstaller --noconsole --onefile --add-data="logo_small.png;." --name="Access_Paralegal_PDF_Merger" gui_merger.py
+        python -c "import customtkinter; print('TK_PATH=' + customtkinter.__path__[0])" >> $GITHUB_ENV
 
     - name: Compile Standalone Bundle (macOS)
       if: runner.os == 'macOS'
       run: |
-        pyinstaller --windowed --noconsole --add-data="logo_small.png:." --name="Access_Paralegal_PDF_Merger" gui_merger.py
+        # Compile MacOS Bundle
+        pyinstaller --windowed --noconfirm --add-data="${{ env.TK_PATH }}:customtkinter/" --add-data="logo_small.png:." --name="AccessParalegal" gui_merger.py
         cd dist
-        # Premium Upgrade: Package as a standard Apple Disk Image (DMG)
-        hdiutil create -volname "Access Paralegal PDF Merger" -srcfolder Access_Paralegal_PDF_Merger.app -ov -format UDZO Access_Paralegal_Mac_Installer.dmg
+        # Package as a standard Apple Disk Image (DMG)
+        hdiutil create -volname "Access Paralegal PDF Merger" -srcfolder AccessParalegal.app -ov -format UDZO Access_Paralegal_Mac_Installer.dmg
 
     - name: Compile Standalone Binary (Linux)
       if: runner.os == 'Linux'
       run: |
         # Linux uses colon separator for add-data
-        pyinstaller --noconsole --onefile --add-data="logo_small.png:." --name="Access_Paralegal_PDF_Merger" gui_merger.py
+        pyinstaller --windowed --noconfirm --add-data="${{ env.TK_PATH }}:customtkinter/" --add-data="logo_small.png:." --name="AccessParalegal" gui_merger.py
         cd dist
         # Create standard Debian distribution directory structure
         mkdir -p deb_pkg/DEBIAN
         mkdir -p deb_pkg/usr/bin
-        cp Access_Paralegal_PDF_Merger deb_pkg/usr/bin/access-paralegal-pdf-merger
+        cp -r AccessParalegal deb_pkg/usr/bin/
+        
         # Generate Debian Control file
         echo "Package: access-paralegal-pdf-merger" > deb_pkg/DEBIAN/control
-        echo "Version: 1.2.5" >> deb_pkg/DEBIAN/control
+        echo "Version: 1.8.1" >> deb_pkg/DEBIAN/control
         echo "Section: base" >> deb_pkg/DEBIAN/control
         echo "Priority: optional" >> deb_pkg/DEBIAN/control
         echo "Architecture: amd64" >> deb_pkg/DEBIAN/control
-        echo "Depends: python3-tk, qpdf" >> deb_pkg/DEBIAN/control
+        echo "Depends: python3-tk" >> deb_pkg/DEBIAN/control
         echo "Maintainer: Alan Woodyard" >> deb_pkg/DEBIAN/control
         echo "Description: Secure offline PDF and Email attachment compiler." >> deb_pkg/DEBIAN/control
+        
+        # Create simple executable script to launch
+        echo '#!/bin/bash' > deb_pkg/usr/bin/access-paralegal-pdf-merger
+        echo '/usr/bin/AccessParalegal/AccessParalegal "$@"' >> deb_pkg/usr/bin/access-paralegal-pdf-merger
+        chmod +x deb_pkg/usr/bin/access-paralegal-pdf-merger
+        
         # Premium Upgrade: Compile standard Linux Debian Installer (.deb)
         dpkg-deb --build deb_pkg Access_Paralegal_Linux_Installer.deb
 
@@ -85,6 +86,5 @@ jobs:
       with:
         name: ${{ matrix.os }}-build
         path: |
-          dist/Access_Paralegal_PDF_Merger.exe
           dist/Access_Paralegal_Mac_Installer.dmg
           dist/Access_Paralegal_Linux_Installer.deb
