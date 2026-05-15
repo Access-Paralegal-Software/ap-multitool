@@ -124,13 +124,13 @@ class AccessMergerApp(ctk.CTk):
             # 2. Draw Light Mode Canvas
             light_canvas = Image.new("RGBA", (bg_w, bg_h), "#EAEAEC") # Premium Matte Light Silver
             l_draw = ImageDraw.Draw(light_canvas)
-            # Swept parallel and slightly lower: starts at 42% width, extends to 82% height
-            l_draw.polygon([(bg_w * 0.42, 0), (bg_w, 0), (bg_w, bg_h * 0.82)], fill=(103, 190, 94, 70))
+            # Pushed WAY down/left: Sweeps from 12% of width down to 95% of height on right
+            l_draw.polygon([(bg_w * 0.12, 0), (bg_w, 0), (bg_w, bg_h * 0.95)], fill=(103, 190, 94, 70))
             
             # 3. Draw Dark Mode Canvas
             dark_canvas = Image.new("RGBA", (bg_w, bg_h), "#1E2222") # Glowing Velvet Charcoal
             d_draw = ImageDraw.Draw(dark_canvas)
-            d_draw.polygon([(bg_w * 0.42, 0), (bg_w, 0), (bg_w, bg_h * 0.82)], fill=(78, 145, 70, 90))
+            d_draw.polygon([(bg_w * 0.12, 0), (bg_w, 0), (bg_w, bg_h * 0.95)], fill=(78, 145, 70, 90))
 
             # 4. Layer the Brand Emblem inside the Slash Sweep
             if emblem:
@@ -145,9 +145,9 @@ class AccessMergerApp(ctk.CTk):
                 emb_overlay = emblem.copy()
                 emb_overlay.putdata(emb_alpha)
                 
-                # Positioned proudly slightly right and down inside the shifted band
-                light_canvas.paste(emb_overlay, (bg_w - 380, 90), emb_overlay)
-                dark_canvas.paste(emb_overlay, (bg_w - 380, 90), emb_overlay)
+                # Positioned proudly deeper inside the vastly expanded green landscape
+                light_canvas.paste(emb_overlay, (bg_w - 450, 130), emb_overlay)
+                dark_canvas.paste(emb_overlay, (bg_w - 450, 130), emb_overlay)
             
             self.adaptive_bg_img = ctk.CTkImage(light_image=light_canvas, dark_image=dark_canvas, size=(bg_w, bg_h))
             self.bg_overlay = ctk.CTkLabel(self, image=self.adaptive_bg_img, text="")
@@ -197,6 +197,8 @@ class AccessMergerApp(ctk.CTk):
         self.config(menu=self.menubar)
 
     def _setup_ui(self):
+        drop_font = ctk.CTkFont(family="Segoe UI", size=13)
+
         # --- HEADER BAR (SILVER WITH PROMINENT LOGO) ---
         self.header_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent", border_width=0, height=110)
         self.header_frame.pack(fill="x", pady=0)
@@ -306,8 +308,9 @@ class AccessMergerApp(ctk.CTk):
 
         ctk.CTkLabel(self.left_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
         self.paper_dropdown = ctk.CTkOptionMenu(
-            self.left_frame, values=["US Letter (8.5 x 11 in)", "US Legal (8.5 x 14 in)", "A4 (International)"], width=260, 
-            fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, button_hover_color=BRAND_DEEP_ACCENT
+            self.left_frame, values=["US Letter (8.5 x 11 in)", "US Legal (8.5 x 14 in)", "A4 (International)"], width=260, height=38,
+            fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, button_hover_color=BRAND_DEEP_ACCENT,
+            font=drop_font, dropdown_font=drop_font
         )
         self.paper_dropdown.pack(padx=20, pady=(0, 10))
 
@@ -410,16 +413,16 @@ class AccessMergerApp(ctk.CTk):
         self.col2 = ctk.CTkFrame(self.num_grid, fg_color="transparent")
         self.col2.pack(side="right", fill="x", expand=True, padx=(5, 0))
         ctk.CTkLabel(self.col2, text="Digit Padding:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w")
-        self.bates_padding = ctk.CTkOptionMenu(self.col2, values=["4 digits (0001)", "6 digits (000001)", "8 digits (00000001)"], width=140, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        self.bates_padding = ctk.CTkOptionMenu(self.col2, values=["4 digits (0001)", "6 digits (000001)", "8 digits (00000001)"], width=140, height=38, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, font=drop_font, dropdown_font=drop_font)
         self.bates_padding.pack(anchor="w")
         self.bates_padding.set("6 digits (000001)")
 
         ctk.CTkLabel(self.bates_left, text="Stamp Positioning:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(5, 2))
-        self.bates_pos = ctk.CTkOptionMenu(self.bates_left, values=["Bottom Right (Court Standard)", "Bottom Center", "Bottom Left", "Top Right"], width=310, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        self.bates_pos = ctk.CTkOptionMenu(self.bates_left, values=["Bottom Right (Court Standard)", "Bottom Center", "Bottom Left", "Top Right"], width=310, height=38, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, font=drop_font, dropdown_font=drop_font)
         self.bates_pos.pack(padx=20, pady=(0, 10))
 
         ctk.CTkLabel(self.bates_left, text="Universal Font Selector:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(5, 2))
-        self.bates_font = ctk.CTkOptionMenu(self.bates_left, values=["Arial Bold (Standard)", "Courier Prime (Monospaced)", "Times New Roman", "Georgia"], width=310, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        self.bates_font = ctk.CTkOptionMenu(self.bates_left, values=["Arial Bold (Standard)", "Courier Prime (Monospaced)", "Times New Roman", "Georgia"], width=310, height=38, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, font=drop_font, dropdown_font=drop_font)
         self.bates_font.pack(padx=20, pady=(0, 15))
 
         # Sequencer Toggles
@@ -449,7 +452,7 @@ class AccessMergerApp(ctk.CTk):
         self.bates_right.pack(side="right", fill="both", expand=True)
 
         self.bates_info_box = ctk.CTkFrame(
-            self.bates_right, fg_color=BRAND_WHITE_PANEL, corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+            self.bates_right, fg_color="transparent", corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
         )
         self.bates_info_box.pack(fill="both", expand=True, pady=(0, 15))
 
@@ -523,7 +526,6 @@ class AccessMergerApp(ctk.CTk):
         # --- RENAMING FORMULA ---
         ctk.CTkLabel(self.org_left, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(10, 4))
 
-        drop_font = ctk.CTkFont(size=13)
         
         self.rename_p1 = ctk.CTkComboBox(
             self.org_left, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], 
@@ -577,7 +579,7 @@ class AccessMergerApp(ctk.CTk):
         
         ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
         self.tree_preview = ctk.CTkTextbox(
-            self.org_right, height=105, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, 
+            self.org_right, height=105, fg_color="transparent", text_color=BRAND_DARK_TEXT, 
             border_width=1, border_color=BRAND_BORDER_LIGHT, font=ctk.CTkFont(size=13)
         )
         self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
