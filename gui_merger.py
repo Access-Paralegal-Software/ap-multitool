@@ -136,24 +136,36 @@ class AccessMergerApp(ctk.CTk):
         self.line = ctk.CTkFrame(self, height=1, fg_color=BRAND_BORDER_LIGHT)
         self.line.pack(fill="x")
 
-        # --- MAIN CONTAINER SPLIT ---
-        self.main_container = ctk.CTkFrame(self, fg_color="transparent")
-        self.main_container.pack(fill="both", expand=True, padx=25, pady=20)
+        # --- DUAL-MODULE TABBED DASHBOARD ---
+        self.tab_view = ctk.CTkTabview(
+            self, fg_color="transparent", segmented_button_selected_color=BRAND_ACCENT_GREEN,
+            segmented_button_selected_hover_color=BRAND_DEEP_ACCENT, text_color=BRAND_DARK_TEXT
+        )
+        self.tab_view.pack(fill="both", expand=True, padx=25, pady=(10, 10))
+        
+        self.tab_merger = self.tab_view.add("📦 Document Merger")
+        self.tab_bates = self.tab_view.add("⚖️ Bates Stamping & Locking")
+
+        # ==========================================
+        # TAB 1: DOCUMENT MERGER (MOUNTED CODEBASE)
+        # ==========================================
+        self.merger_container = ctk.CTkFrame(self.tab_merger, fg_color="transparent")
+        self.merger_container.pack(fill="both", expand=True)
 
         # Left Config Panel
         self.left_frame = ctk.CTkFrame(
-            self.main_container, width=320, fg_color=BRAND_WHITE_PANEL, 
+            self.merger_container, width=320, fg_color=BRAND_WHITE_PANEL, 
             corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
         )
         self.left_frame.pack(side="left", fill="both", padx=(0, 15))
         self.left_frame.pack_propagate(False)
 
         # Right Queue Panel
-        self.right_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        self.right_frame = ctk.CTkFrame(self.merger_container, fg_color="transparent")
         self.right_frame.pack(side="right", fill="both", expand=True)
 
         # --- POPULATE LEFT (SETTINGS) ---
-        ctk.CTkLabel(self.left_frame, text="🛠️ SETTINGS", font=ctk.CTkFont(weight="bold", size=13), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
+        ctk.CTkLabel(self.left_frame, text="🛠️ COMPILER SETTINGS", font=ctk.CTkFont(weight="bold", size=13), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
 
         self.var_bookmark = tk.BooleanVar(value=True)
         self.chk_bookmark = ctk.CTkCheckBox(
@@ -178,23 +190,24 @@ class AccessMergerApp(ctk.CTk):
 
         self.var_email = tk.BooleanVar(value=True)
         self.chk_email = ctk.CTkCheckBox(
-            self.left_frame, text="Extract Email (.eml) PDF Attachments", variable=self.var_email, 
+            self.left_frame, text="Extract Email Attachments", variable=self.var_email, 
             text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_email.pack(anchor="w", padx=20, pady=6)
 
-        ctk.CTkLabel(self.left_frame, text="Property Retention Level:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(12, 4))
-        self.prop_dropdown = ctk.CTkOptionMenu(
-            self.left_frame, values=["Retain All Properties", "Flatten Layout"], width=260, 
+        self.var_grayscale = tk.BooleanVar(value=False)
+        self.chk_grayscale = ctk.CTkCheckBox(
+            self.left_frame, text="📉 Grayscale (Huge File Save!)", variable=self.var_grayscale, 
+            text_color="#B45309", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+        )
+        self.chk_grayscale.pack(anchor="w", padx=20, pady=6)
+
+        ctk.CTkLabel(self.left_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
+        self.paper_dropdown = ctk.CTkOptionMenu(
+            self.left_frame, values=["US Letter (8.5 x 11 in)", "US Legal (8.5 x 14 in)", "A4 (International)"], width=260, 
             fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, button_hover_color=BRAND_DEEP_ACCENT
         )
-        self.prop_dropdown.pack(padx=20, pady=(0, 5))
-
-        self.tip_lbl = ctk.CTkLabel(
-            self.left_frame, text="ℹ️ Keeps Signatures, Annotations, & Highlighting.", 
-            font=ctk.CTkFont(size=9, slant="italic"), text_color="#6B7280", wraplength=260, justify="left"
-        )
-        self.tip_lbl.pack(padx=20, pady=(0, 12))
+        self.paper_dropdown.pack(padx=20, pady=(0, 10))
 
         # AUDIT STATUS CARD
         self.audit_panel = ctk.CTkFrame(self.left_frame, fg_color=BRAND_SILVER_BG, corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
@@ -223,7 +236,6 @@ class AccessMergerApp(ctk.CTk):
         )
         self.dir_btn.pack(side="right")
 
-        # NORMIE VISUAL QUEUE
         self.queue_frame = ctk.CTkScrollableFrame(
             self.right_frame, fg_color=BRAND_WHITE_PANEL, 
             border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
@@ -257,6 +269,113 @@ class AccessMergerApp(ctk.CTk):
             command=self.start_merge_thread
         )
         self.run_btn.pack(fill="x")
+
+        # ==========================================
+        # TAB 2: BATES STAMPING & LOCKING SYSTEM
+        # ==========================================
+        self.bates_container = ctk.CTkFrame(self.tab_bates, fg_color="transparent")
+        self.bates_container.pack(fill="both", expand=True)
+
+        # Left Bates Config Panel
+        self.bates_left = ctk.CTkFrame(
+            self.bates_container, width=350, fg_color=BRAND_WHITE_PANEL, 
+            corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+        )
+        self.bates_left.pack(side="left", fill="both", padx=(0, 15))
+        self.bates_left.pack_propagate(False)
+
+        # Populate Left Bates Controls
+        ctk.CTkLabel(self.bates_left, text="🔢 BATES CONFIGURATION", font=ctk.CTkFont(weight="bold", size=13), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
+        
+        ctk.CTkLabel(self.bates_left, text="Alpha-Numeric Prefix:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(5, 2))
+        self.bates_prefix = ctk.CTkEntry(self.bates_left, placeholder_text="e.g., EXHIBIT-A-", width=310)
+        self.bates_prefix.pack(padx=20, pady=(0, 10))
+        self.bates_prefix.insert(0, "AP-")
+
+        # Dual columns for start index and padding
+        self.num_grid = ctk.CTkFrame(self.bates_left, fg_color="transparent")
+        self.num_grid.pack(fill="x", padx=20, pady=(0, 10))
+        
+        # Start # Column
+        self.col1 = ctk.CTkFrame(self.num_grid, fg_color="transparent")
+        self.col1.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        ctk.CTkLabel(self.col1, text="Starting Index:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w")
+        self.bates_start = ctk.CTkEntry(self.col1, placeholder_text="1", width=140)
+        self.bates_start.pack(anchor="w")
+        self.bates_start.insert(0, "1")
+
+        # Padding Column
+        self.col2 = ctk.CTkFrame(self.num_grid, fg_color="transparent")
+        self.col2.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        ctk.CTkLabel(self.col2, text="Digit Padding:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w")
+        self.bates_padding = ctk.CTkOptionMenu(self.col2, values=["4 digits (0001)", "6 digits (000001)", "8 digits (00000001)"], width=140, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        self.bates_padding.pack(anchor="w")
+        self.bates_padding.set("6 digits (000001)")
+
+        ctk.CTkLabel(self.bates_left, text="Stamp Positioning:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(5, 2))
+        self.bates_pos = ctk.CTkOptionMenu(self.bates_left, values=["Bottom Right (Court Standard)", "Bottom Center", "Bottom Left", "Top Right"], width=310, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        self.bates_pos.pack(padx=20, pady=(0, 10))
+
+        ctk.CTkLabel(self.bates_left, text="Universal Font Selector:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(5, 2))
+        self.bates_font = ctk.CTkOptionMenu(self.bates_left, values=["Arial Bold (Standard)", "Courier Prime (Monospaced)", "Times New Roman", "Georgia"], width=310, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN)
+        self.bates_font.pack(padx=20, pady=(0, 15))
+
+        # Sequencer Toggles
+        self.var_bates_seq = tk.BooleanVar(value=True)
+        self.chk_bates_seq = ctk.CTkCheckBox(
+            self.bates_left, text="Continue Sequential Count Across Files", variable=self.var_bates_seq, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN
+        )
+        self.chk_bates_seq.pack(anchor="w", padx=20, pady=6)
+
+        self.var_bates_csv = tk.BooleanVar(value=True)
+        self.chk_bates_csv = ctk.CTkCheckBox(
+            self.bates_left, text="💾 Generate eDiscovery CSV Load File", variable=self.var_bates_csv, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN
+        )
+        self.chk_bates_csv.pack(anchor="w", padx=20, pady=6)
+
+        self.var_ocr = tk.BooleanVar(value=False)
+        self.chk_ocr = ctk.CTkCheckBox(
+            self.bates_left, text="👁️ Execute OCR Searchable Text Layers", variable=self.var_ocr, 
+            text_color="#B45309", font=ctk.CTkFont(size=12, weight="bold"), fg_color=BRAND_ACCENT_GREEN
+        )
+        self.chk_ocr.pack(anchor="w", padx=20, pady=6)
+
+        # Right Bates Panel (Info & Dynamic Portal)
+        self.bates_right = ctk.CTkFrame(self.bates_container, fg_color="transparent")
+        self.bates_right.pack(side="right", fill="both", expand=True)
+
+        self.bates_info_box = ctk.CTkFrame(
+            self.bates_right, fg_color=BRAND_WHITE_PANEL, corner_radius=12, border_width=1, border_color=BRAND_BORDER_LIGHT
+        )
+        self.bates_info_box.pack(fill="both", expand=True, pady=(0, 15))
+
+        ctk.CTkLabel(self.bates_info_box, text="⛓️ LEGAL AUTHENTICITY REPORT", font=ctk.CTkFont(weight="bold", size=13), text_color=BRAND_ACCENT_GREEN).pack(pady=(20, 10))
+        
+        exp_text = (
+            "Bates Stamping securely vector-locks serialization directly into the page content stream. "
+            "This physically 'flattens' the document metadata to prevent post-filing manipulation.\n\n"
+            "Generating an eDiscovery Load File (CSV) exports a court-ready directory mapping filenames "
+            "to exact Bates ranges, perfectly compatible with enterprise databases like Concordance or Relativity."
+        )
+        ctk.CTkLabel(self.bates_info_box, text=exp_text, font=ctk.CTkFont(size=12), text_color=BRAND_DARK_TEXT, wraplength=400, justify="left").pack(padx=25, pady=10)
+
+        # ❓ DYNAMIC ONLINE FAQ PORTAL
+        self.faq_btn = ctk.CTkButton(
+            self.bates_info_box, text="❓ OPEN FAQ & COMPLIANCE PORTAL (LIVE)", 
+            fg_color="#F3F4F6", text_color=BRAND_ACCENT_GREEN, border_width=1, border_color=BRAND_ACCENT_GREEN,
+            hover_color="#E5E7EB", height=40, font=ctk.CTkFont(weight="bold"),
+            command=lambda: webbrowser.open("https://www.accessparalegalservices.com/software-faq")
+        )
+        self.faq_btn.pack(fill="x", padx=30, pady=(20, 10))
+
+        self.bates_run_btn = ctk.CTkButton(
+            self.bates_right, text="✨ FLATTEN & APPLY BATES STAMPS", height=60, 
+            font=ctk.CTkFont(size=16, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            command=lambda: messagebox.showinfo("Coming Soon", "The Secure Bates Flattening system is staged!\n\nComplete structural module rollout pending in V1.3 Hotfix!")
+        )
+        self.bates_run_btn.pack(fill="x")
 
         # --- FOOTER COPYRIGHT ---
         self.footer_frame = ctk.CTkFrame(self, fg_color=BRAND_WHITE_PANEL, corner_radius=0, height=30)
@@ -321,8 +440,15 @@ class AccessMergerApp(ctk.CTk):
         threading.Thread(target=check, daemon=True).start()
 
     def _generate_email_cover(self, msg, out_path):
-        # Standard High-Res A4 equivalent at 300 DPI
-        w, h = 2480, 3508
+        # Dynamically set dimensions based on paper dropdown
+        paper = self.paper_dropdown.get()
+        if "Legal" in paper:
+            w, h = 2550, 4200 # 300 DPI Legal
+        elif "Letter" in paper:
+            w, h = 2550, 3300 # 300 DPI Letter
+        else:
+            w, h = 2480, 3508 # 300 DPI A4
+
         img = Image.new("RGB", (w, h), "white")
         draw = ImageDraw.Draw(img)
         
@@ -354,7 +480,7 @@ class AccessMergerApp(ctk.CTk):
             words = v.split(' ')
             line = ""
             for word in words:
-                if len(line + " " + word) * 28 < 1700:
+                if len(line + " " + word) * 28 < (w - 850):
                     line += " " + word
                 else:
                     draw.text((450, y), line.strip(), fill="#374151", font=font_reg)
@@ -393,7 +519,7 @@ class AccessMergerApp(ctk.CTk):
         # Draw Wrapped Body Content
         line = ""
         for word in body.split(' '):
-            if len(line + " " + word) * 24 < 2100:
+            if len(line + " " + word) * 24 < (w - 380):
                 line += " " + word
             else:
                 draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
@@ -402,6 +528,10 @@ class AccessMergerApp(ctk.CTk):
                 if y > h - 250: break
         if y < h - 200:
             draw.text((120, y), line.strip(), fill="#4B5563", font=font_reg)
+            
+        # Convert to grayscale matrix if checked by paralegal
+        if self.var_grayscale.get():
+            img = img.convert("L")
             
         img.save(out_path, "PDF")
 
@@ -514,7 +644,9 @@ class AccessMergerApp(ctk.CTk):
                 elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
                     temp_pdf = os.path.join(temp_extract_dir, f"img_{int(time.time())}_{idx}.pdf")
                     with Image.open(file_path) as img:
-                        img.convert("RGB").save(temp_pdf, "PDF")
+                        # Convert to grayscale matrix if enabled to reduce byte-size drastically
+                        target_mode = "L" if self.var_grayscale.get() else "RGB"
+                        img.convert(target_mode).save(temp_pdf, "PDF")
                     
                     with pikepdf.open(temp_pdf) as src:
                         merged_pdf.pages.extend(src.pages)
