@@ -42,12 +42,12 @@ BRAND_DARK_TEXT = ("#222222", "#ECECEC")    # High-Contrast Crisp Typography
 BRAND_WHITE_PANEL = ("#F4F4F5", "#242828")  # Soft Grey Panels for fallback
 BRAND_BORDER_LIGHT = ("#CCCCCC", "#3C4242")
 
-# --- LUXURY "FROSTED GLASS" SIMULATION SYSTEM ---
-# Blended hex codes calculated to match the underlying Pillow diagonal sweep
-GLASS_HEADER = ("#DCEAD9", "#233D20")      # Glass sitting in the upper sweep zone
-GLASS_LEFT = ("#EBECEF", "#242828")        # Glass sitting over Charcoal base (Left)
-GLASS_RIGHT = ("#D2E6CF", "#203F1D")       # Glass sitting deeply inside Green Sweep (Right)
-GLASS_BORDER = ("#A8C0A6", "#355632")      # Emerald-tinted borders to complete glass illusion
+# --- THE "EXECUTIVE GLEAM" LUXURY PALETTE ---
+# 95% Elegant neutral obsidian glass with an ultra-fine 5% jade tint for premium light-catching depth
+GLASS_HEADER = ("#F3F6F3", "#242A2A")       # Crystal-polished glass banner
+GLASS_LEFT = ("#EBECEF", "#212525")         # Sleek, deep professional slate
+GLASS_RIGHT = ("#ECF3EC", "#202B21")        # Refined Obsidian Jade (subtle light-catching tint)
+GLASS_BORDER = ("#BFE2BD", "#5DA652")       # High-specular bright emerald "Gleam" edge
 
 # Mode and Theme Config
 ctk.set_appearance_mode("System")
@@ -349,7 +349,7 @@ class AccessMergerApp(ctk.CTk):
         self.dir_btn.pack(side="right")
 
         self.queue_frame = ctk.CTkScrollableFrame(
-            self.right_frame, fg_color=("#EAF4EA", "#183216"), 
+            self.right_frame, fg_color=("#FFFFFF", "#141616"), 
             border_width=1, border_color=GLASS_BORDER, corner_radius=8
         )
         self.queue_frame.pack(fill="both", expand=True, pady=(0, 15))
@@ -586,7 +586,7 @@ class AccessMergerApp(ctk.CTk):
         
         ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
         self.tree_preview = ctk.CTkTextbox(
-            self.org_right, height=105, fg_color=("#EAF4EA", "#183216"), text_color=BRAND_DARK_TEXT, 
+            self.org_right, height=105, fg_color=("#FFFFFF", "#141616"), text_color=BRAND_DARK_TEXT, 
             border_width=1, border_color=GLASS_BORDER, font=ctk.CTkFont(size=13)
         )
         self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
