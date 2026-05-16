@@ -1,208 +1,132 @@
 import os
 import sys
 
-# Matrix Dimensions: 50 States x 4 Court Levels x 5 Case Specs x 5 Pain Points = 5,000 pages!
-STATES = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", 
-    "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", 
-    "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", 
-    "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", 
-    "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", 
-    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", 
-    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
-]
+# Matrix Dimensions: 50 States x 4 Court Levels x 5 Case Specs = 1000 base locations.
+# Campaign 1 (Original) has 5 keys per location = 5000.
+# Campaign 2 (Psychology) has 5 keys per location = 5000.
+# Total = 10,000 unique pages.
 
-COURTS = [
-    "Federal District Court", 
-    "County Circuit Court", 
-    "State Supreme Court", 
-    "Appellate Division"
-]
+STATES = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
+COURTS = ["Federal District Court", "County Circuit Court", "State Supreme Court", "Appellate Division"]
+SPECIALTIES = ["Personal Injury", "Family & Divorce Law", "Corporate & Commercial", "Trusts & Estates", "Criminal Defense"]
 
-SPECIALTIES = [
-    "Personal Injury",
-    "Family & Divorce Law",
-    "Corporate & Commercial",
-    "Trusts & Estates",
-    "Criminal Defense"
-]
-
-PAIN_POINTS = {
-    "bates-stamping": {
-        "hook": "Flattened Bates Stamping",
-        "sub": "Stop paying $300/mo for Adobe Acrobat just to Bates stamp local discovery.",
-        "body": "Federal and State rules require un-editable, chronological Bates serialization. Access Paralegal Suite permanently fuses numbers into the vector layer locally on your PC.",
-        "seo": "how to bates stamp pdf offline without acrobat"
-    },
-    "email-harvesting": {
-        "hook": "Batch .MSG & .EML Attachment Ripping",
-        "sub": "Tired of manually saving 500 Outlook email attachments for Joint Appendices?",
-        "body": "Drag and drop your native emails. We automatically harvest all PDF attachments, generate expert cover sheets, and outline them natively.",
-        "seo": "extract outlook msg attachments to pdf litigation"
-    },
-    "pacer-compress": {
-        "hook": "High-Compression Court Size Optimizer",
-        "sub": "ECF upload rejected because your color scan PDF was 40MB?",
-        "body": "Toggle our High-Contrast Grayscale optimizer to compress color exhibits by up to 70% while preserving ultra-sharp text legibility.",
-        "seo": "reduce pdf size for pacer e-filing federal court"
-    },
-    "redaction-flatten": {
-        "hook": "Indelible Redaction Preservation",
-        "sub": "Ensure opposing counsel cannot 'undo' your redaction blocks.",
-        "body": "Privacy is paramount. Access Paralegal Suite fuses all layers, flattening the document to prevent metadata leakage and HIPAA/PII violations.",
-        "seo": "how to flatten pdf redaction permanently"
-    },
-    "freelance-edge": {
-        "hook": "The Solo & Freelancer Utility Pack",
-        "sub": "Enterprise-grade legal tools priced for independent practitioners.",
-        "body": "Don't let big firms with Relativity out-pace you. Bring massive litigation compiling power back to your local desktop with a lifetime software pass.",
-        "seo": "software tools for freelance paralegals and legal assistants"
-    }
+ORIGINAL_POINTS = {
+    "bates": {"hook": "Flattened Bates Stamping", "sub": "Stop paying for Adobe just to Bates stamp.", "body": "Permanently fuse numbers into the vector layer locally."},
+    "email": {"hook": "Batch Attachment Ripping", "sub": "Stop manually saving attachments.", "body": "Automatically harvest all PDF attachments from .MSG & .EML."},
+    "pacer": {"hook": "Court Size Optimizer", "sub": "ECF upload rejected?", "body": "Compress exhibits by up to 70% while preserving text."},
+    "flatten": {"hook": "Redaction Preservation", "sub": "Stop Opposing Counsel from undoing your work.", "body": "Fuses all layers to prevent metadata leakage."},
+    "solo": {"hook": "The Freelancer Utility Pack", "sub": "Enterprise tools for independent practitioners.", "body": "Bring massive litigation power to your local desktop."}
 }
 
-# Base URL for Sitemap Generation
+NEW_CAMPAIGN_POINTS = {
+    "grind": {"mode": "icons", "hook": "Daily Grind Fix", "sub": "Does it slow down your day when discovery piles up?", "body": "Stop wasting hours on manual document prep. Access Paralegal Multitool automates the legal friction away."},
+    "power": {"mode": "icons", "hook": "Legal Powerhouse", "sub": "The elite legal automation suite for modern paralegals.", "body": "Touting high-performance local AI engines to audit, merge, and serialize your cases in seconds."},
+    "fix": {"mode": "text", "hook": "The Solution", "sub": "Tired of software that makes your life harder?", "body": "Fix your discovery workflow complaints instantly with the Multitool. It does what it says, offline, forever."},
+    "life": {"mode": "text", "hook": "Freedom Pack", "sub": "Get your weekends back.", "body": "How much free time would you have if document production took 5 minutes instead of 5 hours? reclaim your life."},
+    "legal": {"mode": "text", "hook": "The Paralegal Standard", "sub": "Handcrafted for top-tier legal departments.", "body": "100% Offline Forensic Integrity. The Multitool is the zero-cloud alternative to enterprise monthly fees."}
+}
+
 BASE_URL = "https://software.accessparalegalservices.com/pages/"
 
-def get_template(state, court, spec, key, data):
+def get_template(state, court, spec, key, data, show_icons=True):
+    header_html = f"""
+    <nav style="display: flex; justify-content: space-between; align-items: center; padding: 2rem 0;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="../assets/silver_seal_premium.png" style="height: 80px; width: auto;">
+            <div style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; display: none;">
+                ACCESS PARALEGAL <span style="color: #288F4F;">MULTITOOL</span>
+            </div>
+        </div>
+        <div style="background: white; padding: 6px 16px; border-radius: 99px; border: 1px solid #E5E7EB; font-weight: 700; font-size: 0.85rem; color: #288F4F;">💎 v1.0.0 Stable</div>
+    </nav>
+    """
+    
+    if show_icons:
+        dl_section = """<div class="grid">
+            <a href="../Access_Paralegal_Multitool_Setup_v1.0.0.exe" class="dl-card"><span class="ico">🪟</span><h4 style="font-family:'Outfit';margin:0;font-size:1.25rem;">Windows</h4><p style="color:#6B7280;font-size:0.85rem;margin:0.5rem 0;">Enterprise Setup (.exe)</p><div style="margin-top:1rem;font-size:0.75rem;font-weight:600;color:var(--accent);background:var(--accent-glow);display:inline-block;padding:2px 8px;border-radius:4px;">v1.0.0 Stable</div></a>
+            <a href="../Access_Paralegal_Mac_Installer.dmg" class="dl-card"><span class="ico">🍏</span><h4 style="font-family:'Outfit';margin:0;font-size:1.25rem;">macOS</h4><p style="color:#6B7280;font-size:0.85rem;margin:0.5rem 0;">Universal DMG</p><div style="margin-top:1rem;font-size:0.75rem;font-weight:600;color:#4B5563;background:#F3F4F6;display:inline-block;padding:2px 8px;border-radius:4px;">Universal</div></a>
+            <a href="../Access_Paralegal_Linux_Installer.deb" class="dl-card"><span class="ico">🐧</span><h4 style="font-family:'Outfit';margin:0;font-size:1.25rem;">Linux</h4><p style="color:#6B7280;font-size:0.85rem;margin:0.5rem 0;">.DEB Package</p><div style="margin-top:1rem;font-size:0.75rem;font-weight:600;color:#4B5563;background:#F3F4F6;display:inline-block;padding:2px 8px;border-radius:4px;">Debian/Ubuntu</div></a>
+        </div>"""
+    else:
+        dl_section = """<div style="margin-top:3rem;">
+            <a href="../Access_Paralegal_Multitool_Setup_v1.0.0.exe" style="display:block;max-width:400px;margin:0 auto;text-decoration:none;text-align:center;background:#111827;color:white;padding:1.5rem;border-radius:16px;font-weight:800;font-size:1.25rem;box-shadow:0 10px 30px rgba(0,0,0,0.15);">🛡️ SECURE DOWNLOAD LINK (v1.0.0 Stable)</a>
+            <p style="text-align:center;color:#6B7280;font-size:0.85rem;margin-top:1rem;">Verified Malware-Free • No Cloud Account Required</p>
+        </div>"""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LYF9EC3GQ5"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-      gtag('config', 'G-LYF9EC3GQ5');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Professional {data['hook']} optimized for {state} {court} {spec} litigation requirements. Get the 100% offline Access Paralegal Suite.">
-    <title>{state} {court} {spec} {data['hook']} Utility | Access Paralegal Suite</title>
-    <link rel="icon" type="image/png" href="../assets/suite_logo.png">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional {data['hook']} optimized for {state} {court} {spec} litigation requirements. 100% offline.">
+    <title>{state} {court} {spec} {data['hook']} | Access Paralegal Multitool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        :root {{ --accent: #288F4F; --accent-hover: #1E6C3A; --silver: #F3F4F6; --dark: #1F2937; }}
-        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--dark); background: var(--silver); margin: 0; padding: 0; }}
-        .container {{ max-width: 1000px; margin: 0 auto; padding: 2rem; }}
-        .hero {{ text-align: center; padding: 4rem 1rem; background: white; border-bottom: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }}
-        h1 {{ font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }}
-        h1 span {{ color: var(--accent); }}
-        .sub {{ font-size: 1.25rem; color: #4B5563; margin-bottom: 2rem; }}
-        .desc-box {{ background: #F9FAFB; border: 1px solid #E5E7EB; padding: 2rem; border-radius: 8px; text-align: left; max-width: 600px; margin: 0 auto 3rem auto; }}
-        .cta-form {{ background: white; padding: 2rem; border-radius: 12px; border: 2px solid var(--accent); text-align: center; margin: 2rem auto; max-width: 500px; }}
-        .cta-form input {{ padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; width: 70%; font-size: 1rem; margin-bottom: 1rem; }}
-        .cta-form button {{ background: var(--accent); color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 75%; }}
-        .cta-form button:hover {{ background: var(--accent-hover); }}
-        .dls {{ display: flex; gap: 1.5rem; justify-content: center; margin-top: 4rem; flex-wrap: wrap; }}
-        .dl-card {{ flex: 1; min-width: 250px; background: white; padding: 1.5rem; border-radius: 8px; text-align: center; text-decoration: none; color: inherit; border: 1px solid #E5E7EB; transition: all 0.2s; }}
-        .dl-card:hover {{ border-color: var(--accent); box-shadow: 0 4px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }}
-        .dl-card .ico {{ font-size: 2rem; margin-bottom: 0.5rem; display: block; }}
-        .footer {{ text-align: center; margin-top: 4rem; padding: 2rem; font-size: 0.85rem; color: #6B7280; }}
+        :root {{ --accent: #288F4F; --accent-glow: rgba(40, 143, 79, 0.2); --dark: #111827; --glass: rgba(255, 255, 255, 0.85); --silver: #F9FAFB; }}
+        body {{ font-family: 'Inter', sans-serif; color: var(--dark); background: var(--silver); margin: 0; line-height: 1.6; }}
+        .container {{ max-width: 1100px; margin: 0 auto; padding: 0 2rem; }}
+        .hero {{ padding: 4rem 1rem; text-align: center; background: radial-gradient(circle at top right, #EBF8F1, white); }}
+        h1 {{ font-family: 'Outfit', sans-serif; font-size: 3rem; font-weight: 800; margin: 1rem 0; }}
+        h1 span {{ background: linear-gradient(135deg, #288F4F, #1E6C3A); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .badge {{ display: inline-block; padding: 0.5rem 1.25rem; background: white; border: 1px solid #E5E7EB; border-radius: 9999px; font-weight: 600; font-size: 0.875rem; margin-bottom: 1rem; }}
+        .glass-card {{ background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); padding: 2.5rem; border-radius: 24px; text-align: left; max-width: 700px; margin: 0 auto 4rem auto; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; }}
+        .dl-card {{ background: white; padding: 2rem; border-radius: 20px; text-align: center; text-decoration: none; color: inherit; border: 1px solid #E5E7EB; transition: all 0.3s; }}
+        .dl-card:hover {{ border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.05); }}
+        .dl-card .ico {{ font-size: 2.5rem; margin-bottom: 1rem; display: block; }}
+        .footer {{ text-align: center; padding: 4rem 2rem; font-size: 0.875rem; color: #9CA3AF; }}
     </style>
 </head>
 <body>
     <div class="container">
+        {header_html}
         <div class="hero">
-            <div>🛡️ Tailored for <strong>{state} {court} ({spec})</strong></div>
-            <h1>The Premier Offline <span>{data['hook']}</span></h1>
-            <p class="sub">{data['sub']}</p>
-            
-            <div class="desc-box">
-                <h3>🚀 Handcrafted for {spec} Practitioners</h3>
+            <div class="badge">🛡️ {state} {court} COMPLIANT</div>
+            <h1>Offline <span>{data['hook']}</span></h1>
+            <p style="font-size:1.35rem;color:#4B5563;margin-bottom:3rem;">{data['sub']}</p>
+            <div class="glass-card">
+                <h3 style="font-family:'Outfit';margin-top:0;">🚀 Handcrafted for {spec}</h3>
                 <p>{data['body']}</p>
-                <p style="font-style:italic; color:#6B7280; font-size:0.9rem;">*100% sandboxed. Complies perfectly with {state} standards governing data security, HIPAA, and PII handling in {court} procedures.</p>
             </div>
-
-            <!-- EMAIL CAPTURE -->
-            <div class="cta-form">
-                <h3>📧 Get the {state} Compliance Config</h3>
-                <p style="font-size:0.9rem; color:#4B5563; margin-bottom:1.5rem;">Download the secure client instantly and get exclusive litigation hacks.</p>
-                <form action="#" method="POST">
-                    <input type="hidden" name="tags" value="SEO_{state}_{key}_{spec}">
-                    <input type="email" name="email" placeholder="Enter your work email" required><br>
-                    <button type="submit">🔓 Unlock Free 20-Merge Setup</button>
-                </form>
-            </div>
+            {dl_section}
         </div>
-
-        <!-- DOWNLOAD OPTIONS BAR -->
-        <div class="dls">
-            <a href="../Access_Paralegal_Merge_Setup_v1.8.1.exe" class="dl-card">
-                <span class="ico">🪟</span>
-                <h4>Windows Setup</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">v1.8.1 (.exe) <span style="display:inline-block; background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 4px; font-size:0.65rem; color:#4B5563; font-weight:bold;">BETA</span></span>
-            </a>
-            <a href="../Access_Paralegal_Mac_Installer.dmg" class="dl-card">
-                <span class="ico">🍏</span>
-                <h4>macOS Disk Image</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">Apple Silicon & Intel</span>
-            </a>
-            <a href="../Access_Paralegal_Linux_Installer.deb" class="dl-card">
-                <span class="ico">🐧</span>
-                <h4>Linux Package</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">Ubuntu / Debian</span>
-            </a>
-        </div>
-
-        <div class="footer">
-            <p>Copyright &copy; 2026 Access Paralegal Services. All rights reserved.</p>
-            <p>All operations occur locally on your workstation hardware. Zero third-party servers utilized.</p>
-        </div>
+        <div class="footer"><p>&copy; 2026 Access Paralegal Services. 100% Offline Forensic Integrity.</p></div>
     </div>
-</body>
-</html>
-"""
+</body></html>"""
 
 def generate_sitemap_xml(filenames):
     xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for fn in filenames:
-        xml_lines.append('  <url>')
-        xml_lines.append(f'    <loc>{BASE_URL}{fn}</loc>')
-        xml_lines.append('    <changefreq>monthly</changefreq>')
-        xml_lines.append('    <priority>0.8</priority>')
-        xml_lines.append('  </url>')
+    for fn in filenames: xml_lines.append(f'  <url><loc>{BASE_URL}{fn}</loc><changefreq>monthly</changefreq></url>')
     xml_lines.append('</urlset>')
     return "\n".join(xml_lines)
 
 def main():
     output_dir = "web_portal/pages"
-    # Clean existing pages to avoid bloating
     if os.path.exists(output_dir):
         import shutil
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    
     count = 0
     all_filenames = []
-    print(f"Executing scaled matrix synthesis in {output_dir}...")
     
+    # Original Loop (5000)
     for state in STATES:
         for court in COURTS:
             for spec in SPECIALTIES:
-                for key, data in PAIN_POINTS.items():
-                    # Generate clean URL slugs
-                    s_slug = state.lower().replace(" ", "-")
-                    c_slug = court.lower().replace(" ", "-")
-                    sp_slug = spec.lower().replace(" ", "-").replace("&", "and")
-                    
-                    filename = f"{s_slug}-{c_slug}-{sp_slug}-{key}.html"
-                    filepath = os.path.join(output_dir, filename)
-                    
-                    html = get_template(state, court, spec, key, data)
-                    
-                    with open(filepath, "w", encoding="utf-8") as f:
-                        f.write(html)
-                    
-                    all_filenames.append(filename)
-                    count += 1
-                
-    # Save Sitemap.xml
-    sitemap_content = generate_sitemap_xml(all_filenames)
-    with open("web_portal/sitemap.xml", "w", encoding="utf-8") as sf:
-        sf.write(sitemap_content)
-                
-    print(f"SUCCESS! Synthesized {count} hyper-targeted, scalable SEO landing pages!")
-    print(f"Generated XML sitemap at 'web_portal/sitemap.xml' listing all {count} URLs!")
+                for key, data in ORIGINAL_POINTS.items():
+                    fn = f"{state.lower().replace(' ','-')}-{court.lower().replace(' ','-')}-{spec.lower().replace(' ','-').replace('&','and')}-{key}.html"
+                    with open(os.path.join(output_dir, fn), "w", encoding="utf-8") as f: f.write(get_template(state, court, spec, key, data, True))
+                    all_filenames.append(fn); count += 1
 
-if __name__ == "__main__":
-    main()
+    # Psychology Loop (5000)
+    for state in STATES:
+        for court in COURTS:
+            for spec in SPECIALTIES:
+                for key, data in NEW_CAMPAIGN_POINTS.items():
+                    fn = f"{state.lower().replace(' ','-')}-{court.lower().replace(' ','-')}-{spec.lower().replace(' ','-').replace('&','and')}-v4-{key}.html"
+                    with open(os.path.join(output_dir, fn), "w", encoding="utf-8") as f: f.write(get_template(state, court, spec, key, data, data['mode']=='icons'))
+                    all_filenames.append(fn); count += 1
+
+    with open("web_portal/sitemap.xml", "w", encoding="utf-8") as sf: sf.write(generate_sitemap_xml(all_filenames))
+    print(f"SUCCESS! Synthesized {count} SEO landing pages!")
+
+if __name__ == "__main__": main()
