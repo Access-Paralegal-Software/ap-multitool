@@ -1,3 +1,15 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: Access Paralegal
+status: archived
+tags: []
+title: Reddit_Paralegal_Pain_Points
+type: reference
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # 🧠 Reddit Paralegal Intelligence Log: Industry Pain Points
 *Compiled from r/paralegal, r/legalassistant, and r/lawfirm*
 

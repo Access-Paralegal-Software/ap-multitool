@@ -1,3 +1,15 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: Access Paralegal
+status: archived
+tags: []
+title: Access_Paralegal_Release
+type: reference
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # 📢 Access Paralegal Suite: LinkedIn Release Announcement
 
 Copy and paste the text below into a LinkedIn post for Renee to announce the launch to her legal networks.

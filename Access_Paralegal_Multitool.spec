@@ -1,16 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_submodules
-
-hiddenimports = ['reportlab.graphics.barcode.code128', 'reportlab.graphics.barcode.code39', 'reportlab.graphics.barcode.usps']
-hiddenimports += collect_submodules('reportlab')
 
 
 a = Analysis(
     ['gui_apmultitool.py'],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=hiddenimports,
+    datas=[('logo_small.png', '.'), ('water_texture.png', '.')],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -26,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='AccessParalegalMultitool',
+    name='Access_Paralegal_Multitool',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -39,5 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['logo_small.png'],
 )

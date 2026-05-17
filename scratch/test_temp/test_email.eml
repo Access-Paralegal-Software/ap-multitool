@@ -1,0 +1,69 @@
+Content-Type: multipart/mixed; boundary="===============4303307708428085061=="
+MIME-Version: 1.0
+Subject: =?utf-8?q?Access_Paralegal_Test_Subject_=E2=9A=96=EF=B8=8F?=
+From: sender@accessparalegalservices.com
+To: client@domain.com
+CC: paralegal@accessparalegalservices.com
+Date: Sun, 17 May 2026 02:15:00 -0500
+
+--===============4303307708428085061==
+Content-Type: multipart/related;
+ boundary="===============0716753829778539416=="
+MIME-Version: 1.0
+
+--===============0716753829778539416==
+Content-Type: text/html; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+
+    <html>
+      <body>
+        <h1 style="color: #67BE5E;">Access Email Harvester Test</h1>
+        <p>This is a test of the premium ReportLab email to PDF rendering system.</p>
+        <p>Here is an inline image:</p>
+        <img src="cid:inline_image_cid">
+        <p>And here is some footer text.</p>
+      </body>
+    </html>
+    
+--===============0716753829778539416==
+Content-Type: image/png; name="test_inline.png"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-ID: <inline_image_cid>
+Content-Disposition: inline; filename="test_inline.png"
+
+iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAIAAABM5OhcAAABNklEQVR4nO3YQQqDQBQFQX/w/lee
+nECZhY2QVG0V3TRvxFkHPO8TPBOERcNikRAWCWGREBYJYZEQFglhkTjvL48f81xbc3nJYpEQFm8c
+hTujx7+ZjQ8ki0VCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVC
+WCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgk
+hEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRF
+QlgkhEVCWCSERUJYJIRFQlgkhEVCWCTOzftmNe/nR1ksEsIi4YgjYbFICIuEsEgIi4SwSAiLhLBI
+CIuj8AWEVgfLS7RzuAAAAABJRU5ErkJggg==
+
+--===============0716753829778539416==--
+
+--===============4303307708428085061==
+Content-Type: image/png; name="test_att.png"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="test_att.png"
+
+iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAIAAABM5OhcAAABNklEQVR4nO3YQQqDQBQFQX/w/lee
+nECZhY2QVG0V3TRvxFkHPO8TPBOERcNikRAWCWGREBYJYZEQFglhkTjvL48f81xbc3nJYpEQFm8c
+hTujx7+ZjQ8ki0VCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVC
+WCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgk
+hEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRFQlgkhEVCWCSERUJYJIRF
+QlgkhEVCWCSERUJYJIRFQlgkhEVCWCTOzftmNe/nR1ksEsIi4YgjYbFICIuEsEgIi4SwSAiLhLBI
+CIuj8AWEVgfLS7RzuAAAAABJRU5ErkJggg==
+
+--===============4303307708428085061==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="test_att.txt"
+
+Hello from the text attachment!
+Line 2 of attachment.
+--===============4303307708428085061==--

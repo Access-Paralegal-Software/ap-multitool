@@ -1,3 +1,15 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: None
+status: archived
+tags: []
+title: README
+type: reference
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # 🏛️ Archivist Core
 > *The Universal Translation Layer and Multi-Provider Inbox for Structured Personal Knowledge Graphs.*
 

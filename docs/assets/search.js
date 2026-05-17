@@ -1,12 +1,12 @@
 /**
- * Access Paralegal Suite - Client Side Documentation Index & Search Engine
+ * Access Paralegal Multitool - Client Side Documentation Index & Search Engine
  */
 
 const FAQ_INDEX = [
     {
         title: "Do I need an internet connection to use this software?",
         slug: "offline-security",
-        snippet: "No! Access Paralegal Suite operates 100% offline on your local machine. Confidential files never touch any cloud storage.",
+        snippet: "No! Access Paralegal Multitool operates 100% offline on your local machine. Confidential files never touch any cloud storage.",
         keywords: ["offline", "security", "internet", "cloud", "confidential", "local", "connection"]
     },
     {

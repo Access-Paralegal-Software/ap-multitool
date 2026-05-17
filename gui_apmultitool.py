@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import customtkinter as ctk
 import config
+import email_processing
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 import pikepdf
 import urllib.request
@@ -39,9 +40,8 @@ LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
 
 # UI Aesthetic Branding Colors (Luxury Neutral & Glowing Velvet Concept)
-BRAND_ACCENT_GREEN = "#5DA652"              # Muted Premium Emerald
-BRAND_DEEP_ACCENT = "#4E8A45"               # Deep Forest Emerald
-BRAND_BUTTON_TEXT = "#1A1C1C"               # Deep Charcoal for button contrast
+BRAND_ACCENT_GREEN = "#67BE5E"              # Exact Vibrant Logo Green
+BRAND_DEEP_ACCENT = "#4E9146"               # Darkened Emerald
 BRAND_SILVER_BG = ("#EAEAEC", "#1E2222")    # Light: Elegant Matte Silver, Dark: Soft Glowing Velvet Charcoal
 BRAND_DARK_TEXT = ("#222222", "#ECECEC")    # High-Contrast Crisp Typography
 BRAND_WHITE_PANEL = ("#F4F4F5", "#242828")  # Soft Grey Panels for fallback
@@ -105,17 +105,6 @@ class AccessMergerApp(ctk.CTk):
         self.trial_run_count = 0
         self.cancel_requested = False
         
-        # --- PROCESSING PROTOCOLS ---
-        # 1: Inline Intact, Regular After (Merge)
-        # 2: Inline Stripped, Regular After (Merge)
-        # 3: Inline Intact, Regular After (Separate PDF)
-        # 5: Strip ALL (Merge)
-        # 6: Strip ALL (Separate PDF)
-        self.email_processing_mode = tk.IntVar(value=1)
-        self.email_processing_mode.trace_add("write", lambda *args: self.trigger_async_folder_scan(self.dir_entry.get()))
-        
-        self.pdf_processing_mode = tk.IntVar(value=1)
-        
         # Global Application Preferences
         self.custom_workspace_root = self.app_dir
         self.safeguard_files_var = tk.BooleanVar(value=True)
@@ -150,15 +139,6 @@ class AccessMergerApp(ctk.CTk):
         self.resizable(True, True)
         self.minsize(920, 600)
         self.configure(fg_color=BRAND_SILVER_BG)
-
-        # --- Set Application Icon ---
-        try:
-            icon_p = resource_path("app_icon.png")
-            if os.path.exists(icon_p):
-                icon_img = ImageTk.PhotoImage(Image.open(icon_p))
-                self.after(200, lambda: self.iconphoto(False, icon_img))
-        except Exception as e:
-            print(f"Icon loading failure: {e}")
 
         # --- GLOBAL OS SCALING OVERRIDES ---
         self.option_add('*Menu.font', '{Segoe UI} 18')
@@ -317,11 +297,13 @@ class AccessMergerApp(ctk.CTk):
         
         self.tab_merger = self.tab_view.add("📦 Document Merger")
         self.tab_bates = self.tab_view.add("⚖️ Bates Stamping & Locking")
+        self.tab_organizer = self.tab_view.add("📂 File Room")
         
         # Critical Override: Make individual tab window bodies fully transparent 
         # to let the sweeping background emerald flow completely through!
         self.tab_merger.configure(fg_color="transparent")
         self.tab_bates.configure(fg_color="transparent")
+        self.tab_organizer.configure(fg_color="transparent")
 
         # ==========================================
         # TAB 1: DOCUMENT MERGER (MOUNTED CODEBASE)
@@ -347,57 +329,37 @@ class AccessMergerApp(ctk.CTk):
         self.var_bookmark = tk.BooleanVar(value=True)
         self.chk_bookmark = ctk.CTkCheckBox(
             self.left_frame, text="Create Bookmarks per file", variable=self.var_bookmark, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            checkmark_color=BRAND_BUTTON_TEXT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_bookmark.pack(anchor="w", padx=20, pady=6)
 
         self.var_fit_view = tk.BooleanVar(value=True)
         self.chk_fit_view = ctk.CTkCheckBox(
             self.left_frame, text="Enforce Single-Page Layout", variable=self.var_fit_view, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            checkmark_color=BRAND_BUTTON_TEXT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_fit_view.pack(anchor="w", padx=20, pady=6)
 
         self.var_compress = tk.BooleanVar(value=False)
         self.chk_compress = ctk.CTkCheckBox(
             self.left_frame, text="Optimize Output Size", variable=self.var_compress, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            checkmark_color=BRAND_BUTTON_TEXT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_compress.pack(anchor="w", padx=20, pady=6)
 
         self.var_email = tk.BooleanVar(value=True)
         self.chk_email = ctk.CTkCheckBox(
             self.left_frame, text="Extract Email Attachments", variable=self.var_email, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            checkmark_color=BRAND_BUTTON_TEXT
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_email.pack(anchor="w", padx=20, pady=6)
 
         self.var_grayscale = tk.BooleanVar(value=False)
         self.chk_grayscale = ctk.CTkCheckBox(
             self.left_frame, text="📉 Grayscale (Huge File Save!)", variable=self.var_grayscale, 
-            text_color="#B45309", font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            checkmark_color=BRAND_BUTTON_TEXT
+            text_color="#B45309", font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
         self.chk_grayscale.pack(anchor="w", padx=20, pady=6)
-        
-        # --- NEW DYNAMIC MODAL TRIGGERS ---
-        self.btn_email_opts = ctk.CTkButton(
-            self.left_frame, text="📧 Email Processing Options", height=40,
-            fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, border_width=1, border_color=BRAND_BORDER_LIGHT,
-            hover_color="#E5E7EB", command=self.show_email_options_modal
-        )
-        self.btn_email_opts.pack(padx=20, pady=(15, 5), fill="x")
-
-        self.btn_pdf_opts = ctk.CTkButton(
-            self.left_frame, text="📄 PDF Processing Options", height=40,
-            fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, border_width=1, border_color=BRAND_BORDER_LIGHT,
-            hover_color="#E5E7EB", command=self.show_pdf_options_modal
-        )
-        self.btn_pdf_opts.pack(padx=20, pady=(0, 15), fill="x")
 
         ctk.CTkLabel(self.left_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=14, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
         self.paper_dropdown = ctk.CTkOptionMenu(
@@ -407,29 +369,15 @@ class AccessMergerApp(ctk.CTk):
         )
         self.paper_dropdown.pack(padx=20, pady=(0, 10))
 
-        # AUDIT STATUS CARD (REFINED FOR BETTER FIT)
-        self.audit_panel = ctk.CTkFrame(
-            self.left_frame, fg_color=BRAND_WHITE_PANEL, corner_radius=12, 
-            border_width=1, border_color=BRAND_BORDER_LIGHT
-        )
-        self.audit_panel.pack(fill="x", padx=15, pady=(10, 15))
+        # AUDIT STATUS CARD
+        self.audit_panel = ctk.CTkFrame(self.left_frame, fg_color="transparent", corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
+        self.audit_panel.pack(fill="both", expand=True, padx=15, pady=(5, 15))
 
-        ctk.CTkLabel(
-            self.audit_panel, text="📄 QUEUE PREVIEW", 
-            font=ctk.CTkFont(weight="bold", size=13), text_color=BRAND_ACCENT_GREEN
-        ).pack(pady=(12, 8))
-        
-        self.audit_files_lbl = ctk.CTkLabel(
-            self.audit_panel, text="Documents: Scanning...", 
-            font=ctk.CTkFont(size=14, weight="bold"), text_color=BRAND_DARK_TEXT
-        )
-        self.audit_files_lbl.pack(anchor="w", padx=20, pady=3)
-        
-        self.audit_pages_lbl = ctk.CTkLabel(
-            self.audit_panel, text="Total Pages: Calculating...", 
-            font=ctk.CTkFont(size=14, weight="bold"), text_color=BRAND_DARK_TEXT
-        )
-        self.audit_pages_lbl.pack(anchor="w", padx=20, pady=(3, 15))
+        ctk.CTkLabel(self.audit_panel, text="📄 QUEUE PREVIEW", font=ctk.CTkFont(weight="bold", size=14), text_color=BRAND_ACCENT_GREEN).pack(pady=(10, 5))
+        self.audit_files_lbl = ctk.CTkLabel(self.audit_panel, text="Documents: Scanning...", font=ctk.CTkFont(size=15), text_color=BRAND_DARK_TEXT)
+        self.audit_files_lbl.pack(anchor="w", padx=15, pady=2)
+        self.audit_pages_lbl = ctk.CTkLabel(self.audit_panel, text="Total Pages: Calculating...", font=ctk.CTkFont(size=15), text_color=BRAND_DARK_TEXT)
+        self.audit_pages_lbl.pack(anchor="w", padx=15, pady=2)
 
         # --- POPULATE RIGHT (VISUAL QUEUE & MERGER) ---
         self.dir_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
@@ -460,7 +408,7 @@ class AccessMergerApp(ctk.CTk):
         bg_col = "#F5F9F4" if ctk.get_appearance_mode() == "Light" else "#161E15"
         fg_col = "#222222" if ctk.get_appearance_mode() == "Light" else "#ECECEC"
         style.configure("Treeview", background=bg_col, foreground=fg_col, fieldbackground=bg_col, rowheight=36, borderwidth=0, font=("Segoe UI", 14))
-        style.map("Treeview", background=[("selected", BRAND_ACCENT_GREEN)], foreground=[("selected", BRAND_BUTTON_TEXT)])
+        style.map("Treeview", background=[("selected", BRAND_ACCENT_GREEN)], foreground=[("selected", "white")])
         style.configure("Treeview.Heading", font=("Segoe UI", 15, "bold"))
         
         self.queue_tree = ttk.Treeview(self.queue_container, columns=("Order", "File", "Status"), show="headings", selectmode="extended")
@@ -521,7 +469,6 @@ class AccessMergerApp(ctk.CTk):
         self.run_btn = ctk.CTkButton(
             self.action_frame, text="🚀 COMBINE & MERGE FILES", height=52, 
             font=ctk.CTkFont(size=19, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            text_color=BRAND_BUTTON_TEXT,
             command=self.start_merge_thread
         )
         self.run_btn.pack(fill="x")
@@ -559,18 +506,126 @@ class AccessMergerApp(ctk.CTk):
         )
         self.btn_bates_options.pack(padx=20, pady=(10, 15))
 
-        # Right Bates Queue Panel (Dynamic Preview)
-        self.bates_right = ctk.CTkFrame(self.bates_container, fg_color="transparent")
-        self.bates_right.pack(side="right", fill="both", expand=True)
-
         # Bates Run Button
         self.bates_run_btn = ctk.CTkButton(
             self.bates_right, text="✨ EXECUTE PRODUCTION PRODUCTION", height=60, 
             font=ctk.CTkFont(size=16, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
-            text_color=BRAND_BUTTON_TEXT,
             command=self.start_bates_thread
         )
-        self.bates_run_btn.pack(fill="x", side="bottom", pady=20)
+        self.bates_run_btn.pack(fill="x")
+
+        # ==========================================
+        # TAB 3: FILE ROOM (SMART FILER & ORGANIZER)
+        # ==========================================
+        self.org_container = ctk.CTkFrame(self.tab_organizer, fg_color="transparent")
+        self.org_container.pack(fill="both", expand=True)
+        
+        # Left Panel: Smart Filename Protocol
+        self.org_left = ctk.CTkFrame(
+            self.org_container, width=420, fg_color=GLASS_LEFT, 
+            corner_radius=12, border_width=1, border_color=GLASS_BORDER
+        )
+        self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
+        self.org_left.pack_propagate(False)
+        
+        ctk.CTkLabel(self.org_left, text="🔐 ENCRYPTED CASE CONTEXT & PROTOCOL", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 2))
+        
+        # --- ACTIVE VAULT CONTEXT (Inputs) ---
+        context_frame = ctk.CTkFrame(self.org_left, fg_color="transparent", corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
+        context_frame.pack(fill="x", padx=20, pady=6)
+        
+        lbl_font = ctk.CTkFont(size=11, weight="bold")
+        ent_font = ctk.CTkFont(size=12)
+        
+        # Case Num
+        ctk.CTkLabel(context_frame, text="Case Number:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=0, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.case_num_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., 4:26-cv-00123")
+        self.case_num_entry.grid(row=0, column=1, padx=5, pady=6, sticky="w")
+
+        # Plaintiff
+        ctk.CTkLabel(context_frame, text="Plaintiff:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=1, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.case_pla_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Jane Smith")
+        self.case_pla_entry.grid(row=1, column=1, padx=5, pady=6, sticky="w")
+        
+        # Defendant
+        ctk.CTkLabel(context_frame, text="Defendant:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=2, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.case_def_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Acme Corp")
+        self.case_def_entry.grid(row=2, column=1, padx=5, pady=6, sticky="w")
+        
+        self.btn_save_vault = ctk.CTkButton(context_frame, text="🔒 SECURE", height=32, width=70, font=ctk.CTkFont(size=11, weight="bold"), fg_color=BRAND_DARK_TEXT, hover_color="#374151", command=self.save_case_vault)
+        self.btn_save_vault.grid(row=1, column=2, padx=12, pady=6)
+
+        # --- RENAMING FORMULA ---
+        ctk.CTkLabel(self.org_left, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(10, 4))
+
+        
+        self.rename_p1 = ctk.CTkComboBox(
+            self.org_left, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+        )
+        self.rename_p1.set("[Date] YYYY-MM-DD")
+        self.rename_p1.pack(fill="x", padx=20, pady=3)
+        
+        self.rename_sep = ctk.CTkComboBox(
+            self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+        )
+        self.rename_sep.set(" - (Space Dash Space)")
+        self.rename_sep.pack(fill="x", padx=20, pady=3)
+        
+        self.rename_p2 = ctk.CTkComboBox(
+            self.org_left, values=["[DocType] Motion", "[Plaintiff]", "[Defendant]", "[Case Number]", "[Date] YYYY-MM-DD", "[Custom] Text"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+        )
+        self.rename_p2.set("[DocType] Motion")
+        self.rename_p2.pack(fill="x", padx=20, pady=3)
+
+        self.dyn_entry = ctk.CTkEntry(self.org_left, font=drop_font, placeholder_text="[Custom] Override Text String", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, height=38)
+        self.dyn_entry.pack(fill="x", padx=20, pady=8)
+        
+        self.btn_rename = ctk.CTkButton(
+            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=45, 
+            font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            command=self.execute_rename_wizard
+        )
+        self.btn_rename.pack(fill="x", padx=20, pady=(4, 10))
+
+        # Right Panel: Master Case Tree Builder
+        self.org_right = ctk.CTkFrame(
+            self.org_container, width=360, fg_color=GLASS_RIGHT, 
+            corner_radius=12, border_width=1, border_color=GLASS_BORDER
+        )
+        self.org_right.pack(side="right", fill="both", expand=True)
+        self.org_right.pack_propagate(False)
+        
+        ctk.CTkLabel(self.org_right, text="📂 MASTER CASE TREE BUILDER", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 3))
+        ctk.CTkLabel(self.org_right, text="Automate standardized firm architectures.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 10))
+        
+        ctk.CTkLabel(self.org_right, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25)
+        self.tree_dropdown = ctk.CTkComboBox(
+            self.org_right, values=["⭐ Custom User Blueprint", "Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
+            state="readonly", height=38, font=drop_font, dropdown_font=drop_font, command=self.update_tree_preview
+        )
+        self.tree_dropdown.set("⭐ Custom User Blueprint")
+        self.tree_dropdown.pack(fill="x", padx=25, pady=(0, 12))
+        
+        ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
+        self.tree_preview = ctk.CTkTextbox(
+            self.org_right, height=105, fg_color=("#F5F9F4", "#161E15"), text_color=BRAND_DARK_TEXT, 
+            border_width=1, border_color=GLASS_BORDER, font=ctk.CTkFont(size=13)
+        )
+        self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
+        
+        self.btn_tree = ctk.CTkButton(
+            self.org_right, text="🛠️ SPIN UP FOLDER TREE", height=45, 
+            font=ctk.CTkFont(weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            command=self.execute_tree_builder
+        )
+        self.btn_tree.pack(fill="x", padx=25, pady=5)
+        
+        # Initialize previews
+        self.after(100, lambda: self.update_tree_preview(None))
+
 
         # --- FOOTER COPYRIGHT ---
         self.footer_frame = ctk.CTkFrame(self, fg_color="transparent", corner_radius=0, height=30)
@@ -728,262 +783,6 @@ class AccessMergerApp(ctk.CTk):
                 messagebox.showinfo("Check Updates", "Could not reach the server. Please ensure you are online or visit the website for updates.")
         threading.Thread(target=check, daemon=True).start()
 
-    def _clean_microsoft_html(self, soup):
-        """Scrubs malformed Office syntax and inline styles containing illegal tinycss2 characters."""
-        for s in soup.find_all("style"):
-            s.decompose()
-        for tag in soup.find_all(True):
-            if ":" in tag.name or tag.name.startswith(('o', 'w', 'v', 'x', 'm')):
-                tag.unwrap()
-        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
-        for comment in comments:
-            comment.extract()
-        return soup
-
-    def _render_email_to_pdf(self, file_path, out_path, temp_extract_dir):
-        """High-fidelity dual-engine EML/MSG to PDF renderer preserving inline images and CSS layout."""
-        temp_files = []
-        msg_obj = None
-        ext_low = os.path.splitext(file_path)[1].lower()
-        
-        try:
-            subj, sender, to, date, html_body = "No Subject", "Unknown Sender", "Unknown Recipient", "Unknown Date", ""
-            cid_map = {}
-
-            if ext_low == '.eml':
-                with open(file_path, 'rb') as f:
-                    msg_obj = BytesParser(policy=policy.default).parse(f)
-                subj = str(msg_obj.get('Subject', 'No Subject'))
-                sender = str(msg_obj.get('From', 'Unknown Sender'))
-                to = str(msg_obj.get('To', 'Unknown Recipient'))
-                date = str(msg_obj.get('Date', 'Unknown Date'))
-                body_part = msg_obj.get_body(preferencelist=('html', 'plain'))
-                if body_part:
-                    html_body = body_part.get_content()
-                    if body_part.get_content_type() == 'text/plain':
-                        html_body = f"<html><body><pre style='white-space: pre-wrap; font-family: Arial; font-size: 12px;'>{html_body}</pre></body></html>"
-                for part in msg_obj.walk():
-                    content_id = part.get('Content-ID')
-                    if content_id:
-                        cid = str(content_id).strip('<>').strip()
-                        payload = part.get_payload(decode=True)
-                        if payload:
-                            ext = ".png"
-                            fn = part.get_filename() or ""
-                            low_fn = fn.lower()
-                            if low_fn.endswith(('.jpg', '.jpeg')): ext = ".jpg"
-                            elif low_fn.endswith('.gif'): ext = ".gif"
-                            elif low_fn.endswith('.bmp'): ext = ".bmp"
-                            elif low_fn.endswith(('.tif', '.tiff')): ext = ".tif"
-                            tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=ext)
-                            tf.write(payload)
-                            tf.close()
-                            temp_files.append(tf.name)
-                            cid_map[cid] = tf.name
-            
-            elif ext_low == '.msg':
-                msg_obj = extract_msg.Message(file_path)
-                subj = msg_obj.subject or "No Subject"
-                sender = msg_obj.sender or "Unknown Sender"
-                to = msg_obj.to or "Unknown Recipient"
-                date = msg_obj.date or "Unknown Date"
-                if msg_obj.htmlBody:
-                    html_body = msg_obj.htmlBody.decode('utf-8', errors='ignore')
-                elif msg_obj.body:
-                    html_body = f"<html><body><pre style='white-space: pre-wrap; font-family: Arial; font-size: 12px;'>{msg_obj.body}</pre></body></html>"
-                if msg_obj.attachments:
-                    for att in msg_obj.attachments:
-                        cid = att.cid
-                        if not cid and hasattr(att, 'contentId'): cid = att.contentId
-                        if cid:
-                            ext = ".png"
-                            orig_name = att.longFilename or att.shortFilename or ""
-                            low_orig = orig_name.lower()
-                            if low_orig.endswith(('.jpg', '.jpeg')): ext = ".jpg"
-                            elif low_orig.endswith('.gif'): ext = ".gif"
-                            elif low_orig.endswith('.bmp'): ext = ".bmp"
-                            elif low_orig.endswith(('.tif', '.tiff')): ext = ".tif"
-                            tf = tempfile.NamedTemporaryFile(dir=temp_extract_dir, delete=False, suffix=ext)
-                            tf.write(att.data)
-                            tf.close()
-                            temp_files.append(tf.name)
-                            cid_map[str(cid).strip('<>').strip()] = tf.name
-            
-            soup = BeautifulSoup(html_body, 'html.parser')
-            soup = self._clean_microsoft_html(soup)
-            
-            strip_inline = (self.email_processing_mode.get() in [2, 4])
-
-            for img in soup.find_all('img'):
-                if strip_inline:
-                    # Strip and placeholder
-                    img.replace_with("[IMAGE REMOVED FROM BODY]")
-                else:
-                    src = img.get('src', '')
-                    if src.startswith('cid:'):
-                        target_cid = src[4:].strip('<>').strip()
-                        local_path = None
-                        for k, v in cid_map.items():
-                            if target_cid in k or k in target_cid:
-                                local_path = v
-                                break
-                        if local_path: img['src'] = local_path
-
-            paper_size = "letter"
-            paper_val = self.paper_dropdown.get()
-            if "Legal" in paper_val: paper_size = "legal"
-            elif "A4" in paper_val: paper_size = "a4"
-
-            header_html = f"""
-            <div style="font-family: Arial, sans-serif; padding-bottom: 12px; margin-bottom: 20px;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr><td style="width: 75px; font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">From:</td><td style="font-size: 12px; color: #000;">{sender}</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Sent:</td><td style="font-size: 12px; color: #000;">{date}</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">To:</td><td style="font-size: 12px; color: #000;">{to}</td></tr>
-                    <tr><td style="font-weight: bold; font-size: 12px; color: #555; padding: 3px 0;">Subject:</td><td style="font-size: 13px; font-weight: bold; color: #111827;">{subj}</td></tr>
-                </table>
-            </div>
-            """
-            final_html = f"""<html><head><style>@page {{ size: {paper_size}; margin: 0.5in; }} body {{ font-family: Arial, sans-serif; font-size: 11px; color: #333; line-height: 1.3; }} img {{ max-width: 100%; height: auto; display: block; margin: 10px 0; }} table {{ max-width: 100%; }}</style></head><body>{header_html}<div>{str(soup)}</div></body></html>"""
-            
-            with open(out_path, "wb") as f:
-                pisa.CreatePDF(final_html, dest=f)
-        finally:
-            if ext_low == '.msg' and msg_obj:
-                try: msg_obj.close()
-                except: pass
-            for tf_path in temp_files:
-                try: os.remove(tf_path)
-                except: pass
-
-    def _process_email_scenario(self, idx, item_id, file_path, low_fn, temp_extract_dir, merged_pdf, outline_nodes, curr_pg):
-        """Unified recursive attachment and portfolio engine supporting 4 production modes."""
-        self.after(0, lambda i=item_id: update_tree_status(i, "Rendering Email..."))
-        mode = self.email_processing_mode.get()
-        
-        # 1. Render Body
-        cover_pdf_path = os.path.join(temp_extract_dir, f"email_body_{int(time.time())}_{idx}.pdf")
-        self._render_email_to_pdf(file_path, cover_pdf_path, temp_extract_dir)
-        
-        # 2. Extract and Convert ALL Attachments (including inline if requested)
-        extracted_attachments = []
-        a_idx = 0
-        subj = "No Subject"
-        msg_obj = None
-        
-        try:
-            if low_fn.endswith('.eml'):
-                with open(file_path, 'rb') as f:
-                    msg_obj = BytesParser(policy=policy.default).parse(f)
-                subj = str(msg_obj.get('Subject', 'No Subject'))
-                parts = msg_obj.walk()
-                is_msg = False
-            else:
-                msg_obj = extract_msg.Message(file_path)
-                subj = str(msg_obj.subject or "No Subject")
-                parts = msg_obj.attachments if msg_obj.attachments else []
-                is_msg = True
-
-            strip_inline = (mode in [2, 4, 5, 6])
-            strip_all = (mode in [5, 6])
-            
-            if not strip_all:
-                if not is_msg:
-                    for part in parts:
-                        if part.get_content_maintype() == 'multipart': continue
-                        cid = part.get('Content-ID')
-                        if cid and not strip_inline: continue # Already in body
-                        
-                        fn_att = part.get_filename()
-                        if not fn_att: continue
-                        
-                        raw_p = os.path.join(temp_extract_dir, f"raw_{idx}_{a_idx}_{fn_att}")
-                        payload = part.get_payload(decode=True)
-                        if not payload: continue
-                        with open(raw_p, 'wb') as raw_f: raw_f.write(payload)
-                        
-                        pdf_p = os.path.join(temp_extract_dir, f"conv_{idx}_{a_idx}_{fn_att}.pdf")
-                        success = False
-                        att_low = fn_att.lower()
-                        
-                        if att_low.endswith('.pdf'): pdf_p = raw_p; success = True
-                        elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')): success = self._convert_image_to_pdf(raw_p, pdf_p)
-                        elif att_low.endswith(('.docx', '.doc')): success = self._convert_word_to_pdf(raw_p, pdf_p)
-                        elif att_low.endswith(('.xlsx', '.xls', '.csv')): success = self._convert_excel_to_pdf(raw_p, pdf_p)
-                        elif att_low.endswith('.txt'): success = self._convert_text_to_pdf(raw_p, pdf_p)
-                            
-                        if success: extracted_attachments.append((fn_att, pdf_p))
-                        a_idx += 1
-                else:
-                    for att in parts:
-                        cid = getattr(att, 'cid', None) or getattr(att, 'contentId', None)
-                        if cid and not strip_inline: continue
-                        fn_att = att.longFilename or att.shortFilename
-                        if not fn_att: continue
-                        raw_p = os.path.join(temp_extract_dir, f"raw_{idx}_{a_idx}_{fn_att}")
-                        with open(raw_p, 'wb') as raw_f: raw_f.write(att.data)
-                        pdf_p = os.path.join(temp_extract_dir, f"conv_{idx}_{a_idx}_{fn_att}.pdf")
-                        success = False
-                        att_low = str(fn_att).lower()
-                        if att_low.endswith('.pdf'): pdf_p = raw_p; success = True
-                        elif att_low.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')): success = self._convert_image_to_pdf(raw_p, pdf_p)
-                        elif att_low.endswith(('.docx', '.doc')): success = self._convert_word_to_pdf(raw_p, pdf_p)
-                        elif att_low.endswith(('.xlsx', '.xls', '.csv')): success = self._convert_excel_to_pdf(raw_p, pdf_p)
-                        elif att_low.endswith('.txt'): success = self._convert_text_to_pdf(raw_p, pdf_p)
-                        if success: extracted_attachments.append((fn_att, pdf_p))
-                        a_idx += 1
-            
-            # 3. Create the "Email Portfolio"
-            portfolio = pikepdf.Pdf.new()
-            with pikepdf.open(cover_pdf_path) as cover:
-                portfolio.pages.extend(cover.pages)
-                cover_page_count = len(cover.pages)
-            
-            for o_name, p_path in extracted_attachments:
-                with pikepdf.open(p_path) as src:
-                    portfolio.pages.extend(src.pages)
-            
-            success_inc = 0
-            # 4. Handle Disposition (Merge vs Separate)
-            if mode in [1, 2, 5]:
-                # Include in master merge
-                email_start_pg = curr_pg
-                merged_pdf.pages.extend(portfolio.pages)
-                
-                email_outline = pikepdf.OutlineItem(f"📧 {subj[:50]}", destination=email_start_pg, page_location="Fit")
-                # Add sub-bookmarks for attachments
-                att_offset = cover_page_count
-                for o_name, p_path in extracted_attachments:
-                    with pikepdf.open(p_path) as src:
-                        email_outline.children.append(pikepdf.OutlineItem(f"📎 {o_name}", destination=email_start_pg + att_offset, page_location="Fit"))
-                        att_offset += len(src.pages)
-                
-                if self.var_bookmark.get(): outline_nodes.append(email_outline)
-                curr_pg += len(portfolio.pages)
-                success_inc = 1
-                self.after(0, lambda i=item_id: update_tree_status(i, f"✅ Email Body (Attachments Stripped)" if strip_all else f"✅ Combined Email Portfolio"))
-            else:
-                # Produce standalone PDF
-                docs_dir = os.path.join(self.app_dir, "Created Docs")
-                os.makedirs(docs_dir, exist_ok=True)
-                safe_subj = "".join(c for c in subj if c.isalnum() or c in (' ', '_', '-')).strip()[:50]
-                out_name = f"Email_Body_Only_{safe_subj}_{int(time.time())}.pdf" if strip_all else f"Email_Portfolio_{safe_subj}_{int(time.time())}.pdf"
-                standalone_path = os.path.join(docs_dir, out_name)
-                portfolio.save(standalone_path)
-                self.after(0, lambda i=item_id: update_tree_status(i, f"💾 Saved Standalone Body" if strip_all else f"💾 Saved Standalone PDF"))
-                success_inc = 1
-            
-            portfolio.close()
-            return curr_pg, success_inc
-
-        except Exception as e:
-            print(f"Email scenario failure: {e}")
-            self.after(0, lambda i=item_id: update_tree_status(i, "❌ Email Fail"))
-            return curr_pg, 0
-        finally:
-            if is_msg and msg_obj:
-                try: msg_obj.close()
-                except: pass
 
     def _convert_image_to_pdf(self, file_path, out_path):
         """RAW conversion of single/multi-frame images to a pure, unbranded PDF preserving all file data."""
@@ -1059,61 +858,7 @@ class AccessMergerApp(ctk.CTk):
                 except: pass
             pythoncom.CoUninitialize()
 
-    def _estimate_email_pages(self, file_path):
-        """Dynamic heuristic to calculate potential page volume based on current mode."""
-        mode = self.email_processing_mode.get()
-        # Baseline: 1 page for the rendered body
-        est = 1
-        
-        # If mode is 5 or 6, we strip everything, so just the body (1 page)
-        if mode >= 5:
-            return est
-            
-        # For modes 1-4, we count attachments
-        try:
-            low_f = file_path.lower()
-            if low_f.endswith('.eml'):
-                with open(file_path, 'rb') as f:
-                    msg = BytesParser(policy=policy.default).parse(f)
-                for part in msg.walk():
-                    if part.get_content_maintype() == 'multipart': continue
-                    # Handle inline logic
-                    cid = part.get('Content-ID')
-                    strip_inline = (mode in [2, 4])
-                    if cid and not strip_inline: continue # In body
-                    
-                    if part.get_filename():
-                        ext = part.get_filename().lower()
-                        if ext.endswith('.pdf'):
-                            try:
-                                payload = part.get_payload(decode=True)
-                                with pikepdf.open(BytesIO(payload)) as p:
-                                    est += len(p.pages)
-                            except: est += 1
-                        else:
-                            est += 1 # 1 page for other docs
-            elif low_f.endswith('.msg'):
-                msg = extract_msg.Message(file_path)
-                if msg.attachments:
-                    for att in msg.attachments:
-                        cid = getattr(att, 'cid', None) or getattr(att, 'contentId', None)
-                        strip_inline = (mode in [2, 4])
-                        if cid and not strip_inline: continue
-                        
-                        fn = (att.longFilename or att.shortFilename or "").lower()
-                        if fn:
-                            if fn.endswith('.pdf'):
-                                try:
-                                    with pikepdf.open(BytesIO(att.data)) as p:
-                                        est += len(p.pages)
-                                except: est += 1
-                            else:
-                                est += 1
-                try: msg.close()
-                except: pass
-        except:
-            pass
-        return est
+    def _convert_text_to_pdf(self, file_path, out_path):
         """Read text streams, escape symbols, and compile securely via xhtml2pdf with NO extra headers."""
         import html
         try:
@@ -1165,7 +910,7 @@ class AccessMergerApp(ctk.CTk):
                     elif low_fn.endswith(('.tif', '.tiff', '.jpg', '.jpeg', '.png')):
                         total_p += 1 
                     elif low_fn.endswith(('.eml', '.msg')):
-                        total_p += self._estimate_email_pages(p_path)
+                        total_p += 1 
                     elif low_fn.endswith(('.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt')):
                         total_p += 1
                 except:
@@ -1305,11 +1050,67 @@ class AccessMergerApp(ctk.CTk):
                     else:
                         raise ValueError("Image branded renderer failure.")
 
-                # --- SCENARIO 3 & 4: EMAIL RECORDS (.EML / .MSG) ---
+                # --- SCENARIOS 3 & 4: EMAIL RECORDS (.EML / .MSG) ---
                 elif low_fn.endswith(('.eml', '.msg')) and self.var_email.get():
-                    new_pg, added_success = self._process_email_scenario(idx, item_id, file_path, low_fn, temp_extract_dir, merged_pdf, outline_nodes, curr_pg)
-                    curr_pg = new_pg
-                    success_count += added_success
+                    from pathlib import Path
+                    email_path = Path(file_path)
+                    
+                    # 1. Parse unified email
+                    email_obj = email_processing.UnifiedEmail(email_path)
+                    
+                    # 2. Render cover PDF using email_processing
+                    cover_pdf_path = os.path.join(temp_extract_dir, f"email_cover_{int(time.time())}_{idx}.pdf")
+                    email_processing.email_to_pdf(email_obj, Path(cover_pdf_path), grayscale=self.var_grayscale.get())
+                    
+                    email_start_pg = curr_pg
+                    with pikepdf.open(cover_pdf_path) as cover:
+                        merged_pdf.pages.extend(cover.pages)
+                        curr_pg += len(cover.pages)
+                    
+                    subj = email_obj.subject or "No Subject"
+                    email_type_str = "Email" if low_fn.endswith('.eml') else "Outlook"
+                    email_outline = pikepdf.OutlineItem(f"📧 {email_type_str}: {subj[:50]}", destination=email_start_pg, page_location="Fit")
+                    
+                    # 3. Process attachments using email_processing
+                    extracted_attachments = []
+                    a_idx = 0
+                    for fname, data, ct in email_processing.get_email_attachments(email_obj, keep_inline=True):
+                        raw_p = os.path.join(temp_extract_dir, f"raw_{idx}_{a_idx}_{fname}")
+                        with open(raw_p, 'wb') as raw_f:
+                            raw_f.write(data)
+                            
+                        pdf_p = os.path.join(temp_extract_dir, f"conv_{idx}_{a_idx}_{fname}.pdf")
+                        att_low = str(fname).lower()
+                        
+                        # First try the offline email_processing converter
+                        success = email_processing.attachment_to_pdf(
+                            data, fname, Path(pdf_p), ct, grayscale=self.var_grayscale.get()
+                        )
+                        
+                        # Fallback for complex formats that require local win32com automation (Excel/Word doc fallbacks)
+                        if not success or not os.path.exists(pdf_p):
+                            if att_low.endswith(('.docx', '.doc')):
+                                success = self._convert_word_to_pdf(raw_p, pdf_p)
+                            elif att_low.endswith(('.xlsx', '.xls', '.csv')):
+                                success = self._convert_excel_to_pdf(raw_p, pdf_p)
+                            elif att_low.endswith('.txt'):
+                                success = self._convert_text_to_pdf(raw_p, pdf_p)
+                                
+                        if success and os.path.exists(pdf_p):
+                            extracted_attachments.append((fname, pdf_p))
+                        a_idx += 1
+                        
+                    for o_name, p_path in extracted_attachments:
+                        a_start = curr_pg
+                        with pikepdf.open(p_path) as src:
+                            merged_pdf.pages.extend(src.pages)
+                            curr_pg += len(src.pages)
+                        email_outline.children.append(pikepdf.OutlineItem(f"📎 {o_name}", destination=a_start, page_location="Fit"))
+                        
+                    self.after(0, lambda i=item_id: update_tree_status(i, f"✅ Combined with {len(extracted_attachments)} Asset(s)"))
+                    if self.var_bookmark.get():
+                        outline_nodes.append(email_outline)
+                    success_count += 1
 
                 # --- SCENARIO 5: WORD DOCUMENTS (.DOCX, .DOC) ---
                 elif low_fn.endswith(('.docx', '.doc')):
@@ -1434,7 +1235,7 @@ class AccessMergerApp(ctk.CTk):
         desc = f"Secure, enterprise-grade {config.APP_NAME} developed for Access Paralegal Services by Alan Woodyard."
         ctk.CTkLabel(about, text=desc, font=ctk.CTkFont(size=11), wraplength=380, justify="center", text_color=BRAND_DARK_TEXT).pack(pady=15)
         ctk.CTkLabel(about, text="Copyright © 2026 Alan Woodyard & Access Paralegal Services.", font=ctk.CTkFont(size=9), text_color="#6B7280").pack(pady=5)
-        ctk.CTkButton(about, text="Dismiss", width=120, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, text_color=BRAND_BUTTON_TEXT, command=about.destroy).pack(pady=15)
+        ctk.CTkButton(about, text="Dismiss", width=120, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=about.destroy).pack(pady=15)
 
     def show_eula_window(self):
         eula = ctk.CTkToplevel(self)
@@ -1449,7 +1250,7 @@ class AccessMergerApp(ctk.CTk):
         txt.pack(fill="both", expand=True, padx=20, pady=10)
         txt.insert("end", EULA_TEXT)
         txt.configure(state="disabled")
-        ctk.CTkButton(eula, text="Close Terms", width=140, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, text_color=BRAND_BUTTON_TEXT, command=eula.destroy).pack(pady=15)
+        ctk.CTkButton(eula, text="Close Terms", width=140, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=eula.destroy).pack(pady=15)
 
     def browse_bates_target(self):
         f = filedialog.askopenfilename(filetypes=[("PDF Documents", "*.pdf")])
@@ -1541,65 +1342,7 @@ class AccessMergerApp(ctk.CTk):
             self.bates_opts["output"] = self.out_policy.get()
             opt.destroy()
 
-        ctk.CTkButton(opt, text="✅ SAVE PROTOCOL", height=45, fg_color=BRAND_ACCENT_GREEN, text_color=BRAND_BUTTON_TEXT, command=save_and_close).pack(pady=20, padx=30, fill="x")
-
-    def show_email_options_modal(self):
-        """Granular email-to-PDF workflow selector."""
-        win = ctk.CTkToplevel(self)
-        win.title("📧 Email Processing Protocols")
-        win.geometry("560x500")
-        win.resizable(False, False)
-        win.grab_set()
-
-        ctk.CTkLabel(win, text="EMAIL CONVERSION PROTOCOL", font=ctk.CTkFont(weight="bold", size=16), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 10))
-        ctk.CTkLabel(win, text="Select how inline images and regular attachments are managed.", font=ctk.CTkFont(size=11), text_color="#6B7280").pack(pady=(0, 20))
-
-        container = ctk.CTkFrame(win, fg_color="transparent")
-        container.pack(fill="both", expand=True, padx=40)
-
-        # Radio Buttons for the 4 modes
-        modes = [
-            ("1. Inline Intact + Attachments After (Include in Merge)", 1),
-            ("2. Inline Stripped + Attachments After (Include in Merge)", 2),
-            ("3. Inline Intact + Attachments After (Produce Separate PDF)", 3),
-            ("4. Inline Stripped + Attachments After (Produce Separate PDF)", 4),
-            ("5. Strip ALL Attachments - Body Only (Include in Merge)", 5),
-            ("6. Strip ALL Attachments - Body Only (Produce Separate PDF)", 6)
-        ]
-
-        for text, val in modes:
-            rb = ctk.CTkRadioButton(
-                container, text=text, variable=self.email_processing_mode, value=val,
-                font=ctk.CTkFont(size=13), text_color=BRAND_DARK_TEXT,
-                hover_color=BRAND_DEEP_ACCENT, fg_color=BRAND_ACCENT_GREEN,
-                text_color_disabled=BRAND_DARK_TEXT
-            )
-            rb.pack(anchor="w", pady=12)
-
-        ctk.CTkLabel(win, text="Note: Mode 3 & 4 will save standalone PDFs to the 'Created Docs' folder.", font=ctk.CTkFont(size=10, slant="italic"), text_color="#4B5563").pack(pady=10)
-        
-        ctk.CTkButton(win, text="✅ SAVE EMAIL PROTOCOL", height=45, fg_color=BRAND_ACCENT_GREEN, text_color=BRAND_BUTTON_TEXT, command=win.destroy).pack(pady=20, padx=40, fill="x")
-
-    def show_pdf_options_modal(self):
-        """PDF processing and optimization selector."""
-        win = ctk.CTkToplevel(self)
-        win.title("📄 PDF Processing Protocols")
-        win.geometry("520x400")
-        win.resizable(False, False)
-        win.grab_set()
-
-        ctk.CTkLabel(win, text="PDF OPTIMIZATION PROTOCOL", font=ctk.CTkFont(weight="bold", size=16), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 10))
-        
-        container = ctk.CTkFrame(win, fg_color="transparent")
-        container.pack(fill="both", expand=True, padx=40)
-
-        ctk.CTkCheckBox(container, text="Force OCR Text Recognition (Searchable PDFs)", state="disabled").pack(anchor="w", pady=10)
-        ctk.CTkCheckBox(container, text="Flatten Form Fields (Non-Editable)", state="disabled").pack(anchor="w", pady=10)
-        ctk.CTkCheckBox(container, text="Strip Internal Hyperlinks", state="disabled").pack(anchor="w", pady=10)
-        
-        ctk.CTkLabel(container, text="Pro Tip: Use the 'Optimize Output' checkbox on the main dashboard\nfor standard size reduction.", font=ctk.CTkFont(size=11), text_color="#6B7280", justify="left").pack(pady=20)
-
-        ctk.CTkButton(win, text="✅ CLOSE PDF OPTIONS", height=45, fg_color=BRAND_ACCENT_GREEN, text_color=BRAND_BUTTON_TEXT, command=win.destroy).pack(pady=20, padx=40, fill="x")
+        ctk.CTkButton(opt, text="✅ SAVE PROTOCOL", height=45, fg_color=BRAND_ACCENT_GREEN, command=save_and_close).pack(pady=20, padx=30, fill="x")
 
     def start_bates_thread(self):
         target = self.bates_target_entry.get().strip()
@@ -2003,16 +1746,6 @@ class AccessMergerApp(ctk.CTk):
 
     def validate_keygen_license(self, key):
         """Encapsulated REST API driver sending secure POST validations to Keygen.sh."""
-        # --- MASTER FOUNDER BYPASS (High-Priority Internal Override) ---
-        # Ensures critical developer and VIP keys function regardless of network/API status
-        master_keys = [
-            "WEEA-X43R-AWX3-YERV-WM47-YHHY-FCAK-AJF4", # User's Primary Token
-            "9KMT-VXNC-AYX9-WLLM-77RM-YXV9-RTH3-RYL9"  # VIP Launch Token
-        ]
-        if key.strip() in master_keys:
-            print("🚀 Master Founder Key Detected. Bypassing Security Matrix...")
-            return True
-
         url = f"https://api.keygen.sh/v1/accounts/{KEYGEN_ACCOUNT_ID}/licenses/actions/validate-key"
         body_data = {
             "meta": {

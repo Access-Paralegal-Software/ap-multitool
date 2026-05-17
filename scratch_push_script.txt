@@ -1,0 +1,2 @@
+"# 1. Push to Private Core Repo\ngit add docs/index.html\ngit commit -m \"Fix: Correct Founder Tier price to $30\"\ngit push origin master\n\n# 2. Push to Public Portal Repo\n$token = \"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\"\n$remote = \"https://$($tok
+<truncated 780 bytes>

@@ -1,8 +1,21 @@
+# Obsidian configuration & caches
+.obsidian/
+*.tmp
+*.log
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Python & Build Cache
+__pycache__/
+*.pyc
 build/
 dist/
-__pycache__/
-*.spec
-*.png
-*.txt
-.idea/
-.vscode/
+
+# Local Output & Run Directories
+Merged_Output/
+bates_proof_run/
+bates_test_run/
+final_production_run/
+sop_compliance_test/

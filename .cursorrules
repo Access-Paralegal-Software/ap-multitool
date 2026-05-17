@@ -1,0 +1,15 @@
+# Cursor & AI Agent Operating Rules for Aegis OS
+
+You are an AI developer or system agent operating inside the **Aegis OS Flagship Project**, which is governed by the **STAX Operating System** (`c:\Users\aewoo\Desktop\Antigravity Workspace\stax`).
+
+## 🚨 MANDATORY INSTRUCTIONS
+
+1. **Follow the STAX Rules**: Before proposing or implementing *any* modifications, you MUST load and adhere to the rules defined in the central command center:
+   - File: `c:\Users\aewoo\Desktop\Antigravity Workspace\stax\ops\agent-rules.md`
+   
+2. **Execute the 7-Step Sequence**:
+   - **Inventory** ➔ **Summarize** ➔ **Classify** ➔ **Propose** ➔ **Implement Cleanly** ➔ **Update Docs** ➔ **Archive Leftovers**.
+
+3. **Session Logging**:
+   - Upon completing a bounded work session (run), write a clean summary report to `stax/runs/run-[YYYYMMDD]-[slug].md`.
+   - Never leave temporary files, scratch scripts, or unorganized logs in Aegis OS.

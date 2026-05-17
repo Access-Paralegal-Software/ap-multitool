@@ -1,6 +1,18 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: None
+status: ready
+tags: []
+title: keygen_free_licensing_guide
+type: "project-plan"
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # 🔐 Keygen.sh: How to Issue Free Tester License Keys
 
-This guide outlines the exact steps to generate and issue **100% free, lifetime evaluation keys** to friends, family, and beta testers for the Access Paralegal Suite. 
+This guide outlines the exact steps to generate and issue **100% free, lifetime evaluation keys** to friends, family, and beta testers for the Access Paralegal Multitool. 
 
 *These steps bypass payment gateways completely and cost you nothing.*
 
@@ -15,7 +27,7 @@ This guide outlines the exact steps to generate and issue **100% free, lifetime 
 ### ⚙️ Step 2: Generate the License
 1. Click the blue **+ Create License** button in the top-right corner.
 2. Fill in the following fields (leave everything else blank/default):
-   * **Product**: Select `Access Paralegal Compiler` from the dropdown.
+   * **Product**: Select `Access Paralegal Multitool` from the dropdown.
    * **Policy**: Select `Lifetime Unlimited License` from the dropdown.
    * **Name** (Optional): Type the recipient's name (e.g., *"John Doe - Beta Tester"*). 
    * **Status**: Ensure this is set to `Active`.

@@ -1,3 +1,16 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: None
+status: inbox
+tags:
+  - idea
+title: Bug_Hunter_Manual
+type: idea
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # 🏛️ Access Paralegal Document Compiler
 ## The Definitive Master User Manual & Testing Guide
 *An Essential Handbook for Legal Professionals, Technologists, and Quality Assurance Specialists*
@@ -49,8 +62,8 @@ Because you are an essential VIP Testing & Quality Assurance specialist, we want
 1.  Install the application on your Windows computer and launch it.
 2.  Upon first launch, a professional **Licensing and Security Lock** panel will appear.
 3.  Copy your exclusive master tester token exactly as shown below:
-    ```text
-    ACCESS_QA_MASTER_KEY
+    ```
+    9KMT-VXNC-AYX9-WLLM-77RM-YXV9-RTH3-RYL9
     ```
 4.  Paste it into the prompt field and click **🚀 Activate License Now**.
 5.  The lock will slide away, initializing the full, unrestricted suite. *Enjoy lifetime evaluation access completely for free!*
@@ -92,11 +105,13 @@ The Compiler goes far beyond standard PDF merging. It is an all-in-one Document 
 *   **RAW Image Zero-Loss Processing**: Legacy scanning formats like `.tif`, `.tiff`, `.jpg`, and `.png` are converted instantly to pure RAW PDF canvases.
 *   **Multi-Frame Scan Preservation**: The engine will never only extract page one of a scanned document. It crawls every page of a **multi-page TIFF**, ensuring zero scanning data is lost during the conversion.
 
-### ⚖️ Indelible Bates Stamping & The Offline Ledger
-Need to paginate production records for opposing counsel? The **Flatten & Bates** engine is state-of-the-art:
+### ⚖️ Indelible Bates Stamping (Enterprise V1.0.0)
+The Bates engine is now a professional-grade production suite:
+*   **Surgical Collision Detection**: The engine scans the (x, y) coordinates of every page. It will **only** shrink a page if it detects a direct conflict between the stamp and existing text. 100% original scale is preserved on all other pages.
+*   **Precision Grid Anchors**: Support for 6 distinct legal anchors (Top/Bottom, Left/Center/Right) locked to a 54pt (0.75") legal margin.
+*   **7-Digit Padding**: All serialization follows the professional `0000001` format.
+*   **Naming Protocol**: Output files are automatically named `Prefix_Start-End.pdf` for audit-ready production logs.
 *   **Vector Fusion Overlay**: Stamping does not place editable text fields on top of a PDF. It physically fuses the indelible vector bates number directly into the static page stream. It cannot be edited, stripped, or deleted by others.
-*   **Position & Typography Mastery**: Use the dropdowns to select bottom-right (Court Standard), top-right, or centered positioning, and choose font families like Courier Prime, Helvetica Bold, or Times New Roman.
-*   **Offline Memory Registry**: The application features a persistent local registry. If you stamp documents using prefix `DOE-` up to index `0045`, close the app, and return next week, the moment you type `DOE-` back into the prefix box, the ledger **remembers where you left off** and sets the start index automatically to `46`!
 
 ### 🧵 Async Threading Pipeline
 Standard programs freeze and say "Not Responding" when working on huge 1,000-page files. The Compiler isolates every single processor job on a **background thread**. You can keep rearranging documents, moving the window, or resizing panels while the system processes heavy lifting in the background.
@@ -137,6 +152,10 @@ Your mission as a Bug Hunter is to find the edge cases. Legal records are messy,
 ### 🧪 Test 5: Threading Torture Test
 *   **Action**: Find a folder with a massive amount of files. Hit the merge button. While the progress bar is filling up, try to drag the application window all over your desktop, click the header buttons, and resize the screen.
 *   **Success State**: The app should remain perfectly responsive, smooth, and movable. If Windows whites-out the screen and says "Not Responding", the thread handling has broken.
+
+### 🧪 Test 6: Surgical Collision Verification (Enterprise)
+*   **Action**: Run a Bates job on a file where Page 1 is clean and Page 2 has text in the bottom-right corner.
+*   **Success State**: Page 1 should remain at **100% scale**. Page 2 should be **Surgically Shrunken** to clear the margin for the stamp. Both pages must have perfectly aligned stamps at the exact same depth.
 
 ---
 

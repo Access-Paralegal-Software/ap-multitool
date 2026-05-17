@@ -1,3 +1,15 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: None
+status: archived
+tags: []
+title: VERSION_UPGRADE_NOTE
+type: reference
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # Version Upgrade Synchronization Checklist
 
 To maintain marketing integrity and prevent users from hitting 404 errors, **always** update the version identifier and executable naming schemes across these specific files whenever you perform a new release.

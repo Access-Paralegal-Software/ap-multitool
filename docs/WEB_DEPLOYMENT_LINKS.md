@@ -1,3 +1,15 @@
+---
+category: software
+plane_id: 
+profit_likelihood: high
+project: None
+status: archived
+tags: []
+title: WEB_DEPLOYMENT_LINKS
+type: reference
+updated_at: "2026-05-17T09:08:47Z"
+---
+
 # Access Paralegal Web Deployment Links
 
 Here are the final URL routes for the newly constructed GitHub Pages static portal. Use these clean, extension-free paths when linking from your primary Squarespace site or marketing assets.
