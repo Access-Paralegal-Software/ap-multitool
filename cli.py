@@ -26,7 +26,7 @@ logger.addHandler(log_handler)
 
 def configure_logging(args):
     """Adjust logging verbosity and format based on global CLI parameters."""
-    if getattr(args, "silent", False):
+    if getattr(args, "silent", False) or getattr(args, "quiet", False):
         logger.setLevel(logging.ERROR)
     elif getattr(args, "verbose", False):
         logger.setLevel(logging.DEBUG)
@@ -37,7 +37,7 @@ def configure_logging(args):
 
 def get_progress_cb(args):
     """Return a progress callback suitable for the selected verbosity."""
-    if getattr(args, "silent", False) or getattr(args, "json", False):
+    if getattr(args, "silent", False) or getattr(args, "quiet", False) or getattr(args, "json", False):
         return lambda msg, val: None
 
     def on_progress(msg, progress_val):
@@ -50,7 +50,7 @@ def handle_job_result(res_job, args):
 
     Exits:
       0 = Complete
-      2 = Failed Execution
+      1 = Failed Execution
       3 = Cancelled
     """
     is_json = getattr(args, "json", False)
@@ -68,8 +68,10 @@ def handle_job_result(res_job, args):
                 "page_count": page_count,
                 "error": None
             }
+            # Output goes strictly to stdout
             print(json.dumps(result_data, indent=2))
         else:
+            # Info logs go to stderr
             logger.info("Job completed successfully!")
             logger.info(f"Output: {output_paths[0]}")
             logger.info(f"Pages: {page_count}")
@@ -102,7 +104,7 @@ def handle_job_result(res_job, args):
             print(json.dumps(result_data, indent=2))
         else:
             logger.error(f"Job failed: {error_msg}")
-        sys.exit(2)
+        sys.exit(1) # Execution failure gets exit code 1
 
 
 def trap_execution(func):
@@ -123,7 +125,7 @@ def trap_execution(func):
                     "error": str(e)
                 }
                 print(json.dumps(result_data, indent=2))
-            sys.exit(2)
+            sys.exit(1) # Operational failure exit code
     return wrapper
 
 
@@ -135,7 +137,7 @@ def handle_email_to_pdf(args):
         logger.error(f"Input file not found: {input_path}")
         if args.json:
             print(json.dumps({"status": "failed", "error": f"Input file not found: {input_path}"}))
-        sys.exit(1)
+        sys.exit(2) # Validation/Argument error gets exit code 2
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -176,10 +178,35 @@ def handle_merge(args):
         logger.error("No valid inputs provided for merge.")
         if args.json:
             print(json.dumps({"status": "failed", "error": "No valid inputs provided for merge."}))
-        sys.exit(1)
+        sys.exit(2) # Validation/Argument error gets exit code 2
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Dry run execution check
+    if getattr(args, "dry_run", False):
+        summary = {
+            "dry_run": True,
+            "operation": "merge",
+            "inputs_resolved": [str(i.path) for i in inputs],
+            "output_directory": str(output_dir),
+            "output_name": args.output_name or "merged.pdf",
+            "grayscale": args.grayscale
+        }
+        if args.json:
+            print(json.dumps(summary, indent=2))
+        else:
+            # Print human-readable summary to stdout
+            print("=== DRY RUN SUMMARY ===")
+            print(f"Operation: Merge")
+            print(f"Inputs Resolved ({len(inputs)}):")
+            for inp in summary["inputs_resolved"]:
+                print(f"  - {inp}")
+            print(f"Output Directory: {summary['output_directory']}")
+            print(f"Output Name Override: {summary['output_name']}")
+            print(f"Grayscale: {summary['grayscale']}")
+            print("=======================")
+        sys.exit(0)
 
     job_params = MergeParams(
         grayscale=args.grayscale,
@@ -208,7 +235,7 @@ def handle_docx_to_pdf(args):
         logger.error(f"Input file not found: {input_path}")
         if args.json:
             print(json.dumps({"status": "failed", "error": f"Input file not found: {input_path}"}))
-        sys.exit(1)
+        sys.exit(2) # Validation/Argument error gets exit code 2
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -240,7 +267,7 @@ def handle_xlsx_to_pdf(args):
         logger.error(f"Input file not found: {input_path}")
         if args.json:
             print(json.dumps({"status": "failed", "error": f"Input file not found: {input_path}"}))
-        sys.exit(1)
+        sys.exit(2) # Validation/Argument error gets exit code 2
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -272,21 +299,57 @@ def handle_bates(args):
         logger.error(f"Input file not found: {input_path}")
         if args.json:
             print(json.dumps({"status": "failed", "error": f"Input file not found: {input_path}"}))
-        sys.exit(1)
+        sys.exit(2) # Validation/Argument error gets exit code 2
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Dry run execution check
+    if getattr(args, "dry_run", False):
+        summary = {
+            "dry_run": True,
+            "operation": "bates_stamp",
+            "input_resolved": str(input_path),
+            "output_directory": str(output_dir),
+            "output_name": args.output_name or f"{args.prefix or 'BATES'}_stamped.pdf",
+            "prefix": args.prefix or "",
+            "sep": args.sep,
+            "start_number": args.start_number,
+            "padding": args.padding,
+            "position": args.position,
+            "font_name": args.font_name,
+            "font_size": args.font_size,
+            "shrink_conflict": not args.no_shrink
+        }
+        if args.json:
+            print(json.dumps(summary, indent=2))
+        else:
+            print("=== DRY RUN SUMMARY ===")
+            print(f"Operation: Bates Stamp")
+            print(f"Input File: {summary['input_resolved']}")
+            print(f"Output Directory: {summary['output_directory']}")
+            print(f"Output Name Override: {summary['output_name']}")
+            print(f"Prefix: {summary['prefix']}")
+            print(f"Separator: '{summary['sep']}'")
+            print(f"Start Number: {summary['start_number']}")
+            print(f"Padding Width: {summary['padding']}")
+            print(f"Position: {summary['position']}")
+            print(f"Font Name: {summary['font_name']}")
+            print(f"Font Size: {summary['font_size']}")
+            print(f"Shrink Conflict Page Contents: {summary['shrink_conflict']}")
+            print("=======================")
+        sys.exit(0)
+
     job_input = InputSpec.from_path(input_path)
     job_params = BatesParams(
         prefix=args.prefix or "",
-        start_number=args.start,
+        start_number=args.start_number,
         padding=args.padding,
-        position=args.pos,
-        font_size=args.size,
+        position=args.position,
+        font_size=args.font_size,
         shrink_conflict=not args.no_shrink,
         sep=args.sep,
-        font_name=args.font,
+        font_name=args.font_name,
         naming="Prefix_Range" if args.output_name is None else "Prefix_StartOnly",
         output_name=args.output_name
     )
@@ -307,7 +370,7 @@ def handle_bates(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="APMultitool Command-Line Interface (Core v1.1.0)",
+        description="APMultitool Command-Line Interface (Core v1.2.0)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples of usage:
@@ -318,7 +381,7 @@ Examples of usage:
   python cli.py --json --silent email-to-pdf -i mail.eml -o out/
 
   # Apply Bates stamping starting at 1000:
-  python cli.py bates -i document.pdf --prefix CONFIDENTIAL --start 1000 --padding 6
+  python cli.py bates -i document.pdf --prefix CONFIDENTIAL --start-number 1000 --padding 6
 """
     )
     # Global modifiers
@@ -333,9 +396,20 @@ Examples of usage:
         help="Suppress all informational output logs (error logs still print)"
     )
     parser.add_argument(
+        "-q", "--quiet",
+        action="store_true",
+        help="Alias for --silent"
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Print structured execution status and outcomes in JSON to stdout on exit"
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="APMultitool CLI v1.2.0",
+        help="Show program's version number and exit"
     )
 
     subparsers = parser.add_subparsers(dest="operation", required=True)
@@ -394,6 +468,11 @@ Examples of usage:
         "--grayscale",
         action="store_true",
         help="Force all merged pages to grayscale layout representation"
+    )
+    merge_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Perform configuration validation and print merge outline without generating output files"
     )
 
     # Subparser: docx-to-pdf
@@ -466,7 +545,7 @@ Examples of usage:
         help="Separator character between prefix and serial (default: '-')"
     )
     bates_parser.add_argument(
-        "--start",
+        "--start-number",
         type=int,
         default=1,
         help="Starting serial index (default: 1)"
@@ -478,18 +557,18 @@ Examples of usage:
         help="Zero padding width for serial suffix (default: 7)"
     )
     bates_parser.add_argument(
-        "--pos",
+        "--position",
         default="Bottom Right",
         choices=["Bottom Right", "Bottom Center", "Top Center", "Top Right", "Top Left", "Bottom Left"],
         help="Placement zone on each page (default: 'Bottom Right')"
     )
     bates_parser.add_argument(
-        "--font",
+        "--font-name",
         default="Helvetica",
         help="Font face name (default: 'Helvetica')"
     )
     bates_parser.add_argument(
-        "--size",
+        "--font-size",
         type=int,
         default=10,
         help="Font size in points (default: 10)"
@@ -498,6 +577,11 @@ Examples of usage:
         "--no-shrink",
         action="store_true",
         help="Disable page margin shrinking for collision avoidance"
+    )
+    bates_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Perform parameters check and print Bates layout summary without generating output file"
     )
 
     args = parser.parse_args()

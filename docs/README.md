@@ -35,6 +35,11 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 *   **[`operations/docx_xlsx_to_pdf_refactor.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/operations/docx_xlsx_to_pdf_refactor.md)**: Headless Word/Excel document conversion design specifications.
 *   **[`operations/bates_core_refactor.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/operations/bates_core_refactor.md)**: Core Bates stamping design specifications.
 *   **[`roadmaps/core_first_multi_interface_strategy.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/roadmaps/core_first_multi_interface_strategy.md)**: Strategic roadmap mapping interface prioritizations.
+*   **[`ops/cli_ux_audit.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/cli_ux_audit.md)**: Usability audit and baseline conventions of the CLI commands.
+*   **[`ops/windows_installer_spec.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_spec.md)**: Branding, layout, and configuration specifications for Inno Setup.
+*   **[`ops/macos_linux_packaging_plan.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/macos_linux_packaging_plan.md)**: Packaging strategy, sandboxing, and signing procedures for Unix platforms.
+*   **[`operations/cli_overview.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/operations/cli_overview.md)**: Headless operation manual and script examples for developers/IT.
+*   **[`ops/marketing_snippets_apmultitool.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/marketing_snippets_apmultitool.md)**: Promotional descriptions and core value assertions.
 
 ---
 
@@ -61,6 +66,7 @@ These historical documents track sprint execution timelines and developmental pr
 *   **[`ho_0012_2026_05_19_email_integration_and_cli_scaffold.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0012_2026_05_19_email_integration_and_cli_scaffold.md)**: Refactored email operations into core engine, completed GUI wiring, implemented CLI, and deployed pytest test suite.
 *   **[`ho_0013_2026_05_19_converters_and_bates_migration.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0013_2026_05_19_converters_and_bates_migration.md)**: Migrated legacy Word/Excel converters and Bates stamping into core engine, wired GUI execution flow, implemented CLI subcommands, and expanded tests.
 *   **[`ho_0014_2026_05_19_cli_polish_and_packaging.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0014_2026_05_19_cli_polish_and_packaging.md)**: Polished CLI arguments, configured global logging controls and `--json` format output, added Windows/macOS packaging script blueprints, and compiled stability test harness.
+*   **[`ho_0015_2026_05_19_cli_ux_and_installer_readiness.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0015_2026_05_19_cli_ux_and_installer_readiness.md)**: Completed CLI UX audit, standardized flags and exit codes, integrated --dry-run mode for merge/bates, added CLI UX pytest suite, established Windows Inno Setup requirements, planned macOS/Linux packaging pathways, and added marketing materials.
 
 ---
 

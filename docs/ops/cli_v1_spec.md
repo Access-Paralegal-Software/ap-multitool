@@ -24,7 +24,9 @@ python cli.py [global_modifiers] <operation> [options]
 
 - `-v, --verbose`: Enable debug logging and show error tracebacks.
 - `--silent`: Suppress all informational output logs (error logs still print to stderr).
+- `-q, --quiet`: Alias for `--silent` to suppress informational output.
 - `--json`: Print structured execution status and outcomes in JSON to stdout on exit. Suppresses progress logs automatically to keep stdout clean.
+- `--version`: Show program's version number and exit.
 
 ## 3. Command Structure
 
@@ -44,6 +46,7 @@ Combines multiple files (PDFs, images, emails, DOCX) into a single PDF.
   - `-o, --output-dir PATH`: Path to the output directory. (Default: current directory)
   - `--output-name FILENAME`: Custom name for the merged output PDF.
   - `--grayscale`: Convert images and emails to grayscale.
+  - `--dry-run`: Validate arguments and show a layout summary without writing output.
 
 ### Operation: `docx-to-pdf`
 Converts a Word document (`.docx` or `.doc`) to a PDF.
@@ -67,15 +70,16 @@ Applies Bates numbering stamps to a PDF with optional collision avoidance.
   - `--output-name FILENAME`: Custom output filename.
   - `--prefix TEXT`: Bates prefix string (e.g. `PROD`).
   - `--sep CHAR`: Separator character between prefix and serial (e.g. `-`). (Default: `-`)
-  - `--start NUMBER`: Suffix starting index. (Default: `1`)
+  - `--start-number NUMBER`: Suffix starting index. (Default: `1`)
   - `--padding WIDTH`: Width of zero-padded serial suffix. (Default: `7`)
-  - `--pos POSITION`: Stamp placement coordinates. Choices: `Bottom Right`, `Bottom Center`, `Top Center`, `Top Right`, `Top Left`, `Bottom Left`. (Default: `Bottom Right`)
-  - `--font NAME`: Stamp text font family. (Default: `Helvetica`)
-  - `--size POINTS`: Font point size. (Default: `10`)
+  - `--position POSITION`: Stamp placement coordinates. Choices: `Bottom Right`, `Bottom Center`, `Top Center`, `Top Right`, `Top Left`, `Bottom Left`. (Default: `Bottom Right`)
+  - `--font-name NAME`: Stamp text font family. (Default: `Helvetica`)
+  - `--font-size POINTS`: Font point size. (Default: `10`)
   - `--no-shrink`: Disable margin-moat collision detection and page contents shrinking.
+  - `--dry-run`: Validate parameters and preview Bates layout details without writing output.
 
 ## 4. Exit Codes
-- `0`: Success.
-- `1`: Validation/Argument error (missing arguments, invalid formats, file not found).
-- `2`: Engine execution error (operation failed).
+- `0`: Success (or dry-run verification success).
+- `1`: Engine execution error (operation failed).
+- `2`: Validation/Argument/Usage error (missing arguments, invalid formats, file not found, bad option combinations).
 - `3`: Operation was cancelled by user.
