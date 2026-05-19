@@ -295,9 +295,9 @@ class AccessMergerApp(ctk.CTk):
         
         self.tab_view.pack(fill="both", expand=True, padx=25, pady=(10, 10))
         
-        self.tab_merger = self.tab_view.add("📦 Document Merger")
-        self.tab_bates = self.tab_view.add("⚖️ Bates Stamping & Locking")
-        self.tab_organizer = self.tab_view.add("📂 File Room")
+        self.tab_merger = self.tab_view.add("📦 Document Compiler")
+        self.tab_bates = self.tab_view.add("⚖️ Bates & Security")
+        self.tab_organizer = self.tab_view.add("📂 File Room & Trees")
         
         # Critical Override: Make individual tab window bodies fully transparent 
         # to let the sweeping background emerald flow completely through!
@@ -1053,69 +1053,92 @@ class AccessMergerApp(ctk.CTk):
                 # --- SCENARIOS 3 & 4: EMAIL RECORDS (.EML / .MSG) ---
                 elif low_fn.endswith(('.eml', '.msg')) and self.var_email.get():
                     from pathlib import Path
+                    from core.job import Job, InputSpec, EmailToPdfParams, OutputSpec
+                    from core.engine import DocEngine
+
                     email_path = Path(file_path)
+                    output_pdf_name = f"email_conv_{int(time.time())}_{idx}.pdf"
                     
-                    # 1. Parse unified email
-                    email_obj = email_processing.UnifiedEmail(email_path)
+                    # 1. Construct Job for DocEngine
+                    job_input = InputSpec.from_path(email_path)
+                    job_params = EmailToPdfParams(
+                        grayscale=self.var_grayscale.get(),
+                        include_attachments=True,
+                        output_name=output_pdf_name
+                    )
+                    job_output = OutputSpec(directory=Path(temp_extract_dir))
                     
-                    # 2. Render cover PDF using email_processing
-                    cover_pdf_path = os.path.join(temp_extract_dir, f"email_cover_{int(time.time())}_{idx}.pdf")
-                    email_processing.email_to_pdf(email_obj, Path(cover_pdf_path), grayscale=self.var_grayscale.get())
+                    email_job = Job(
+                        operation="email_to_pdf",
+                        inputs=[job_input],
+                        params=job_params,
+                        output=job_output
+                    )
                     
+                    # Enforce user cancellation request if set in GUI
+                    if self.cancel_requested:
+                        from core.job import JobStatus
+                        email_job.status = JobStatus.CANCELLED
+                    
+                    # 2. Define callback to show progress in tree status
+                    def progress_cb(msg, progress_val):
+                        self.after(0, lambda i=item_id: update_tree_status(i, f"📧 {msg}"))
+                    
+                    # 3. Submit and execute job via engine
+                    engine = DocEngine(write_audit=False)
+                    engine.submit(email_job, on_progress=progress_cb)
+                    
+                    pdf_p = Path(temp_extract_dir) / output_pdf_name
+                    if not pdf_p.exists():
+                        raise ValueError("Email engine conversion failed: output PDF not generated.")
+                    
+                    # 4. Merge results into the compiler master document
                     email_start_pg = curr_pg
-                    with pikepdf.open(cover_pdf_path) as cover:
+                    with pikepdf.open(pdf_p) as cover:
                         merged_pdf.pages.extend(cover.pages)
                         curr_pg += len(cover.pages)
                     
-                    subj = email_obj.subject or "No Subject"
-                    email_type_str = "Email" if low_fn.endswith('.eml') else "Outlook"
-                    email_outline = pikepdf.OutlineItem(f"📧 {email_type_str}: {subj[:50]}", destination=email_start_pg, page_location="Fit")
-                    
-                    # 3. Process attachments using email_processing
-                    extracted_attachments = []
-                    a_idx = 0
-                    for fname, data, ct in email_processing.get_email_attachments(email_obj, keep_inline=True):
-                        raw_p = os.path.join(temp_extract_dir, f"raw_{idx}_{a_idx}_{fname}")
-                        with open(raw_p, 'wb') as raw_f:
-                            raw_f.write(data)
-                            
-                        pdf_p = os.path.join(temp_extract_dir, f"conv_{idx}_{a_idx}_{fname}.pdf")
-                        att_low = str(fname).lower()
-                        
-                        # First try the offline email_processing converter
-                        success = email_processing.attachment_to_pdf(
-                            data, fname, Path(pdf_p), ct, grayscale=self.var_grayscale.get()
-                        )
-                        
-                        # Fallback for complex formats that require local win32com automation (Excel/Word doc fallbacks)
-                        if not success or not os.path.exists(pdf_p):
-                            if att_low.endswith(('.docx', '.doc')):
-                                success = self._convert_word_to_pdf(raw_p, pdf_p)
-                            elif att_low.endswith(('.xlsx', '.xls', '.csv')):
-                                success = self._convert_excel_to_pdf(raw_p, pdf_p)
-                            elif att_low.endswith('.txt'):
-                                success = self._convert_text_to_pdf(raw_p, pdf_p)
-                                
-                        if success and os.path.exists(pdf_p):
-                            extracted_attachments.append((fname, pdf_p))
-                        a_idx += 1
-                        
-                    for o_name, p_path in extracted_attachments:
-                        a_start = curr_pg
-                        with pikepdf.open(p_path) as src:
-                            merged_pdf.pages.extend(src.pages)
-                            curr_pg += len(src.pages)
-                        email_outline.children.append(pikepdf.OutlineItem(f"📎 {o_name}", destination=a_start, page_location="Fit"))
-                        
-                    self.after(0, lambda i=item_id: update_tree_status(i, f"✅ Combined with {len(extracted_attachments)} Asset(s)"))
+                    # 5. Handle outline bookmarks
                     if self.var_bookmark.get():
+                        try:
+                            email_obj = email_processing.UnifiedEmail(email_path)
+                            subj = email_obj.subject or "No Subject"
+                        except Exception:
+                            subj = "No Subject"
+                        email_type_str = "Email" if low_fn.endswith('.eml') else "Outlook"
+                        email_outline = pikepdf.OutlineItem(f"📧 {email_type_str}: {subj[:50]}", destination=email_start_pg, page_location="Fit")
                         outline_nodes.append(email_outline)
+                        
+                    self.after(0, lambda i=item_id: update_tree_status(i, "✅ Combined E-mail"))
                     success_count += 1
 
                 # --- SCENARIO 5: WORD DOCUMENTS (.DOCX, .DOC) ---
                 elif low_fn.endswith(('.docx', '.doc')):
-                    temp_pdf = os.path.join(temp_extract_dir, f"word_{int(time.time())}_{idx}.pdf")
-                    if self._convert_word_to_pdf(file_path, temp_pdf):
+                    from pathlib import Path
+                    from core.job import Job, InputSpec, DocxToPdfParams, OutputSpec, JobStatus
+                    from core.engine import DocEngine
+
+                    output_pdf_name = f"word_{int(time.time())}_{idx}.pdf"
+                    job_input = InputSpec.from_path(Path(file_path))
+                    job_params = DocxToPdfParams(
+                        grayscale=self.var_grayscale.get(),
+                        output_name=output_pdf_name
+                    )
+                    job_output = OutputSpec(directory=Path(temp_extract_dir))
+                    word_job = Job(
+                        operation="docx_to_pdf",
+                        inputs=[job_input],
+                        params=job_params,
+                        output=job_output
+                    )
+                    if self.cancel_requested:
+                        word_job.status = JobStatus.CANCELLED
+                    def word_progress_cb(msg, progress_val):
+                        self.after(0, lambda i=item_id: update_tree_status(i, f"📝 {msg}"))
+                    engine = DocEngine(write_audit=False)
+                    engine.submit(word_job, on_progress=word_progress_cb)
+                    temp_pdf = os.path.join(temp_extract_dir, output_pdf_name)
+                    if os.path.exists(temp_pdf):
                         with pikepdf.open(temp_pdf) as src:
                             merged_pdf.pages.extend(src.pages)
                             if self.var_bookmark.get():
@@ -1129,8 +1152,31 @@ class AccessMergerApp(ctk.CTk):
 
                 # --- SCENARIO 6: SPREADSHEETS (.XLSX, .XLS, .CSV) ---
                 elif low_fn.endswith(('.xlsx', '.xls', '.csv')):
-                    temp_pdf = os.path.join(temp_extract_dir, f"excel_{int(time.time())}_{idx}.pdf")
-                    if self._convert_excel_to_pdf(file_path, temp_pdf):
+                    from pathlib import Path
+                    from core.job import Job, InputSpec, XlsxToPdfParams, OutputSpec, JobStatus
+                    from core.engine import DocEngine
+
+                    output_pdf_name = f"excel_{int(time.time())}_{idx}.pdf"
+                    job_input = InputSpec.from_path(Path(file_path))
+                    job_params = XlsxToPdfParams(
+                        grayscale=self.var_grayscale.get(),
+                        output_name=output_pdf_name
+                    )
+                    job_output = OutputSpec(directory=Path(temp_extract_dir))
+                    excel_job = Job(
+                        operation="xlsx_to_pdf",
+                        inputs=[job_input],
+                        params=job_params,
+                        output=job_output
+                    )
+                    if self.cancel_requested:
+                        excel_job.status = JobStatus.CANCELLED
+                    def excel_progress_cb(msg, progress_val):
+                        self.after(0, lambda i=item_id: update_tree_status(i, f"📊 {msg}"))
+                    engine = DocEngine(write_audit=False)
+                    engine.submit(excel_job, on_progress=excel_progress_cb)
+                    temp_pdf = os.path.join(temp_extract_dir, output_pdf_name)
+                    if os.path.exists(temp_pdf):
                         with pikepdf.open(temp_pdf) as src:
                             merged_pdf.pages.extend(src.pages)
                             if self.var_bookmark.get():
@@ -1351,11 +1397,12 @@ class AccessMergerApp(ctk.CTk):
             return
         
         self.bates_run_btn.configure(state="disabled", text="Executing Production...")
+        import threading
         threading.Thread(target=self.execute_bates_production, daemon=True).start()
 
     def execute_bates_production(self):
-        """High-Performance Bates Engine with Normalization and Collision Avoidance."""
-        target_path = self.bates_target_entry.get()
+        """High-Performance Bates Engine leveraging core engine and DocEngine.submit()."""
+        target_path = self.bates_target_entry.get().strip()
         source_dir = os.path.dirname(target_path)
         
         # Pull Options
@@ -1372,120 +1419,55 @@ class AccessMergerApp(ctk.CTk):
             out_dir = os.path.join(source_dir, folder_name)
             os.makedirs(out_dir, exist_ok=True)
 
-        # 2. Setup Stamping
-        prefix = opts["prefix"]
-        sep = opts["sep"]
-        font = opts["font"]
-        size = opts["size"]
-        pos = opts["pos"]
-        
         try:
             start_idx = int(self.bates_start.get().strip())
         except:
             start_idx = 1
-            
-        padding = 7 # Professor's SOP Standard
-        
-        # Font Mapping
-        pdf_font = "Helvetica-Bold"
-        if "Times" in font: pdf_font = "Times-Bold"
-        elif "Courier" in font: pdf_font = "Courier-Bold"
-        elif "Arial" in font: pdf_font = "Helvetica" # ReportLab uses Helvetica for Arial
-        
-        curr_idx = start_idx
-        start_label = f"{prefix}{sep}{str(curr_idx).zfill(padding)}"
-        
+
+        # Build Job structures
+        from pathlib import Path
+        from core.job import Job, InputSpec, BatesParams, OutputSpec, JobStatus
+        from core.engine import DocEngine
+
+        job_input = InputSpec.from_path(Path(target_path))
+        job_params = BatesParams(
+            prefix=opts["prefix"],
+            start_number=start_idx,
+            padding=7, # Professor's SOP Standard
+            position=opts["pos"],
+            font_size=opts["size"],
+            shrink_conflict=opts["shrink"].get(),
+            sep=opts["sep"],
+            font_name=opts["font"],
+            naming=opts["naming"],
+            output_name=None  # Managed by operation naming format
+        )
+        job_output = OutputSpec(directory=Path(out_dir), overwrite=True)
+
+        bates_job = Job(
+            operation="bates_stamp",
+            inputs=[job_input],
+            params=job_params,
+            output=job_output
+        )
+
+        def progress_cb(msg, progress_val):
+            self.after(0, lambda: self.bates_run_btn.configure(text=f"Stamping: {int(progress_val*100)}%"))
+
         try:
-            with pikepdf.open(target_path) as pdf:
-                page_count = len(pdf.pages)
-                
-                for i, page in enumerate(pdf.pages):
-                    mbox = page.mediabox
-                    p_w = float(mbox[2] - mbox[0])
-                    p_h = float(mbox[3] - mbox[1])
-                    
-                    # --- PRECISION VISITOR COLLISION DETECTION ---
-                    LEGAL_MARGIN = 54
-                    needs_shrink = False
-                    
-                    if opts["shrink"].get():
-                        try:
-                            # Danger Zone: 150x60 in corners
-                            zone_w, zone_h = 150, 60
-                            if "Bottom Right" in pos: x0, y0, x1, y1 = p_w - zone_w, 0, p_w, zone_h
-                            elif "Bottom Left" in pos: x0, y0, x1, y1 = 0, 0, zone_w, zone_h
-                            elif "Top Right" in pos: x0, y0, x1, y1 = p_w - zone_w, p_h - zone_h, p_w, p_h
-                            elif "Top Left" in pos: x0, y0, x1, y1 = 0, p_h - zone_h, zone_w, p_h
-                            else: x0, y0, x1, y1 = p_w/2 - zone_w/2, 0, p_w/2 + zone_w/2, zone_h # Center
+            engine = DocEngine(write_audit=True)
+            res_job = engine.submit(bates_job, on_progress=progress_cb)
 
-                            reader = pypdf.PdfReader(target_path)
-                            found_text = []
-                            def visitor(text, cm, tm, fontDict, fontSize):
-                                tx, ty = tm[4], tm[5]
-                                if x0 <= tx <= x1 and y0 <= ty <= y1:
-                                    if text.strip(): found_text.append(text)
-                                    
-                            reader.pages[i].extract_text(visitor_text=visitor)
-                            if found_text:
-                                needs_shrink = True
-                        except: pass
-                        
-                    if needs_shrink:
-                        # Only shrink if surgical collision is detected in the corner!
-                        scale_x = (p_w - 2*LEGAL_MARGIN) / p_w
-                        scale_y = (p_h - 2*LEGAL_MARGIN) / p_h
-                        scale = min(scale_x, scale_y, 1.0)
-                        tx, ty = (p_w - p_w*scale)/2, (p_h - p_h*scale)/2
-                        matrix = f"q {scale:.4f} 0 0 {scale:.4f} {tx:.4f} {ty:.4f} cm ".encode()
-                        page.contents_add(matrix, prepend=True)
-                        page.contents_add(b" Q", prepend=False)
-
-                    bates_str = f"{prefix}{sep}{str(curr_idx).zfill(padding)}"
-                    
-                    # Create Overlay
-                    packet = BytesIO()
-                    can = canvas.Canvas(packet, pagesize=(p_w, p_h))
-                    can.setFont(pdf_font, size)
-                    
-                    # Position Logic (Centered in the Margin Moat)
-                    tw = can.stringWidth(bates_str, pdf_font, size)
-                    stamp_depth = LEGAL_MARGIN / 2 # Perfectly centered in the footer/header space
-                    
-                    if "Bottom Right" in pos:
-                        x, y = p_w - tw - LEGAL_MARGIN, stamp_depth
-                    elif "Bottom Center" in pos:
-                        x, y = (p_w / 2) - (tw / 2), stamp_depth
-                    elif "Top Center" in pos:
-                        x, y = (p_w / 2) - (tw / 2), p_h - stamp_depth
-                    elif "Top Right" in pos:
-                        x, y = p_w - tw - LEGAL_MARGIN, p_h - stamp_depth
-                    elif "Top Left" in pos:
-                        x, y = LEGAL_MARGIN, p_h - stamp_depth
-                    else: # Bottom Left
-                        x, y = LEGAL_MARGIN, stamp_depth
-                        
-                    can.drawString(x, y, bates_str)
-                    can.save()
-                    
-                    packet.seek(0)
-                    with pikepdf.open(packet) as overlay:
-                        page.add_overlay(overlay.pages[0])
-                    
-                    curr_idx += 1
-                
-                end_label = f"{prefix}{sep}{str(curr_idx - 1).zfill(padding)}"
-                
-                # 3. Save with Custom Naming
-                if opts["naming"] == "Prefix_StartOnly":
-                    out_name = f"{prefix}{sep}{str(start_idx).zfill(padding)}.pdf"
-                else:
-                    out_name = f"{prefix}{sep}{str(start_idx).zfill(padding)}-{str(curr_idx-1).zfill(padding)}.pdf"
-                
-                final_path = os.path.join(out_dir, out_name)
-                pdf.save(final_path, linearize=True)
-                
-            self.after(0, lambda: messagebox.showinfo("Success", f"Bates Production Complete!\n\nFile: {out_name}\nPages: {page_count}"))
-            os.startfile(out_dir)
+            if res_job.status == JobStatus.COMPLETE:
+                out_path = res_job.result.outputs[0]
+                out_name = os.path.basename(out_path)
+                page_count = res_job.result.page_count_out
+                self.after(0, lambda: messagebox.showinfo("Success", f"Bates Production Complete!\n\nFile: {out_name}\nPages: {page_count}"))
+                os.startfile(out_dir)
+            elif res_job.status == JobStatus.CANCELLED:
+                self.after(0, lambda: messagebox.showinfo("Cancelled", "Bates stamping was cancelled."))
+            else:
+                raise ValueError(res_job.result.error or "Unknown engine error.")
         except Exception as e:
             self.after(0, lambda err=str(e): messagebox.showerror("Production Error", f"Bates execution failed: {err}"))
             
