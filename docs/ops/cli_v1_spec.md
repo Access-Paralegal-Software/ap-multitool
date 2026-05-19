@@ -14,15 +14,21 @@ This specification defines the interface requirements, subcommands, and paramete
 - **Core-First**: CLI acts as a lightweight wrapper calling `DocEngine.submit()` directly.
 - **Explicit Inputs**: Provide explicit options for input files/folders, parameter settings, and output directories.
 - **Machine-Readable Outputs**: Support stdout printing of JSON results for easy integration into automation scripts.
-- **Consistent Codes**: Return standard shell exit codes (`0` for success, non-zero for failures).
+- **Consistent Codes**: Return standard shell exit codes.
 
-## 2. Command Structure
-The CLI is invoked via:
+## 2. Global Modifiers
+Global modifiers are specified before the subcommand:
 ```bash
-python cli.py <operation> [options]
+python cli.py [global_modifiers] <operation> [options]
 ```
 
-### Operation: `email_to_pdf`
+- `-v, --verbose`: Enable debug logging and show error tracebacks.
+- `--silent`: Suppress all informational output logs (error logs still print to stderr).
+- `--json`: Print structured execution status and outcomes in JSON to stdout on exit. Suppresses progress logs automatically to keep stdout clean.
+
+## 3. Command Structure
+
+### Operation: `email-to-pdf`
 Converts an email file and optional attachments to a PDF.
 - **Options**:
   - `-i, --input PATH`: Path to the input `.eml` or `.msg` file. (Required)
@@ -68,8 +74,8 @@ Applies Bates numbering stamps to a PDF with optional collision avoidance.
   - `--size POINTS`: Font point size. (Default: `10`)
   - `--no-shrink`: Disable margin-moat collision detection and page contents shrinking.
 
-
-## 3. Exit Codes
+## 4. Exit Codes
 - `0`: Success.
-- `1`: Validation error (missing arguments, invalid formats).
-- `2`: Engine execution error (operation failed or was cancelled).
+- `1`: Validation/Argument error (missing arguments, invalid formats, file not found).
+- `2`: Engine execution error (operation failed).
+- `3`: Operation was cancelled by user.

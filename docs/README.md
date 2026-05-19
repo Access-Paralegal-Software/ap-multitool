@@ -60,6 +60,7 @@ These historical documents track sprint execution timelines and developmental pr
 *   **[`ho_0005_23eb2985_ap-rename-audit.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0005_23eb2985_ap-rename-audit.md)**: Formal rename audit, layout gap mappings, and prioritized next moves.
 *   **[`ho_0012_2026_05_19_email_integration_and_cli_scaffold.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0012_2026_05_19_email_integration_and_cli_scaffold.md)**: Refactored email operations into core engine, completed GUI wiring, implemented CLI, and deployed pytest test suite.
 *   **[`ho_0013_2026_05_19_converters_and_bates_migration.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0013_2026_05_19_converters_and_bates_migration.md)**: Migrated legacy Word/Excel converters and Bates stamping into core engine, wired GUI execution flow, implemented CLI subcommands, and expanded tests.
+*   **[`ho_0014_2026_05_19_cli_polish_and_packaging.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0014_2026_05_19_cli_polish_and_packaging.md)**: Polished CLI arguments, configured global logging controls and `--json` format output, added Windows/macOS packaging script blueprints, and compiled stability test harness.
 
 ---
 
