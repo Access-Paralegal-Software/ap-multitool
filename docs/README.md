@@ -53,6 +53,10 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 *   **[`ops/qt_async_worker_pattern.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_async_worker_pattern.md)**: Thread separation layout, Signals/Slots, and cooperative cancel triggers.
 *   **[`ops/qt_file_dialog_notes.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_file_dialog_notes.md)**: Platform-safe file, multi-file, and directory pickers.
 *   **[`ops/qt_shell_responsive_notes.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_shell_responsive_notes.md)**: Viewport scaling limits and tablet touch metrics.
+*   **[`ops/qt_bates_parity_map.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_bates_parity_map.md)**: Parity map for legacy to Qt Bates view inputs and methods.
+*   **[`ops/qt_bates_view_spec.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_bates_view_spec.md)**: Specifications and layouts for the Qt Bates stamping screen.
+*   **[`ops/qt_fileroom_parity_map.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_fileroom_parity_map.md)**: Parity map for legacy to Qt File Room view inputs and methods.
+*   **[`ops/qt_fileroom_view_spec.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_fileroom_view_spec.md)**: Specifications, layout, and validation rules for the Qt File Room tree builder view.
 *   **[`ops/windows_installer_spec.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_spec.md)**: Branding, layout, and configuration specifications for Inno Setup.
 *   **[`ops/windows_installer_build.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_build.md)**: Build prerequisites and compile workflow for Inno Setup 6.
 *   **[`ops/windows_installer_validation.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_validation.md)**: Smoke-testing protocols and silent deployment parameters verification.
@@ -61,6 +65,7 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 *   **[`ops/macos_linux_packaging_plan.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/macos_linux_packaging_plan.md)**: Packaging strategy, sandboxing, and signing procedures for Unix platforms.
 *   **[`operations/cli_overview.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/operations/cli_overview.md)**: Headless operation manual and script examples for developers/IT.
 *   **[`ops/marketing_snippets_apmultitool.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/marketing_snippets_apmultitool.md)**: Promotional descriptions and core value assertions.
+
 
 ---
 

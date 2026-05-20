@@ -26,7 +26,8 @@ graph TD
   - Thread-safe `EngineJobWorker` support for progress updates and cancellation hooks.
 
 
-### 📄 Phase 2: Document Compiler Tab Migration
+
+### 📄 Phase 2: Document Compiler Tab Migration (COMPLETED)
 - **Objective**: Migrate the document merge list and queue control actions.
 - **Deliverables**:
   - `QTableWidget` representing the files queue with drag-and-drop row reordering.
@@ -34,7 +35,7 @@ graph TD
   - Action buttons (`Combine & Merge Files`, `Cancel`).
   - Integration with the core merge engine thread using Qt's `QThread` and custom Signal boundaries.
 
-### 🔢 Phase 3: Bates Stamping Tab Migration
+### 🔢 Phase 3: Bates Stamping Tab Migration (COMPLETED)
 - **Objective**: Migrate the Bates stamping setup, console logger, and options modal.
 - **Deliverables**:
   - File picker, prefix, and index input fields.
@@ -42,19 +43,20 @@ graph TD
   - Custom Settings dialog showing compliance options, with Return/Enter and Escape binders.
   - Cooperative stamping cancellation hook.
 
-### 🏛️ Phase 4: File Room & Case Trees Migration
+### 🏛️ Phase 4: File Room & Case Trees Migration (COMPLETED)
 - **Objective**: Migrate Case blueprints loader and tree visualizer.
 - **Deliverables**:
   - Case Matter number input.
   - Interactive Tree View representing directories to create.
   - "Spin Up Folder Tree" execution hooks.
 
-### ⚙️ Phase 5: Global Modals & System Settings
+### ⚙️ Phase 5: Global Modals & System Settings (COMPLETED)
 - **Objective**: Port global preference dialogs, EULA, and licensing frames.
 - **Deliverables**:
   - About modal with security token calculations and CLI help instructions.
   - Preferences modal with theme selections (Light, Dark) and workspace relocate options.
   - License Activation modal with Return key hook.
+
 
 ### 📱 Phase 6: Tablet Optimization & Packaging
 - **Objective**: Refine sizing policies, expand touch targets, and package cross-platform.

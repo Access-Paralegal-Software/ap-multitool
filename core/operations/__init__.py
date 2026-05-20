@@ -16,6 +16,7 @@ from core.operations.email_to_pdf import handle as _email_to_pdf
 from core.operations.docx_to_pdf import handle as _docx_to_pdf
 from core.operations.xlsx_to_pdf import handle as _xlsx_to_pdf
 from core.operations.bates_stamp import handle as _bates_stamp
+from core.operations.folder_tree import handle as _folder_tree
 
 OPERATION_REGISTRY: dict = {
     "merge":   _merge,
@@ -27,5 +28,7 @@ OPERATION_REGISTRY: dict = {
     "docx_to_pdf": _docx_to_pdf,
     "xlsx_to_pdf": _xlsx_to_pdf,
     "bates_stamp": _bates_stamp,
+    "folder_tree": _folder_tree,
 }
+
 

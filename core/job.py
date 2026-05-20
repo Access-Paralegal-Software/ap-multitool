@@ -132,6 +132,14 @@ class BatesParams:
     output_name: str | None = None
 
 
+@dataclass
+class FolderTreeParams:
+    archetype: str
+    custom_subdirs: list[str] = field(default_factory=list)
+    matter_id: str = "Case_Matter"
+
+
+
 
 @dataclass
 class EmailToPdfParams:
