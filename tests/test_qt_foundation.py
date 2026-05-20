@@ -29,7 +29,7 @@ def test_views_structure():
 
     compiler = CompilerView()
     assert compiler.table is not None
-    assert compiler.table.columnCount() == 3
+    assert compiler.table.columnCount() == 6
     assert compiler.btn_run is not None
 
     bates = BatesView()

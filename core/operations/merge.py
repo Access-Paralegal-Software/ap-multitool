@@ -109,6 +109,8 @@ def _convert_to_pdf(spec, params: MergeParams, warnings: list[str]) -> Path:
         _email_to_pdf(spec, tmp, params)
     elif spec.kind == "docx":
         _word_to_pdf(spec.path, tmp, warnings)
+    elif spec.kind == "xlsx":
+        _excel_to_pdf(spec.path, tmp, warnings)
     else:
         raise ValueError(f"Unsupported input kind: {spec.kind}")
 
@@ -168,17 +170,50 @@ def _email_to_pdf(spec, dest: Path, params: MergeParams) -> None:
         shutil.move(str(result_path), str(dest))
 
 
-
 def _word_to_pdf(src: Path, dest: Path, warnings: list[str]) -> None:
     try:
-        import subprocess
-        result = subprocess.run(
-            ["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(dest.parent), str(src)],
-            capture_output=True, timeout=60,
+        from core.job import Job, InputSpec, DocxToPdfParams, OutputSpec
+        from core.operations.docx_to_pdf import handle as docx_handle
+        
+        job_input = InputSpec(path=src, kind="docx", order_index=0)
+        job_params = DocxToPdfParams(output_name=dest.name)
+        job_output = OutputSpec(directory=dest.parent, overwrite=True)
+        job = Job(
+            operation="docx_to_pdf",
+            inputs=[job_input],
+            params=job_params,
+            output=job_output
         )
-        converted = dest.parent / (src.stem + ".pdf")
-        if converted.exists() and converted != dest:
-            converted.rename(dest)
+        res = docx_handle(job, lambda msg, val: None)
+        if res.error:
+            raise RuntimeError(res.error)
+        if res.warnings:
+            warnings.extend(res.warnings)
     except Exception as exc:
         warnings.append(f"Word conversion failed for {src.name} ({exc}). File skipped.")
         raise
+
+
+def _excel_to_pdf(src: Path, dest: Path, warnings: list[str]) -> None:
+    try:
+        from core.job import Job, InputSpec, XlsxToPdfParams, OutputSpec
+        from core.operations.xlsx_to_pdf import handle as xlsx_handle
+        
+        job_input = InputSpec(path=src, kind="xlsx", order_index=0)
+        job_params = XlsxToPdfParams(output_name=dest.name)
+        job_output = OutputSpec(directory=dest.parent, overwrite=True)
+        job = Job(
+            operation="xlsx_to_pdf",
+            inputs=[job_input],
+            params=job_params,
+            output=job_output
+        )
+        res = xlsx_handle(job, lambda msg, val: None)
+        if res.error:
+            raise RuntimeError(res.error)
+        if res.warnings:
+            warnings.extend(res.warnings)
+    except Exception as exc:
+        warnings.append(f"Excel conversion failed for {src.name} ({exc}). File skipped.")
+        raise
+

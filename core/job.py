@@ -76,6 +76,7 @@ def _infer_kind(path: Path) -> str:
         ".png": "image", ".jpg": "image", ".jpeg": "image",
         ".gif": "image", ".bmp": "image", ".tiff": "image", ".tif": "image",
         ".txt": "text", ".csv": "text",
+        ".xlsx": "xlsx", ".xls": "xlsx",
     }.get(ext, "unknown")
 
 
