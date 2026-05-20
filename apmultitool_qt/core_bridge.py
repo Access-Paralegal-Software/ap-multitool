@@ -110,6 +110,13 @@ class EngineJobWorker(QtCore.QObject):
         self.started.emit()
         self.progress.emit(0, "Initiating core document engine...")
 
+        # Record telemetry start
+        try:
+            from apmultitool_qt.telemetry import telemetry_manager
+            telemetry_manager.log_job_started(self.job.operation)
+        except Exception as te:
+            self.log_message.emit(f"⚠️ Telemetry log failed: {str(te)}")
+
         def on_engine_progress(msg: str, fraction: float):
             if self._is_cancelled:
                 raise OperationCancelled("Cancelled by user request from GUI.")
@@ -122,10 +129,31 @@ class EngineJobWorker(QtCore.QObject):
             completed_job = engine.submit(self.job, on_progress=on_engine_progress)
             self.progress.emit(100, "Done.")
             self.log_message.emit("✅ Job execution completed successfully.")
+            
+            # Record telemetry success
+            try:
+                telemetry_manager.log_job_finished(self.job.operation, success=True, cancelled=False)
+            except Exception as te:
+                self.log_message.emit(f"⚠️ Telemetry log failed: {str(te)}")
+
             self.finished.emit(True, "", completed_job.result)
         except OperationCancelled:
             self.log_message.emit("🛑 Job execution aborted by user.")
+            
+            # Record telemetry cancellation
+            try:
+                telemetry_manager.log_job_finished(self.job.operation, success=False, cancelled=True)
+            except Exception as te:
+                self.log_message.emit(f"⚠️ Telemetry log failed: {str(te)}")
+
             self.finished.emit(False, "Operation cancelled.", None)
         except Exception as e:
             self.log_message.emit(f"❌ Job execution failed: {str(e)}")
+            
+            # Record telemetry failure
+            try:
+                telemetry_manager.log_job_finished(self.job.operation, success=False, cancelled=False, error_msg=str(e))
+            except Exception as te:
+                self.log_message.emit(f"⚠️ Telemetry log failed: {str(te)}")
+
             self.finished.emit(False, str(e), None)

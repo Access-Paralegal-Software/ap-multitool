@@ -53,7 +53,7 @@ def test_shell_structure():
         app = QtWidgets.QApplication([])
 
     window = APMainWindow()
-    assert window.windowTitle() == "Access Paralegal Multitool (Qt Edition)"
+    assert window.windowTitle() == f"Access Paralegal Multitool {window.full_version} (Qt Edition)"
     assert window.stacked_widget.count() == 4
     assert window.btn_compiler.isChecked() is True
 

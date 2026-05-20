@@ -77,6 +77,47 @@ class AboutView(QtWidgets.QWidget):
         cli_desc.setStyleSheet("color: #374151; font-family: 'Consolas', monospace; font-size: 10px; padding: 5px;")
         self.left_card.add_widget(cli_desc)
 
+        # Divider for Telemetry
+        divider_tel = QtWidgets.QFrame()
+        divider_tel.setFrameShape(QtWidgets.QFrame.HLine)
+        divider_tel.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.left_card.add_widget(divider_tel)
+
+        # Telemetry Header
+        tel_header = QtWidgets.QLabel("📊 APPLICATION TELEMETRY")
+        tel_header.setStyleSheet("font-weight: bold; color: #10B981; font-size: 11px;")
+        self.left_card.add_widget(tel_header)
+
+        # Telemetry Labels
+        self.lbl_tel_total = QtWidgets.QLabel("Total runs: 0")
+        self.lbl_tel_total.setStyleSheet("color: #374151; font-size: 11px;")
+        self.left_card.add_widget(self.lbl_tel_total)
+
+        self.lbl_tel_rate = QtWidgets.QLabel("Success Rate: 100.0%")
+        self.lbl_tel_rate.setStyleSheet("color: #374151; font-size: 11px; font-weight: bold;")
+        self.left_card.add_widget(self.lbl_tel_rate)
+
+        self.lbl_tel_failed = QtWidgets.QLabel("Failed runs: 0")
+        self.lbl_tel_failed.setStyleSheet("color: #374151; font-size: 11px;")
+        self.left_card.add_widget(self.lbl_tel_failed)
+
+        self.lbl_tel_cancelled = QtWidgets.QLabel("Cancelled runs: 0")
+        self.lbl_tel_cancelled.setStyleSheet("color: #374151; font-size: 11px;")
+        self.left_card.add_widget(self.lbl_tel_cancelled)
+
+        self.lbl_tel_last_err = QtWidgets.QLabel("")
+        self.lbl_tel_last_err.setWordWrap(True)
+        self.lbl_tel_last_err.setStyleSheet("color: #DC2626; font-size: 10px; font-style: italic;")
+        self.lbl_tel_last_err.setVisible(False)
+        self.left_card.add_widget(self.lbl_tel_last_err)
+
+        # Reset Button
+        self.btn_reset_tel = QtWidgets.QPushButton("Reset Telemetry")
+        self.btn_reset_tel.setObjectName("SecondaryButton")
+        self.btn_reset_tel.setFixedHeight(24)
+        self.btn_reset_tel.clicked.connect(self.reset_telemetry)
+        self.left_card.add_widget(self.btn_reset_tel)
+
         self.left_card.add_stretch()
         splitter.addWidget(self.left_card)
 
@@ -189,3 +230,43 @@ class AboutView(QtWidgets.QWidget):
         # Cleanup references
         self.worker = None
         self.thread = None
+
+    def update_telemetry_display(self):
+        """Reload telemetry logs and refresh dashboard labels."""
+        try:
+            from apmultitool_qt.telemetry import telemetry_manager
+            telemetry_manager.load()
+            stats = telemetry_manager.stats
+            rate = telemetry_manager.get_success_rate()
+            
+            self.lbl_tel_total.setText(f"Total runs: {stats['total_runs']}")
+            self.lbl_tel_rate.setText(f"Success Rate: {rate:.1f}%")
+            self.lbl_tel_failed.setText(f"Failed runs: {stats['failed_runs']}")
+            self.lbl_tel_cancelled.setText(f"Cancelled runs: {stats['cancelled_runs']}")
+            
+            if stats.get("last_error"):
+                err_text = f"Last error: {stats['last_error']}\n({stats['last_error_time']})"
+                if len(err_text) > 120:
+                    err_text = err_text[:117] + "..."
+                self.lbl_tel_last_err.setText(err_text)
+                self.lbl_tel_last_err.setVisible(True)
+            else:
+                self.lbl_tel_last_err.setVisible(False)
+        except Exception as e:
+            self.lbl_tel_last_err.setText(f"Telemetry error: {str(e)}")
+            self.lbl_tel_last_err.setVisible(True)
+
+    def showEvent(self, event):
+        """Update telemetry dashboard when view is brought into focus."""
+        super().showEvent(event)
+        self.update_telemetry_display()
+
+    def reset_telemetry(self):
+        """Ask for confirmation and reset telemetry metrics."""
+        if dialogs.show_confirmation(self, "Reset Telemetry?", "Are you sure you want to clear all execution statistics?"):
+            try:
+                from apmultitool_qt.telemetry import telemetry_manager
+                telemetry_manager.reset()
+                self.update_telemetry_display()
+            except Exception as e:
+                dialogs.show_error(self, "Error", f"Failed to reset telemetry: {str(e)}")
