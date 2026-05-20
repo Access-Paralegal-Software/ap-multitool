@@ -1,12 +1,12 @@
 ---
-title: "APMultitool Handoff ho_0017: GUI Modernization and Release Polish"
+title: "APMultitool Handoff ho_0017: GUI Modernization and Release-Ready UX"
 date: 2026-05-20
 tags: [ap_multitool, handoff, gui, accessibility, cancellation, testing]
 status: completed
 project: "Access Paralegal"
 ---
 
-# APMultitool Handoff ho_0017: GUI Modernization and Release Polish
+# APMultitool Handoff ho_0017: GUI Modernization and Release-Ready UX
 
 ## 1. Executive Summary
 
@@ -57,7 +57,7 @@ python -m pytest --ignore=scratch
 
 ---
 
-## 4. Next Steps & Release Recommendations
+## 4. Recommendations & Next Steps
 
 1. **Commit and Push changes**: Commit all modified and new files to `origin/master`.
 2. **Interactive Testing**: Execute the manual validation steps outlined in `docs/ops/gui_smoke_test_apmultitool.md`.
