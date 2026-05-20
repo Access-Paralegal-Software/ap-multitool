@@ -1,0 +1,123 @@
+# build_installer.ps1 — Windows Installer Build Orchestrator
+# Run from repository root: powershell -File packaging/windows/build_installer.ps1
+
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "  APMultitool Windows Installer Compiler Pipeline" -ForegroundColor Cyan
+Write-Host "==========================================================" -ForegroundColor Cyan
+
+# 1. Trigger Bundle Preparation
+Write-Host "[1/5] Preparing application distribution bundle..." -ForegroundColor Yellow
+if (-not (Test-Path -Path "packaging/windows/prepare_bundle.ps1")) {
+    Write-Error "Could not find prepare_bundle.ps1 at packaging/windows/prepare_bundle.ps1. Aborting."
+    Exit 1
+}
+
+& powershell -File packaging/windows/prepare_bundle.ps1
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Bundle preparation failed. Aborting installer compilation."
+    Exit $LASTEXITCODE
+}
+
+# 2. Validate Bundle Outputs
+Write-Host "[2/5] Validating bundle files..." -ForegroundColor Yellow
+$bundleDir = "dist\APMultitool_Bundle"
+$requiredFiles = @(
+    "$bundleDir\Access_Paralegal_Multitool.exe",
+    "$bundleDir\apmultitool.exe",
+    "$bundleDir\logo_small.png",
+    "$bundleDir\water_texture.png",
+    "$bundleDir\LICENSE",
+    "$bundleDir\README_BUNDLE.txt"
+)
+
+$missingCount = 0
+foreach ($file in $requiredFiles) {
+    if (-not (Test-Path -Path $file)) {
+        Write-Host "❌ Missing required file: $file" -ForegroundColor Red
+        $missingCount++
+    } else {
+        Write-Host "✅ Verified file: $file" -ForegroundColor Green
+    }
+}
+
+if ($missingCount -gt 0) {
+    Write-Error "Bundle validation failed. Missing $missingCount files. Aborting."
+    Exit 1
+}
+Write-Host "Bundle validation completed successfully." -ForegroundColor Green
+
+# 3. Locate Inno Setup Compiler (ISCC.exe)
+Write-Host "[3/5] Locating Inno Setup compiler (ISCC.exe)..." -ForegroundColor Yellow
+$isccPath = $null
+
+# Candidate paths
+$candidates = @(
+    "ISCC.exe", # Check if in PATH
+    "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe",
+    "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+    "C:\Program Files\Inno Setup 6\ISCC.exe"
+)
+
+foreach ($candidate in $candidates) {
+    if ($candidate -eq "ISCC.exe") {
+        $checkCmd = Get-Command "ISCC.exe" -ErrorAction SilentlyContinue
+        if ($checkCmd) {
+            $isccPath = $checkCmd.Source
+            break
+        }
+    } else {
+        if (Test-Path -Path $candidate) {
+            $isccPath = $candidate
+            break
+        }
+    }
+}
+
+if (-not $isccPath) {
+    Write-Host "❌ Inno Setup compiler (ISCC.exe) was not found in standard paths or Local AppData." -ForegroundColor Red
+    Write-Host "Please install Inno Setup 6 or add its folder to your system PATH." -ForegroundColor Yellow
+    Write-Host "Installer compilation skipped, but bundle is prepared in: $bundleDir" -ForegroundColor Green
+    Exit 2
+}
+
+Write-Host "✅ Found Inno Setup compiler at: $isccPath" -ForegroundColor Green
+
+# 4. Compile Installer
+Write-Host "[4/5] Running Inno Setup compilation..." -ForegroundColor Yellow
+$issScript = "packaging\windows\apmultitool_installer.iss"
+
+if (-not (Test-Path -Path $issScript)) {
+    Write-Error "Could not find Inno Setup script at: $issScript. Aborting."
+    Exit 1
+}
+
+# Run compiler
+& $isccPath $issScript
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Inno Setup compiler failed with exit code: $LASTEXITCODE"
+    Exit $LASTEXITCODE
+}
+
+Write-Host "✅ Inno Setup compilation finished successfully!" -ForegroundColor Green
+
+# 5. Locate Output and Generate Checksum
+Write-Host "[5/5] Generating release metadata & checksums..." -ForegroundColor Yellow
+$setupExe = "dist\APMultitool_Setup_v0.5.0.exe"
+
+if (-not (Test-Path -Path $setupExe)) {
+    Write-Error "Setup output file not found at: $setupExe. Compilation might have failed silently."
+    Exit 1
+}
+
+# Generate SHA256 checksum
+$sha256 = (Get-FileHash -Path $setupExe -Algorithm SHA256).Hash
+$sha256File = "dist\APMultitool_Setup_v0.5.0.exe.sha256"
+$sha256 | Out-File -FilePath $sha256File -Encoding ascii
+
+Write-Host "✅ Created Installer Executable: $setupExe" -ForegroundColor Green
+Write-Host "✅ SHA256 Checksum ($sha256) written to: $sha256File" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "  APMultitool Windows Installer Build Completed!" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Cyan

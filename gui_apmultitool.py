@@ -324,59 +324,78 @@ class AccessMergerApp(ctk.CTk):
         self.right_frame.pack(side="right", fill="both", expand=True)
 
         # --- POPULATE LEFT (SETTINGS) ---
-        ctk.CTkLabel(self.left_frame, text="🛠️ COMPILER SETTINGS", font=ctk.CTkFont(weight="bold", size=16), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
+        ctk.CTkLabel(self.left_frame, text="🛠️ COMPILER SETTINGS", font=ctk.CTkFont(weight="bold", size=14), text_color=BRAND_DARK_TEXT).pack(pady=(15, 10))
+
+        # --- Group 1: Layout & Compression ---
+        g1_frame = ctk.CTkFrame(
+            self.left_frame, fg_color="transparent", border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+        )
+        g1_frame.pack(fill="x", padx=15, pady=6)
+        ctk.CTkLabel(g1_frame, text="📐 LAYOUT & COMPRESSION", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(anchor="w", padx=15, pady=(8, 4))
 
         self.var_bookmark = tk.BooleanVar(value=True)
         self.chk_bookmark = ctk.CTkCheckBox(
-            self.left_frame, text="Create Bookmarks per file", variable=self.var_bookmark, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            g1_frame, text="Create Bookmarks per file", variable=self.var_bookmark, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
-        self.chk_bookmark.pack(anchor="w", padx=20, pady=6)
+        self.chk_bookmark.pack(anchor="w", padx=15, pady=(5, 1))
+        ctk.CTkLabel(g1_frame, text="     Creates outline navigation links for each file", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(anchor="w", padx=15, pady=(0, 4))
 
         self.var_fit_view = tk.BooleanVar(value=True)
         self.chk_fit_view = ctk.CTkCheckBox(
-            self.left_frame, text="Enforce Single-Page Layout", variable=self.var_fit_view, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            g1_frame, text="Enforce Single-Page Layout", variable=self.var_fit_view, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
-        self.chk_fit_view.pack(anchor="w", padx=20, pady=6)
+        self.chk_fit_view.pack(anchor="w", padx=15, pady=(4, 1))
+        ctk.CTkLabel(g1_frame, text="     Forces PDF readers to default to fit-width", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(anchor="w", padx=15, pady=(0, 4))
 
         self.var_compress = tk.BooleanVar(value=False)
         self.chk_compress = ctk.CTkCheckBox(
-            self.left_frame, text="Optimize Output Size", variable=self.var_compress, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+            g1_frame, text="Optimize Output Size", variable=self.var_compress, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
         )
-        self.chk_compress.pack(anchor="w", padx=20, pady=6)
+        self.chk_compress.pack(anchor="w", padx=15, pady=(4, 1))
+        ctk.CTkLabel(g1_frame, text="     Applies stream compression to reduce file size", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(anchor="w", padx=15, pady=(0, 6))
 
-        self.var_email = tk.BooleanVar(value=True)
-        self.chk_email = ctk.CTkCheckBox(
-            self.left_frame, text="Extract Email Attachments", variable=self.var_email, 
-            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=14), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
-        )
-        self.chk_email.pack(anchor="w", padx=20, pady=6)
-
-        self.var_grayscale = tk.BooleanVar(value=False)
-        self.chk_grayscale = ctk.CTkCheckBox(
-            self.left_frame, text="📉 Grayscale (Huge File Save!)", variable=self.var_grayscale, 
-            text_color="#B45309", font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
-        )
-        self.chk_grayscale.pack(anchor="w", padx=20, pady=6)
-
-        ctk.CTkLabel(self.left_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=14, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
+        ctk.CTkLabel(g1_frame, text="Target Standard Page Size:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=15, pady=(5, 2))
         self.paper_dropdown = ctk.CTkOptionMenu(
-            self.left_frame, values=["US Letter (8.5 x 11 in)", "US Legal (8.5 x 14 in)", "A4 (International)"], width=260, height=38,
+            g1_frame, values=["US Letter (8.5 x 11 in)", "US Legal (8.5 x 14 in)", "A4 (International)"], width=290, height=34,
             fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, button_hover_color=BRAND_DEEP_ACCENT,
             font=drop_font, dropdown_font=drop_font
         )
-        self.paper_dropdown.pack(padx=20, pady=(0, 10))
+        self.paper_dropdown.pack(padx=15, pady=(0, 10))
+
+        # --- Group 2: Advanced Content Engine ---
+        g2_frame = ctk.CTkFrame(
+            self.left_frame, fg_color="transparent", border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+        )
+        g2_frame.pack(fill="x", padx=15, pady=6)
+        ctk.CTkLabel(g2_frame, text="⚙️ SPECIAL ENGINES", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(anchor="w", padx=15, pady=(8, 4))
+
+        self.var_email = tk.BooleanVar(value=True)
+        self.chk_email = ctk.CTkCheckBox(
+            g2_frame, text="Extract Email Attachments", variable=self.var_email, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+        )
+        self.chk_email.pack(anchor="w", padx=15, pady=(5, 1))
+        ctk.CTkLabel(g2_frame, text="     Parses .eml/.msg files and inline attachments", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(anchor="w", padx=15, pady=(0, 4))
+
+        self.var_grayscale = tk.BooleanVar(value=False)
+        self.chk_grayscale = ctk.CTkCheckBox(
+            g2_frame, text="Grayscale Output", variable=self.var_grayscale, 
+            text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(size=12), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT
+        )
+        self.chk_grayscale.pack(anchor="w", padx=15, pady=(4, 1))
+        ctk.CTkLabel(g2_frame, text="     Converts colored assets to grayscale for print savings", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(anchor="w", padx=15, pady=(0, 10))
 
         # AUDIT STATUS CARD
         self.audit_panel = ctk.CTkFrame(self.left_frame, fg_color="transparent", corner_radius=8, border_width=1, border_color=BRAND_BORDER_LIGHT)
         self.audit_panel.pack(fill="both", expand=True, padx=15, pady=(5, 15))
 
-        ctk.CTkLabel(self.audit_panel, text="📄 QUEUE PREVIEW", font=ctk.CTkFont(weight="bold", size=14), text_color=BRAND_ACCENT_GREEN).pack(pady=(10, 5))
-        self.audit_files_lbl = ctk.CTkLabel(self.audit_panel, text="Documents: Scanning...", font=ctk.CTkFont(size=15), text_color=BRAND_DARK_TEXT)
+        ctk.CTkLabel(self.audit_panel, text="📄 QUEUE PREVIEW", font=ctk.CTkFont(weight="bold", size=11), text_color=BRAND_ACCENT_GREEN).pack(pady=(10, 5))
+        self.audit_files_lbl = ctk.CTkLabel(self.audit_panel, text="Documents: Scanning...", font=ctk.CTkFont(size=12), text_color=BRAND_DARK_TEXT)
         self.audit_files_lbl.pack(anchor="w", padx=15, pady=2)
-        self.audit_pages_lbl = ctk.CTkLabel(self.audit_panel, text="Total Pages: Calculating...", font=ctk.CTkFont(size=15), text_color=BRAND_DARK_TEXT)
+        self.audit_pages_lbl = ctk.CTkLabel(self.audit_panel, text="Total Pages: Calculating...", font=ctk.CTkFont(size=12), text_color=BRAND_DARK_TEXT)
         self.audit_pages_lbl.pack(anchor="w", padx=15, pady=2)
 
         # --- POPULATE RIGHT (VISUAL QUEUE & MERGER) ---
@@ -442,8 +461,10 @@ class AccessMergerApp(ctk.CTk):
         
         btn_frame = ctk.CTkFrame(self.queue_container, fg_color="transparent")
         btn_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=2, padx=2)
-        ctk.CTkButton(btn_frame, text="Move Up ⬆", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_up).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Move Down ⬇", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_down).pack(side="left")
+        self.btn_move_up = ctk.CTkButton(btn_frame, text="Move Up ⬆", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_up)
+        self.btn_move_up.pack(side="left", padx=5)
+        self.btn_move_down = ctk.CTkButton(btn_frame, text="Move Down ⬇", width=80, height=28, fg_color="#4B5563", hover_color="#374151", command=self.move_item_down)
+        self.btn_move_down.pack(side="left")
         
         self.status_bar_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
         self.status_bar_frame.pack(fill="x", pady=(0, 10))
@@ -481,35 +502,107 @@ class AccessMergerApp(ctk.CTk):
 
         # Left Bates Config Panel
         self.bates_left = ctk.CTkFrame(
-            self.bates_container, width=380, fg_color=GLASS_LEFT, 
+            self.bates_container, width=360, fg_color=GLASS_LEFT, 
             corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
         self.bates_left.pack(side="left", fill="both", padx=(0, 15))
         self.bates_left.pack_propagate(False)
 
-        # Target File Selector
-        ctk.CTkLabel(self.bates_left, text="🎯 TARGET PDF FOR PRODUCTION:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=20, pady=(10, 2))
-        self.bates_target_entry = ctk.CTkEntry(self.bates_left, placeholder_text="Select PDF...", width=310)
-        self.bates_target_entry.pack(padx=20, pady=(0, 5))
+        # Target File Selector Group
+        g_target_frame = ctk.CTkFrame(
+            self.bates_left, fg_color="transparent", border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+        )
+        g_target_frame.pack(fill="x", padx=15, pady=6)
+        ctk.CTkLabel(g_target_frame, text="🎯 TARGET PDF FOR PRODUCTION", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(anchor="w", padx=15, pady=(8, 4))
         
-        btn_target = ctk.CTkButton(
-            self.bates_left, text="📂 Browse for PDF", width=310, height=32, 
+        self.bates_target_entry = ctk.CTkEntry(
+            g_target_frame, placeholder_text="Select PDF...", width=290, height=32,
+            fg_color=BRAND_WHITE_PANEL, text_color=BRAND_DARK_TEXT, border_color=BRAND_BORDER_LIGHT
+        )
+        self.bates_target_entry.pack(padx=15, pady=(0, 5))
+        
+        self.btn_bates_target = ctk.CTkButton(
+            g_target_frame, text="📂 Browse for PDF", width=290, height=32, 
             fg_color="#4B5563", hover_color="#374151", command=self.browse_bates_target
         )
-        btn_target.pack(padx=20, pady=(0, 15))
+        self.btn_bates_target.pack(padx=15, pady=(0, 10))
+
+        # Bates Protocol Setup Group
+        bates_protocol_frame = ctk.CTkFrame(
+            self.bates_left, fg_color="transparent", border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+        )
+        bates_protocol_frame.pack(fill="x", padx=15, pady=6)
+        ctk.CTkLabel(bates_protocol_frame, text="🔢 BATES PROTOCOL SETUP", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(anchor="w", padx=15, pady=(8, 4))
+
+        lbl_font = ctk.CTkFont(size=11, weight="bold")
+        ent_font = ctk.CTkFont(size=12)
+
+        # Grid config inside bates_protocol_frame
+        bates_protocol_frame.grid_columnconfigure(0, weight=1)
+        bates_protocol_frame.grid_columnconfigure(1, weight=2)
+
+        # Prefix Row
+        ctk.CTkLabel(bates_protocol_frame, text="Prefix:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=0, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.bates_prefix = ctk.CTkEntry(bates_protocol_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL)
+        self.bates_prefix.grid(row=0, column=1, padx=5, pady=6, sticky="w")
+        self.bates_prefix.insert(0, "AP")
+        self.bates_prefix.bind("<FocusOut>", self._on_bates_prefix_focusout)
+
+        # Start Number Row
+        ctk.CTkLabel(bates_protocol_frame, text="Start Number:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=1, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.bates_start = ctk.CTkEntry(bates_protocol_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL)
+        self.bates_start.grid(row=1, column=1, padx=5, pady=6, sticky="w")
+        self.bates_start.insert(0, "1")
+
+        # Separator Row
+        ctk.CTkLabel(bates_protocol_frame, text="Separator:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=2, column=0, padx=(15, 5), pady=6, sticky="e")
+        self.bates_sep_var = ctk.StringVar(value="_")
+        self.bates_sep_menu = ctk.CTkOptionMenu(
+            bates_protocol_frame, values=["_", "-", "(None)"], variable=self.bates_sep_var, width=100, height=32,
+            fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, button_color=BRAND_ACCENT_GREEN, button_hover_color=BRAND_DEEP_ACCENT
+        )
+        self.bates_sep_menu.grid(row=2, column=1, padx=5, pady=(6, 12), sticky="w")
 
         # --- ADVANCED OPTIONS TRIGGER ---
         self.btn_bates_options = ctk.CTkButton(
-            self.bates_left, text="⚙️ ADVANCED STAMP OPTIONS", width=310, height=40,
+            self.bates_left, text="⚙️ ADVANCED STAMP OPTIONS", width=330, height=36,
             fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, border_width=1, border_color=BRAND_BORDER_LIGHT,
             hover_color="#E5E7EB", command=self.show_bates_options_modal
         )
-        self.btn_bates_options.pack(padx=20, pady=(10, 15))
+        self.btn_bates_options.pack(padx=15, pady=(8, 15))
+
+        # Right Bates Panel (Pipeline, Logs & Actions)
+        self.bates_right = ctk.CTkFrame(self.bates_container, fg_color="transparent")
+        self.bates_right.pack(side="right", fill="both", expand=True)
+
+        self.bates_pipeline_panel = ctk.CTkFrame(
+            self.bates_right, fg_color=("#F5F9F4", "#161E15"), 
+            border_width=1, border_color=GLASS_BORDER, corner_radius=12
+        )
+        self.bates_pipeline_panel.pack(fill="both", expand=True, pady=(0, 15))
+
+        ctk.CTkLabel(self.bates_pipeline_panel, text="📊 PRODUCTION PIPELINE STATUS", font=ctk.CTkFont(weight="bold", size=14), text_color=BRAND_ACCENT_GREEN).pack(pady=(12, 5))
+
+        self.bates_console = ctk.CTkTextbox(
+            self.bates_pipeline_panel, font=ctk.CTkFont(family="Consolas", size=12),
+            fg_color=BRAND_WHITE_PANEL, text_color=BRAND_DARK_TEXT, border_width=1, border_color=BRAND_BORDER_LIGHT
+        )
+        self.bates_console.pack(fill="both", expand=True, padx=15, pady=(5, 15))
+        self.bates_console.insert("0.0", "System ready. Select a target PDF and click Execute to start Bates stamping.\n")
+        self.bates_console.configure(state="disabled")
+
+        self.bates_action_frame = ctk.CTkFrame(self.bates_right, fg_color="transparent")
+        self.bates_action_frame.pack(fill="x")
+
+        # Progress Bar
+        self.bates_p_bar = ctk.CTkProgressBar(self.bates_action_frame, height=12, progress_color=BRAND_ACCENT_GREEN)
+        self.bates_p_bar.set(0)
+        self.bates_p_bar.pack(fill="x", pady=(0, 15))
 
         # Bates Run Button
         self.bates_run_btn = ctk.CTkButton(
-            self.bates_right, text="✨ EXECUTE PRODUCTION PRODUCTION", height=60, 
-            font=ctk.CTkFont(size=16, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            self.bates_action_frame, text="⚡ FLATTEN & APPLY BATES STAMPS", height=52, 
+            font=ctk.CTkFont(size=18, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
             command=self.start_bates_thread
         )
         self.bates_run_btn.pack(fill="x")
@@ -525,7 +618,7 @@ class AccessMergerApp(ctk.CTk):
             self.org_container, width=420, fg_color=GLASS_LEFT, 
             corner_radius=12, border_width=1, border_color=GLASS_BORDER
         )
-        self.org_left.pack(side="left", fill="both", padx=(0, 12), expand=True)
+        self.org_left.pack(side="left", fill="both", padx=(0, 12))
         self.org_left.pack_propagate(False)
         
         ctk.CTkLabel(self.org_left, text="🔐 ENCRYPTED CASE CONTEXT & PROTOCOL", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 2))
@@ -541,7 +634,7 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(context_frame, text="Case Number:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=0, column=0, padx=(15, 5), pady=6, sticky="e")
         self.case_num_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., 4:26-cv-00123")
         self.case_num_entry.grid(row=0, column=1, padx=5, pady=6, sticky="w")
-
+ 
         # Plaintiff
         ctk.CTkLabel(context_frame, text="Plaintiff:", font=lbl_font, text_color=BRAND_DARK_TEXT).grid(row=1, column=0, padx=(15, 5), pady=6, sticky="e")
         self.case_pla_entry = ctk.CTkEntry(context_frame, font=ent_font, height=32, width=150, fg_color=BRAND_WHITE_PANEL, placeholder_text="e.g., Jane Smith")
@@ -554,42 +647,48 @@ class AccessMergerApp(ctk.CTk):
         
         self.btn_save_vault = ctk.CTkButton(context_frame, text="🔒 SECURE", height=32, width=70, font=ctk.CTkFont(size=11, weight="bold"), fg_color=BRAND_DARK_TEXT, hover_color="#374151", command=self.save_case_vault)
         self.btn_save_vault.grid(row=1, column=2, padx=12, pady=6)
-
-        # --- RENAMING FORMULA ---
-        ctk.CTkLabel(self.org_left, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(10, 4))
-
-        
+ 
+        # --- Group 2: Dynamic Renaming Formula ---
+        g_rename_frame = ctk.CTkFrame(
+            self.org_left, fg_color="transparent", border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+        )
+        g_rename_frame.pack(fill="x", padx=20, pady=8)
+        ctk.CTkLabel(g_rename_frame, text="🔀 COMPOSE DYNAMIC FORMULA", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(anchor="w", padx=15, pady=(8, 4))
+ 
         self.rename_p1 = ctk.CTkComboBox(
-            self.org_left, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], 
-            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+            g_rename_frame, values=["[Date] YYYY-MM-DD", "[Case Number]", "[Plaintiff]", "[Defendant]", "[DocType] Motion", "[Custom] Text"], 
+            state="readonly", height=34, font=drop_font, dropdown_font=drop_font
         )
         self.rename_p1.set("[Date] YYYY-MM-DD")
-        self.rename_p1.pack(fill="x", padx=20, pady=3)
+        self.rename_p1.pack(fill="x", padx=15, pady=5)
         
         self.rename_sep = ctk.CTkComboBox(
-            self.org_left, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], 
-            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+            g_rename_frame, values=[" - (Space Dash Space)", "_ (Underscore)", ". (Period)", " (Single Space)"], 
+            state="readonly", height=34, font=drop_font, dropdown_font=drop_font
         )
         self.rename_sep.set(" - (Space Dash Space)")
-        self.rename_sep.pack(fill="x", padx=20, pady=3)
+        self.rename_sep.pack(fill="x", padx=15, pady=5)
         
         self.rename_p2 = ctk.CTkComboBox(
-            self.org_left, values=["[DocType] Motion", "[Plaintiff]", "[Defendant]", "[Case Number]", "[Date] YYYY-MM-DD", "[Custom] Text"], 
-            state="readonly", height=38, font=drop_font, dropdown_font=drop_font
+            g_rename_frame, values=["[DocType] Motion", "[Plaintiff]", "[Defendant]", "[Case Number]", "[Date] YYYY-MM-DD", "[Custom] Text"], 
+            state="readonly", height=34, font=drop_font, dropdown_font=drop_font
         )
         self.rename_p2.set("[DocType] Motion")
-        self.rename_p2.pack(fill="x", padx=20, pady=3)
-
-        self.dyn_entry = ctk.CTkEntry(self.org_left, font=drop_font, placeholder_text="[Custom] Override Text String", fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, height=38)
-        self.dyn_entry.pack(fill="x", padx=20, pady=8)
+        self.rename_p2.pack(fill="x", padx=15, pady=5)
+ 
+        self.dyn_entry = ctk.CTkEntry(
+            g_rename_frame, font=drop_font, placeholder_text="[Custom] Override Text String", 
+            fg_color=BRAND_WHITE_PANEL, text_color=BRAND_DARK_TEXT, border_color=BRAND_BORDER_LIGHT, height=34
+        )
+        self.dyn_entry.pack(fill="x", padx=15, pady=5)
         
         self.btn_rename = ctk.CTkButton(
-            self.org_left, text="🔀 BATCH RENAME & NORMALIZE", height=45, 
+            g_rename_frame, text="🔀 BATCH RENAME & NORMALIZE", height=42, 
             font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
             command=self.execute_rename_wizard
         )
-        self.btn_rename.pack(fill="x", padx=20, pady=(4, 10))
-
+        self.btn_rename.pack(fill="x", padx=15, pady=(5, 12))
+ 
         # Right Panel: Master Case Tree Builder
         self.org_right = ctk.CTkFrame(
             self.org_container, width=360, fg_color=GLASS_RIGHT, 
@@ -598,30 +697,38 @@ class AccessMergerApp(ctk.CTk):
         self.org_right.pack(side="right", fill="both", expand=True)
         self.org_right.pack_propagate(False)
         
-        ctk.CTkLabel(self.org_right, text="📂 MASTER CASE TREE BUILDER", font=ctk.CTkFont(size=13, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(15, 3))
-        ctk.CTkLabel(self.org_right, text="Automate standardized firm architectures.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 10))
+        ctk.CTkLabel(self.org_right, text="📂 MASTER CASE TREE BUILDER", font=ctk.CTkFont(size=14, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(15, 3))
+        ctk.CTkLabel(self.org_right, text="Automate standardized firm architectures.", font=ctk.CTkFont(size=11), text_color="#6B7280").pack(pady=(0, 10))
+ 
+        # Architect Blueprint Group
+        g_tree_frame = ctk.CTkFrame(
+            self.org_right, fg_color="transparent", border_width=1, border_color=BRAND_BORDER_LIGHT, corner_radius=8
+        )
+        g_tree_frame.pack(fill="both", expand=True, padx=20, pady=(5, 15))
+ 
+        ctk.CTkLabel(g_tree_frame, text="🏛️ ARCHITECTURE BLUEPRINT", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(anchor="w", padx=15, pady=(8, 4))
         
-        ctk.CTkLabel(self.org_right, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25)
+        ctk.CTkLabel(g_tree_frame, text="Choose Architecture Archetype:", font=ctk.CTkFont(size=11, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=15)
         self.tree_dropdown = ctk.CTkComboBox(
-            self.org_right, values=["⭐ Custom User Blueprint", "Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
-            state="readonly", height=38, font=drop_font, dropdown_font=drop_font, command=self.update_tree_preview
+            g_tree_frame, values=["⭐ Custom User Blueprint", "Standard Civil Litigation", "Trial Notebook Model", "Solo / Freelance Core"], 
+            state="readonly", height=34, font=drop_font, dropdown_font=drop_font, command=self.update_tree_preview
         )
         self.tree_dropdown.set("⭐ Custom User Blueprint")
-        self.tree_dropdown.pack(fill="x", padx=25, pady=(0, 12))
+        self.tree_dropdown.pack(fill="x", padx=15, pady=(0, 10))
         
-        ctk.CTkLabel(self.org_right, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=25)
+        ctk.CTkLabel(g_tree_frame, text="Folder Blueprint Preview:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#4B5563").pack(anchor="w", padx=15)
         self.tree_preview = ctk.CTkTextbox(
-            self.org_right, height=105, fg_color=("#F5F9F4", "#161E15"), text_color=BRAND_DARK_TEXT, 
-            border_width=1, border_color=GLASS_BORDER, font=ctk.CTkFont(size=13)
+            g_tree_frame, fg_color=BRAND_WHITE_PANEL, text_color=BRAND_DARK_TEXT, 
+            border_width=1, border_color=BRAND_BORDER_LIGHT, font=ctk.CTkFont(size=12)
         )
-        self.tree_preview.pack(fill="x", padx=25, pady=(0, 15))
+        self.tree_preview.pack(fill="both", expand=True, padx=15, pady=(0, 10))
         
         self.btn_tree = ctk.CTkButton(
-            self.org_right, text="🛠️ SPIN UP FOLDER TREE", height=45, 
-            font=ctk.CTkFont(weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
+            g_tree_frame, text="🛠️ SPIN UP FOLDER TREE", height=42, 
+            font=ctk.CTkFont(size=14, weight="bold"), fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT,
             command=self.execute_tree_builder
         )
-        self.btn_tree.pack(fill="x", padx=25, pady=5)
+        self.btn_tree.pack(fill="x", padx=15, pady=(0, 15))
         
         # Initialize previews
         self.after(100, lambda: self.update_tree_preview(None))
@@ -925,13 +1032,34 @@ class AccessMergerApp(ctk.CTk):
         finally:
             self.scan_in_progress = False
 
+    def toggle_compiler_inputs(self, state):
+        self.run_btn.configure(state=state)
+        self.btn_move_up.configure(state=state)
+        self.btn_move_down.configure(state=state)
+        self.chk_bookmark.configure(state=state)
+        self.chk_fit_view.configure(state=state)
+        self.chk_compress.configure(state=state)
+        self.chk_email.configure(state=state)
+        self.chk_grayscale.configure(state=state)
+        self.paper_dropdown.configure(state=state)
+        self.dir_btn.configure(state=state)
+
+    def request_cancel(self):
+        self.cancel_requested = True
+        self.run_btn.configure(state="disabled", text="Cancelling...")
+        self.processing_lbl.configure(text="Status: Cancellation requested...")
+
     def start_merge_thread(self):
         if not self.queue_tree.get_children():
             return
         answer = messagebox.askyesno("Confirm Order", "Please ensure the documents in the list are in the exact order you want them merged.\n\nProceed with merge?")
         if not answer:
             return
-        self.run_btn.configure(state="disabled", text="Processing...")
+        
+        self.cancel_requested = False
+        self.toggle_compiler_inputs("disabled")
+        self.run_btn.configure(state="normal", text="🛑 CANCEL COMPILE", fg_color="#DC2626", hover_color="#B91C1C", command=self.request_cancel)
+        
         self.p_bar.set(0)
         for item in self.queue_tree.get_children():
             vals = self.queue_tree.item(item, 'values')
@@ -941,7 +1069,8 @@ class AccessMergerApp(ctk.CTk):
     def execute_audit_merge(self):
         source = self.dir_entry.get()
         if not os.path.exists(source):
-            self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
+            self.after(0, lambda: self.toggle_compiler_inputs("normal"))
+            self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES", fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=self.start_merge_thread))
             return
         
         tree_items = self.queue_tree.get_children()
@@ -1017,6 +1146,10 @@ class AccessMergerApp(ctk.CTk):
             
             self.after(0, lambda i=item_id: update_tree_status(i, "Processing..."))
             
+            if self.cancel_requested:
+                self.after(0, lambda i=item_id: update_tree_status(i, "⚠️ Cancelled"))
+                continue
+                
             time.sleep(0.01)
             
             try:
@@ -1207,6 +1340,28 @@ class AccessMergerApp(ctk.CTk):
                 self.after(0, lambda i=item_id, err=str(e): update_tree_status(i, f"❌ Fail: {err[:30]}"))
             time.sleep(0.01)
 
+        if self.cancel_requested:
+            try: merged_pdf.close()
+            except: pass
+            
+            # Clean extraction directories
+            for f in os.listdir(temp_extract_dir):
+                try: os.remove(os.path.join(temp_extract_dir, f))
+                except: pass
+            try: os.rmdir(temp_extract_dir)
+            except: pass
+            
+            if shadow_dir:
+                try: shutil.rmtree(shadow_dir, ignore_errors=True)
+                except: pass
+            
+            self.after(0, lambda: self.processing_lbl.configure(text="Status: Compile Cancelled"))
+            self.after(0, lambda: self.p_bar.set(0))
+            self.after(0, lambda: messagebox.showinfo("Cancelled", "Merge compile was cancelled by user."))
+            self.after(0, lambda: self.toggle_compiler_inputs("normal"))
+            self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES", fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=self.start_merge_thread))
+            return
+
         if self.var_bookmark.get() and outline_nodes:
             with merged_pdf.open_outline() as outline: 
                 outline.root.extend(outline_nodes)
@@ -1243,6 +1398,7 @@ class AccessMergerApp(ctk.CTk):
                     except: pass
             self.after(0, on_success)
             self.trial_run_count += 1
+            file_names = [fn for (fn, _) in ordered_files]
             self.after(0, lambda: self.generate_audit_log(f"{config.APP_NAME} Merge", self.default_output, file_names, elapsed))
         except Exception as e:
             self.after(0, lambda: self.processing_lbl.configure(text="Error: Compile failed!"))
@@ -1253,16 +1409,29 @@ class AccessMergerApp(ctk.CTk):
             try: shutil.rmtree(shadow_dir, ignore_errors=True)
             except: pass
 
-        self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES"))
+        self.after(0, lambda: self.toggle_compiler_inputs("normal"))
+        self.after(0, lambda: self.run_btn.configure(state="normal", text="🚀 COMBINE & MERGE FILES", fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=self.start_merge_thread))
+
+    def setup_modal_window(self, win, width, height, title):
+        win.title(title)
+        win.geometry(f"{width}x{height}")
+        win.configure(fg_color=BRAND_WHITE_PANEL)
+        win.resizable(False, False)
+        win.transient(self)
+        win.grab_set()
+        win.lift()
+        
+        # Center over main window
+        x = self.winfo_x() + (self.winfo_width() - width) // 2
+        y = self.winfo_y() + (self.winfo_height() - height) // 2
+        win.geometry(f"+{x}+{y}")
+        
+        # Escape key closes modal
+        win.bind("<Escape>", lambda e: win.destroy())
 
     def show_about_window(self):
         about = ctk.CTkToplevel(self)
-        about.title(f"About {config.APP_NAME}")
-        about.geometry("460x420")
-        about.configure(fg_color=BRAND_WHITE_PANEL)
-        about.resizable(False, False)
-        about.grab_set()
-        about.lift()
+        self.setup_modal_window(about, 460, 500, f"About {config.APP_NAME}")
         
         ctk.CTkLabel(about, text=config.APP_NAME, font=ctk.CTkFont(size=20, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(25, 5))
         ctk.CTkLabel(about, text=f"Version {VERSION} (Production)", font=ctk.CTkFont(size=12, weight="bold"), text_color="#4B5563").pack(pady=2)
@@ -1278,6 +1447,12 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(token_frame, text="SUPPORT SECURITY TOKEN", font=ctk.CTkFont(size=9, weight="bold"), text_color="#6B7280").pack(pady=(5, 0))
         ctk.CTkLabel(token_frame, text=support_token, font=ctk.CTkFont(family="Consolas", size=12, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(0, 5))
 
+        # --- CLI Companion Pointer ---
+        cli_frame = ctk.CTkFrame(about, fg_color=BRAND_SILVER_BG, corner_radius=6)
+        cli_frame.pack(pady=5, padx=40, fill="x")
+        ctk.CTkLabel(cli_frame, text="💻 CLI COMPANION ENABLED", font=ctk.CTkFont(size=9, weight="bold"), text_color="#6B7280").pack(pady=(5, 0))
+        ctk.CTkLabel(cli_frame, text="Run 'apmultitool --help' in your terminal\nto access automation subcommands.", font=ctk.CTkFont(size=10), text_color=BRAND_DARK_TEXT).pack(pady=(0, 5))
+
         desc = f"Secure, enterprise-grade {config.APP_NAME} developed for Access Paralegal Services by Alan Woodyard."
         ctk.CTkLabel(about, text=desc, font=ctk.CTkFont(size=11), wraplength=380, justify="center", text_color=BRAND_DARK_TEXT).pack(pady=15)
         ctk.CTkLabel(about, text="Copyright © 2026 Alan Woodyard & Access Paralegal Services.", font=ctk.CTkFont(size=9), text_color="#6B7280").pack(pady=5)
@@ -1285,12 +1460,7 @@ class AccessMergerApp(ctk.CTk):
 
     def show_eula_window(self):
         eula = ctk.CTkToplevel(self)
-        eula.title("License & EULA")
-        eula.geometry("580x480")
-        eula.configure(fg_color=BRAND_WHITE_PANEL)
-        eula.resizable(False, False)
-        eula.grab_set()
-        eula.lift()
+        self.setup_modal_window(eula, 580, 480, "License & EULA")
         ctk.CTkLabel(eula, text="End User License Agreement", font=ctk.CTkFont(size=16, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=15)
         txt = ctk.CTkTextbox(eula, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT, font=ctk.CTkFont(family="Consolas", size=10))
         txt.pack(fill="both", expand=True, padx=20, pady=10)
@@ -1307,10 +1477,7 @@ class AccessMergerApp(ctk.CTk):
     def show_bates_options_modal(self):
         """Advanced Bates Modal with Professor-level compliance controls."""
         opt = ctk.CTkToplevel(self)
-        opt.title("🔢 Advanced Bates Stamping Options")
-        opt.geometry("540x700")
-        opt.configure(fg_color=BRAND_WHITE_PANEL)
-        opt.grab_set()
+        self.setup_modal_window(opt, 540, 700, "🔢 Advanced Bates Stamping Options")
 
         # Defaults
         if not hasattr(self, "bates_opts"):
@@ -1336,6 +1503,7 @@ class AccessMergerApp(ctk.CTk):
         self.pref_ent = ctk.CTkEntry(f1, width=150)
         self.pref_ent.pack(side="left", padx=10)
         self.pref_ent.insert(0, self.bates_opts["prefix"])
+        self.pref_ent.focus_set()
         
         self.sep_var = ctk.StringVar(value=self.bates_opts["sep"])
         ctk.CTkRadioButton(f1, text="-", variable=self.sep_var, value="-").pack(side="left", padx=5)
@@ -1366,7 +1534,8 @@ class AccessMergerApp(ctk.CTk):
 
         # 4. Normalization
         self.chk_shrink = ctk.CTkCheckBox(opt, text="🛡️ Collision Avoidance: Shrink page to fit margins (Recommended)", variable=self.bates_opts["shrink"], text_color=BRAND_DARK_TEXT)
-        self.chk_shrink.pack(anchor="w", padx=30, pady=15)
+        self.chk_shrink.pack(anchor="w", padx=30, pady=(15, 2))
+        ctk.CTkLabel(opt, text="     Shrinks target page contents to create 0.75-inch clean margins for stamps.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(anchor="w", padx=30)
 
         # 5. Output Management
         ctk.CTkLabel(opt, text="Output Directory Policy:", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=30, pady=(10, 2))
@@ -1390,13 +1559,30 @@ class AccessMergerApp(ctk.CTk):
 
         ctk.CTkButton(opt, text="✅ SAVE PROTOCOL", height=45, fg_color=BRAND_ACCENT_GREEN, command=save_and_close).pack(pady=20, padx=30, fill="x")
 
+    def toggle_bates_inputs(self, state):
+        self.bates_run_btn.configure(state=state)
+        self.btn_bates_target.configure(state=state)
+        self.bates_target_entry.configure(state=state)
+        self.bates_prefix.configure(state=state)
+        self.bates_start.configure(state=state)
+        self.bates_sep_menu.configure(state=state)
+        self.btn_bates_options.configure(state=state)
+
+    def request_bates_cancel(self):
+        self.cancel_requested = True
+        self.bates_run_btn.configure(state="disabled", text="Cancelling...")
+
     def start_bates_thread(self):
         target = self.bates_target_entry.get().strip()
         if not target or not os.path.exists(target):
             messagebox.showerror("Error", "Please select a valid PDF to Bates Number.")
             return
         
-        self.bates_run_btn.configure(state="disabled", text="Executing Production...")
+        self.cancel_requested = False
+        self.toggle_bates_inputs("disabled")
+        self.bates_run_btn.configure(state="normal", text="🛑 CANCEL PRODUCTION", fg_color="#DC2626", hover_color="#B91C1C", command=self.request_bates_cancel)
+        self.bates_p_bar.set(0)
+        
         import threading
         threading.Thread(target=self.execute_bates_production, daemon=True).start()
 
@@ -1405,10 +1591,44 @@ class AccessMergerApp(ctk.CTk):
         target_path = self.bates_target_entry.get().strip()
         source_dir = os.path.dirname(target_path)
         
-        # Pull Options
-        if not hasattr(self, "bates_opts"): self.show_bates_options_modal() # Fallback to defaults
+        # Pull Options & Sync from main panel widgets
+        if not hasattr(self, "bates_opts"):
+            self.bates_opts = {
+                "prefix": "AP",
+                "sep": "_",
+                "start": 1,
+                "padding": 7,
+                "font": "Arial Bold",
+                "size": 12,
+                "pos": "Bottom Right (Outside Margin)",
+                "shrink": tk.BooleanVar(value=True),
+                "naming": "Prefix_Start-End",
+                "output": "Nested Folder (Default)"
+            }
+        
+        # Sync values from left panel inputs
+        self.bates_opts["prefix"] = self.bates_prefix.get().strip()
+        sep_char = self.bates_sep_var.get()
+        self.bates_opts["sep"] = "" if sep_char == "(None)" else sep_char
+        
         opts = self.bates_opts
         
+        # Setup Logger in console
+        def log_message(msg):
+            def _log():
+                self.bates_console.configure(state="normal")
+                self.bates_console.insert("end", f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+                self.bates_console.configure(state="disabled")
+                self.bates_console.see("end")
+            self.after(0, _log)
+
+        # Clear console
+        def _clear_console():
+            self.bates_console.configure(state="normal")
+            self.bates_console.delete("1.0", "end")
+            self.bates_console.configure(state="disabled")
+        self.after(0, _clear_console)
+
         # 1. Resolve Output Dir
         if opts["output"] == "Same as Source":
             out_dir = source_dir
@@ -1423,6 +1643,13 @@ class AccessMergerApp(ctk.CTk):
             start_idx = int(self.bates_start.get().strip())
         except:
             start_idx = 1
+            self.after(0, lambda: self.bates_start.delete(0, "end"))
+            self.after(0, lambda: self.bates_start.insert(0, "1"))
+
+        log_message(f"Initiating Bates production for: {os.path.basename(target_path)}")
+        log_message(f"Parameters: Prefix='{opts['prefix']}', Separator='{opts['sep']}', Start={start_idx}")
+        log_message(f"Style: Font={opts['font']}, Size={opts['size']}pt, Placement='{opts['pos']}'")
+        log_message(f"Destination: {out_dir}")
 
         # Build Job structures
         from pathlib import Path
@@ -1433,14 +1660,14 @@ class AccessMergerApp(ctk.CTk):
         job_params = BatesParams(
             prefix=opts["prefix"],
             start_number=start_idx,
-            padding=7, # Professor's SOP Standard
+            padding=opts["padding"],
             position=opts["pos"],
             font_size=opts["size"],
             shrink_conflict=opts["shrink"].get(),
             sep=opts["sep"],
             font_name=opts["font"],
             naming=opts["naming"],
-            output_name=None  # Managed by operation naming format
+            output_name=None
         )
         job_output = OutputSpec(directory=Path(out_dir), overwrite=True)
 
@@ -1452,9 +1679,15 @@ class AccessMergerApp(ctk.CTk):
         )
 
         def progress_cb(msg, progress_val):
+            if self.cancel_requested:
+                bates_job.status = JobStatus.CANCELLED
             self.after(0, lambda: self.bates_run_btn.configure(text=f"Stamping: {int(progress_val*100)}%"))
+            self.after(0, lambda: self.bates_p_bar.set(progress_val))
+            if msg:
+                log_message(msg)
 
         try:
+            from core.job import OperationCancelled
             engine = DocEngine(write_audit=True)
             res_job = engine.submit(bates_job, on_progress=progress_cb)
 
@@ -1462,16 +1695,36 @@ class AccessMergerApp(ctk.CTk):
                 out_path = res_job.result.outputs[0]
                 out_name = os.path.basename(out_path)
                 page_count = res_job.result.page_count_out
+                log_message("🎉 Production successfully completed.")
+                log_message(f"Output File: {out_name}")
+                log_message(f"Stamping completed. Total Pages: {page_count}")
+                self.after(0, lambda: self.bates_p_bar.set(1.0))
+                
+                # Update registry for local persistence
+                matter_name = self.case_num_entry.get().strip() or "Default_Matter"
+                if not hasattr(self, "bates_registry"):
+                    self.bates_registry = {}
+                if matter_name not in self.bates_registry:
+                    self.bates_registry[matter_name] = {}
+                next_index = start_idx + page_count
+                self.bates_registry[matter_name][opts["prefix"]] = next_index
+                
                 self.after(0, lambda: messagebox.showinfo("Success", f"Bates Production Complete!\n\nFile: {out_name}\nPages: {page_count}"))
                 os.startfile(out_dir)
             elif res_job.status == JobStatus.CANCELLED:
+                log_message("⚠️ Stamping operation cancelled by user.")
                 self.after(0, lambda: messagebox.showinfo("Cancelled", "Bates stamping was cancelled."))
             else:
                 raise ValueError(res_job.result.error or "Unknown engine error.")
+        except OperationCancelled:
+            log_message("⚠️ Stamping operation cancelled by user.")
+            self.after(0, lambda: messagebox.showinfo("Cancelled", "Bates stamping was cancelled."))
         except Exception as e:
+            log_message(f"❌ Error during execution: {e}")
             self.after(0, lambda err=str(e): messagebox.showerror("Production Error", f"Bates execution failed: {err}"))
             
-        self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="✨ EXECUTE PRODUCTION PRODUCTION"))
+        self.after(0, lambda: self.toggle_bates_inputs("normal"))
+        self.after(0, lambda: self.bates_run_btn.configure(state="normal", text="⚡ FLATTEN & APPLY BATES STAMPS", fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, command=self.start_bates_thread))
 
     def _on_bates_prefix_focusout(self, event):
         prefix = self.bates_prefix.get().strip()
@@ -1669,12 +1922,7 @@ class AccessMergerApp(ctk.CTk):
     def show_feedback_window(self):
         """Sleek UI interface allowing paralegals to submit local platform feedback."""
         fb = ctk.CTkToplevel(self)
-        fb.title("💬 Submit Application Feedback")
-        fb.geometry("480x420")
-        fb.configure(fg_color=BRAND_WHITE_PANEL)
-        fb.resizable(False, False)
-        fb.grab_set()
-        fb.lift()
+        self.setup_modal_window(fb, 480, 420, "💬 Submit Application Feedback")
 
         ctk.CTkLabel(fb, text="WE VALUE YOUR FEEDBACK", font=ctk.CTkFont(size=16, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(20, 5))
         ctk.CTkLabel(fb, text="Help us build the premier local legal ecosystem.", font=ctk.CTkFont(size=11), text_color="#6B7280").pack(pady=(0, 15))
@@ -1683,6 +1931,7 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(fb, text="What features or refinements would you like to see?", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(5, 2))
         fb_txt = ctk.CTkTextbox(fb, height=120, fg_color=BRAND_SILVER_BG, border_color=BRAND_BORDER_LIGHT, text_color=BRAND_DARK_TEXT)
         fb_txt.pack(fill="x", padx=25, pady=(0, 10))
+        fb_txt.focus_set()
 
         # Email Box
         ctk.CTkLabel(fb, text="Email Address (Optional - for responses):", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=25, pady=(5, 2))
@@ -1787,12 +2036,7 @@ class AccessMergerApp(ctk.CTk):
     def show_activation_window(self):
         """Generates beautiful modal asking for activation keys, verifying via backend hooks."""
         act = ctk.CTkToplevel(self)
-        act.title(f"🔐 {config.APP_NAME} Activation")
-        act.geometry("480x400")
-        act.configure(fg_color=BRAND_WHITE_PANEL)
-        act.resizable(False, False)
-        act.grab_set()
-        act.lift()
+        self.setup_modal_window(act, 480, 400, f"🔐 {config.APP_NAME} Activation")
         
         ctk.CTkLabel(act, text=f"ACTIVATE YOUR {config.APP_NAME.upper()}", font=ctk.CTkFont(size=16, weight="bold"), text_color=BRAND_DARK_TEXT).pack(pady=(25, 5))
         ctk.CTkLabel(act, text="Unlock unlimited batch compiling and permanent Bates numbering.", font=ctk.CTkFont(size=10), text_color="#6B7280").pack(pady=(0, 20))
@@ -1800,6 +2044,7 @@ class AccessMergerApp(ctk.CTk):
         ctk.CTkLabel(act, text="Enter License Key:", font=ctk.CTkFont(size=12, weight="bold"), text_color=BRAND_DARK_TEXT).pack(anchor="w", padx=35, pady=(10, 2))
         key_entry = ctk.CTkEntry(act, placeholder_text="XXXX-XXXX-XXXX-XXXX", height=40, fg_color=BRAND_SILVER_BG, text_color=BRAND_DARK_TEXT)
         key_entry.pack(fill="x", padx=35, pady=(0, 15))
+        key_entry.focus_set()
         if self.active_license_key:
             key_entry.insert(0, self.active_license_key)
             
@@ -1829,6 +2074,8 @@ class AccessMergerApp(ctk.CTk):
                     self.after(0, lambda: status_lbl.configure(text="❌ Invalid License Key or Network Timeout!", text_color="#DC2626"))
             
             threading.Thread(target=thread_task, daemon=True).start()
+            
+        key_entry.bind("<Return>", lambda e: attempt_activation())
 
         btn_act = ctk.CTkButton(act, text="🚀 Activate License Now", height=45, fg_color=BRAND_ACCENT_GREEN, hover_color=BRAND_DEEP_ACCENT, font=ctk.CTkFont(weight="bold"), command=attempt_activation)
         btn_act.pack(fill="x", padx=35, pady=15)
@@ -1997,16 +2244,7 @@ class AccessMergerApp(ctk.CTk):
     def show_settings_modal(self):
         """Consolidated Premium Settings & Preferences Panel."""
         win = ctk.CTkToplevel(self)
-        win.title("⚙️ System Preferences & Settings")
-        win.geometry("520x450")
-        win.resizable(False, False)
-        win.transient(self)
-        win.grab_set()
-        
-        # Center over main window
-        x = self.winfo_x() + (self.winfo_width() - 520) // 2
-        y = self.winfo_y() + (self.winfo_height() - 450) // 2
-        win.geometry(f"+{x}+{y}")
+        self.setup_modal_window(win, 520, 450, "⚙️ System Preferences & Settings")
         
         # --- HEADER ---
         ctk.CTkLabel(win, text="SYSTEM PREFERENCES", font=ctk.CTkFont(size=18, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 5))
@@ -2085,15 +2323,7 @@ class AccessMergerApp(ctk.CTk):
     def show_case_architect_modal(self):
         """Dynamic blueprint architect allowing user to customize default case folder structures."""
         win = ctk.CTkToplevel(self)
-        win.title("🛠️ Advanced Case File-Tree Architect")
-        win.geometry("620x640")
-        win.resizable(False, False)
-        win.transient(self)
-        win.grab_set()
-        
-        x = self.winfo_x() + (self.winfo_width() - 620) // 2
-        y = self.winfo_y() + (self.winfo_height() - 640) // 2
-        win.geometry(f"+{x}+{y}")
+        self.setup_modal_window(win, 620, 640, "🛠️ Advanced Case File-Tree Architect")
         
         ctk.CTkLabel(win, text="CASE FILE TREE ARCHITECT", font=ctk.CTkFont(size=18, weight="bold"), text_color=BRAND_ACCENT_GREEN).pack(pady=(25, 2))
         ctk.CTkLabel(win, text="Define a custom hierarchical architecture for automated case creation.", font=ctk.CTkFont(size=12), text_color="#6B7280").pack(pady=(0, 15))

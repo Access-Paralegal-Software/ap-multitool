@@ -138,7 +138,8 @@ This pattern should be repeated for other important operations over time.
 ## 4. Installer and CLI Progress (Milestone May 2026)
 
 - **CLI UX Standardized**: The CLI has been polished to production-level standards. All commands follow a strict kebab-case structure. Parameters have standard flags (`--start-number`, `--position`, `--font-name`, `--font-size`). Exit codes match enterprise standards, and machine-readable `--json` output enables headless task scheduling.
-- **Windows Installer Design & Prototype**: Completed design spec (`windows_installer_spec.md`) and prototype packaging scripts. This prepares the tool for native installer compilation using Inno Setup (providing path variables, shortcuts, and silent command switches).
+- **Windows Installer Implementation**: Completed native installer compilation using Inno Setup 6 (`apmultitool_installer.iss`), including desktop/start menu shortcuts, license checks, user-level directory deployments (`PrivilegesRequired=lowest`), and silent execution commands support (`/SILENT`, `/VERYSILENT`).
+- **CLI PATH Integration**: Implemented registry addition Pascal scripting to register APMultitool on the user's environment variable `PATH` dynamically. Updates are broadcast to active command shells via win32 APIs without requiring a system reboot, and clean uninstall hooks completely purge custom entries.
 - **Cross-Platform Planning**: Established macOS/Linux distribution blueprints (`macos_linux_packaging_plan.md`) targeting DMG installers with signing/notarization on macOS, and AppImage/Tarball packages on Linux.
 
 

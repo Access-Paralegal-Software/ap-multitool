@@ -80,8 +80,10 @@ To create a true, user-friendly installer (.exe/.msi), configure Inno Setup
 $readmeContent | Out-File -FilePath "$bundleDir\README_BUNDLE.txt" -Encoding utf8
 
 # Create a test CLI launcher batch file for convenience
-$batContent = "@echo off`ncmd /k `"%~dp0apmultitool.exe`\" --help"
+$batContent = '@echo off' + "`r`n" + 'cmd /k "%~dp0apmultitool.exe" --help'
 $batContent | Out-File -FilePath "$bundleDir\launch_cli_help.bat" -Encoding ascii
+
+
 
 Write-Host "✅ Unified Bundle prepared successfully at: $bundleDir" -ForegroundColor Green
 Write-Host "Structure inside bundle:" -ForegroundColor Cyan
