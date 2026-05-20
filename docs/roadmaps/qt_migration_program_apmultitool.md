@@ -16,12 +16,15 @@ graph TD
     P5 --> P6[Phase 6: Tablet & Packaging]
 ```
 
-### 🏁 Phase 1: Foundation & Shell Setup (Current Sprint)
-- **Objective**: Establish codebase directory structures, QSS design styles, main window, navigation sidebar, and placeholder tab layouts.
+### 🏁 Phase 1: Foundation, Hardened Shell, & Primitives (COMPLETED)
+- **Objective**: Establish codebase directory structures, QSS design styles, main window, navigation sidebar, shared UI components, standardized native dialogs, and generic async engine worker interfaces.
 - **Deliverables**:
   - `apmultitool_qt/` app modules.
-  - Sidebar layout with placeholder content views.
-  - Minimal engine signal bridge.
+  - Sidebar layout and refined placeholder views.
+  - Shared components: `SectionCard`, `FormRow`, `ActionBar`, `HintLabel`, `EmptyStateWidget`.
+  - Standardized alerts (`dialogs.py`) and native file utilities (`file_dialogs.py`).
+  - Thread-safe `EngineJobWorker` support for progress updates and cancellation hooks.
+
 
 ### 📄 Phase 2: Document Compiler Tab Migration
 - **Objective**: Migrate the document merge list and queue control actions.

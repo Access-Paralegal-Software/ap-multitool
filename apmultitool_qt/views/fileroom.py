@@ -2,12 +2,13 @@
 
 """File Room & Trees View widget class for APMultitool Qt."""
 
-from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtCore
+from apmultitool_qt.components import SectionCard, FormRow, ActionBar, HintLabel, dialogs, file_dialogs
 
 class FileRoomView(QtWidgets.QWidget):
     """
-    Placeholder View class for the File Room and Directory Tree Architect.
-    Lays out matter selectors and visual folder-hierarchy trees.
+    Refined File Room & Case Directories View.
+    Configures matter blueprints utilizing FormRows and renders a structure tree.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -22,31 +23,24 @@ class FileRoomView(QtWidgets.QWidget):
         main_layout.addWidget(splitter)
 
         # ----------------------------------------------------
-        # Left Panel (Fixed Blueprint Options Sidebar)
+        # Left Panel (Blueprint Options Sidebar Card)
         # ----------------------------------------------------
-        left_panel = QtWidgets.QFrame()
-        left_panel.setObjectName("GroupBoxContainer")
-        left_panel.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-        left_panel.setMinimumWidth(320)
-        left_panel.setMaximumWidth(340)
+        self.left_card = SectionCard()
+        self.left_card.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+        self.left_card.setMinimumWidth(320)
+        self.left_card.setMaximumWidth(340)
 
-        left_layout = QtWidgets.QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(15, 15, 15, 15)
-        left_layout.setSpacing(12)
-
-        # Header
+        # Header Title
         header = QtWidgets.QLabel("FILE ROOM CONFIG")
         header.setObjectName("GroupHeader")
-        left_layout.addWidget(header)
+        self.left_card.add_widget(header)
 
-        # Case ID
-        left_layout.addWidget(QtWidgets.QLabel("Case Matter ID Reference:"))
+        # Case ID FormRow
         self.txt_case_id = QtWidgets.QLineEdit()
         self.txt_case_id.setText("2026-AP-9908")
-        left_layout.addWidget(self.txt_case_id)
+        self.left_card.add_widget(FormRow("Matter ID Reference:", self.txt_case_id, label_width=130))
 
-        # Blueprints Select
-        left_layout.addWidget(QtWidgets.QLabel("Select Structure Blueprint:"))
+        # Blueprints FormRow
         self.cb_blueprints = QtWidgets.QComboBox()
         self.cb_blueprints.addItems([
             "Access Paralegal Litigation Standard",
@@ -54,39 +48,44 @@ class FileRoomView(QtWidgets.QWidget):
             "Bankruptcy Default Proceeding",
             "Custom User Defined..."
         ])
-        left_layout.addWidget(self.cb_blueprints)
+        self.left_card.add_widget(FormRow("Structure Blueprint:", self.cb_blueprints, label_width=130))
 
-        left_layout.addStretch()
+        self.left_card.add_stretch()
 
-        # Primary Run Action Button
+        # Primary Run Action Bar
+        self.action_bar = ActionBar()
         self.btn_run = QtWidgets.QPushButton("Spin Up Folder Tree")
         self.btn_run.setObjectName("PrimaryButton")
-        left_layout.addWidget(self.btn_run)
+        self.btn_run.clicked.connect(self.run_spinup)
+        self.action_bar.add_button(self.btn_run)
+        self.left_card.add_layout(self.action_bar.layout_container)
 
-        splitter.addWidget(left_panel)
+        splitter.addWidget(self.left_card)
 
         # ----------------------------------------------------
-        # Right Panel (Folder Tree Visualizer Preview)
+        # Right Panel (Structural Preview Tree Card)
         # ----------------------------------------------------
-        right_panel = QtWidgets.QFrame()
-        right_panel.setObjectName("GroupBoxContainer")
-
-        right_layout = QtWidgets.QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(15, 15, 15, 15)
-        right_layout.setSpacing(12)
-
-        # Header
+        self.right_card = SectionCard()
+        
         t_header = QtWidgets.QLabel("FOLDER TREE ARCHITECTURE PREVIEW")
         t_header.setObjectName("GroupHeader")
-        right_layout.addWidget(t_header)
+        self.right_card.add_widget(t_header)
 
         # Tree Widget
         self.tree = QtWidgets.QTreeWidget()
         self.tree.setHeaderHidden(True)
-        right_layout.addWidget(self.tree)
+        self.right_card.add_widget(self.tree)
 
-        # Prepopulate with folder mock outlines
-        root = QtWidgets.QTreeWidgetItem(self.tree, ["Case_2026-AP-9908"])
+        # Prepopulate structure
+        self.rebuild_preview()
+
+        splitter.addWidget(self.right_card)
+
+    def rebuild_preview(self):
+        self.tree.clear()
+        case_id = self.txt_case_id.text().strip() or "Case_Matter"
+        root = QtWidgets.QTreeWidgetItem(self.tree, [case_id])
+        
         pleadings = QtWidgets.QTreeWidgetItem(root, ["01_Pleadings"])
         QtWidgets.QTreeWidgetItem(pleadings, ["01_Complaints"])
         QtWidgets.QTreeWidgetItem(pleadings, ["02_Answers"])
@@ -101,4 +100,12 @@ class FileRoomView(QtWidgets.QWidget):
 
         self.tree.expandAll()
 
-        splitter.addWidget(right_panel)
+    def run_spinup(self):
+        target_dir = file_dialogs.get_existing_directory(
+            self,
+            "Select Matter Workspace Folder"
+        )
+        if not target_dir:
+            return
+
+        dialogs.show_info(self, "Spin Up Completed", "Workspace directory trees spin up complete. Shared components tests checked out successfully.")

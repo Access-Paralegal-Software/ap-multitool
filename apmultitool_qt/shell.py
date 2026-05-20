@@ -29,7 +29,7 @@ class APMainWindow(QtWidgets.QMainWindow):
         layout.setSpacing(0)
 
         # ----------------------------------------------------
-        # 1. Left Sidebar Frame
+        # 1. Left Sidebar Frame (Relative narrow width)
         # ----------------------------------------------------
         sidebar = QtWidgets.QFrame()
         sidebar.setObjectName("SidebarFrame")
@@ -126,10 +126,50 @@ class APMainWindow(QtWidgets.QMainWindow):
         # Wire navigation buttons to switch views
         self.btn_group.idClicked.connect(self.switch_view)
 
-        # Bottom Status Bar
+        # ----------------------------------------------------
+        # 3. Status Bar & Persistent Progress Bar
+        # ----------------------------------------------------
         self.status_bar = QtWidgets.QStatusBar()
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("Ready")
+
+        # Standard status label
+        self.status_label = QtWidgets.QLabel("Ready")
+        self.status_bar.addWidget(self.status_label, 1)
+
+        # Determinate progress bar overlay inside the statusbar, hidden by default
+        self.progress_bar = QtWidgets.QProgressBar()
+        self.progress_bar.setFixedWidth(180)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #E5E7EB;
+                border-radius: 4px;
+                text-align: center;
+                background-color: #FFFFFF;
+                height: 14px;
+            }
+            QProgressBar::chunk {
+                background-color: #67BE5E;
+            }
+        """)
+        self.status_bar.addPermanentWidget(self.progress_bar)
+
+    def set_status(self, text: str):
+        """Update standard statusbar text label."""
+        self.status_label.setText(text)
+
+    def show_progress(self, percent: int, msg: str | None = None):
+        """Display progress bar and update its active state."""
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(percent)
+        if msg:
+            self.set_status(msg)
+
+    def hide_progress(self, msg: str = "Ready"):
+        """Hide statusbar progress indicators."""
+        self.progress_bar.setVisible(False)
+        self.set_status(msg)
 
     def switch_view(self, view_id):
         # Switch stacked widget active index

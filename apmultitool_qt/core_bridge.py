@@ -3,8 +3,10 @@
 """Qt Signals/Slots thread bridge for APMultitool Core Engine."""
 
 import time
+from pathlib import Path
 from PySide6 import QtCore
 from core.engine import DocEngine
+from core.job import Job, JobResult, OperationCancelled
 
 class DiagnosticWorker(QtCore.QObject):
     """
@@ -80,3 +82,50 @@ class DiagnosticWorker(QtCore.QObject):
         self.progress.emit(100)
         self.log_message.emit("✅ Diagnostic complete. Engine is healthy!")
         self.finished.emit(True, "Engine Diagnostic passed successfully.")
+
+
+class EngineJobWorker(QtCore.QObject):
+    """
+    Generalized background worker to execute standard core engine Jobs.
+    Hooks into progress callbacks and propagates user cancellation request.
+    """
+    started = QtCore.Signal()
+    progress = QtCore.Signal(int, str)  # percent, message
+    log_message = QtCore.Signal(str)
+    finished = QtCore.Signal(bool, str, object)  # success, error_message, JobResult
+
+    def __init__(self, job: Job, output_root: Path | None = None):
+        super().__init__()
+        self.job = job
+        self.output_root = output_root
+        self._is_cancelled = False
+
+    def request_cancel(self):
+        """Trigger cooperative cancel flag checked in progress callback."""
+        self._is_cancelled = True
+        self.log_message.emit("🛑 User requested execution cancel. Aborting...")
+
+    def run_job(self):
+        """Execute the job in the worker's thread context."""
+        self.started.emit()
+        self.progress.emit(0, "Initiating core document engine...")
+
+        def on_engine_progress(msg: str, fraction: float):
+            if self._is_cancelled:
+                raise OperationCancelled("Cancelled by user request from GUI.")
+            percent = int(fraction * 100)
+            self.progress.emit(percent, msg)
+            self.log_message.emit(f"[{percent}%] {msg}")
+
+        try:
+            engine = DocEngine(output_root=self.output_root)
+            completed_job = engine.submit(self.job, on_progress=on_engine_progress)
+            self.progress.emit(100, "Done.")
+            self.log_message.emit("✅ Job execution completed successfully.")
+            self.finished.emit(True, "", completed_job.result)
+        except OperationCancelled:
+            self.log_message.emit("🛑 Job execution aborted by user.")
+            self.finished.emit(False, "Operation cancelled.", None)
+        except Exception as e:
+            self.log_message.emit(f"❌ Job execution failed: {str(e)}")
+            self.finished.emit(False, str(e), None)

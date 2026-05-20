@@ -47,6 +47,12 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 *   **[`ops/qt_design_tokens_apmultitool.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_design_tokens_apmultitool.md)**: Color palettes, margins, styling guidelines, and QSS sheet variables.
 *   **[`ops/qt_engine_integration_notes.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_engine_integration_notes.md)**: Thread separation structures, Signals/Slots, and diagnostic worker models.
 *   **[`ops/qt_desktop_tablet_layout_doctrine.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_desktop_tablet_layout_doctrine.md)**: Viewport reflow policies and touch target specifications.
+*   **[`ops/qt_shell_hardening_audit.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_shell_hardening_audit.md)**: Hardening audit, widget issues, and layout gap mappings.
+*   **[`ops/qt_shell_conventions.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_shell_conventions.md)**: Margins scale, panel splits, and sidebar naming conventions.
+*   **[`ops/qt_dialog_patterns.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_dialog_patterns.md)**: Modal alerts, confirmations, and detailed error trace specs.
+*   **[`ops/qt_async_worker_pattern.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_async_worker_pattern.md)**: Thread separation layout, Signals/Slots, and cooperative cancel triggers.
+*   **[`ops/qt_file_dialog_notes.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_file_dialog_notes.md)**: Platform-safe file, multi-file, and directory pickers.
+*   **[`ops/qt_shell_responsive_notes.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/qt_shell_responsive_notes.md)**: Viewport scaling limits and tablet touch metrics.
 *   **[`ops/windows_installer_spec.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_spec.md)**: Branding, layout, and configuration specifications for Inno Setup.
 *   **[`ops/windows_installer_build.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_build.md)**: Build prerequisites and compile workflow for Inno Setup 6.
 *   **[`ops/windows_installer_validation.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/ops/windows_installer_validation.md)**: Smoke-testing protocols and silent deployment parameters verification.
@@ -84,6 +90,8 @@ These historical documents track sprint execution timelines and developmental pr
 *   **[`ho_0015_2026_05_19_cli_ux_and_installer_readiness.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0015_2026_05_19_cli_ux_and_installer_readiness.md)**: Completed CLI UX audit, standardized flags and exit codes, integrated --dry-run mode for merge/bates, added CLI UX pytest suite, established Windows Inno Setup requirements, planned macOS/Linux packaging pathways, and added marketing materials.
 *   **[`ho_0017_2026_05_20_gui_modernization_and_release_ux.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0017_2026_05_20_gui_modernization_and_release_ux.md)**: Standardized visual frame margins, built thread-safe cooperative cancellation buttons, added Escape binds to modals, and updated smoke checklists.
 *   **[`ho_0018_2026_05_20_qt_migration_foundation_and_shell.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0018_2026_05_20_qt_migration_foundation_and_shell.md)**: Setup PySide6 foundation, defined design tokens, created QMainWindow shell sidebar layout, and implemented PoC thread diagnostic bridge.
+*   **[`ho_0019_2026_05_20_qt_shell_hardening_and_infrastructure.md`](file:///c:/Users/aewoo/Desktop/Repos/Access_Paralegal_PDF_Merger/docs/handoffs/ho_0019_2026_05_20_qt_shell_hardening_and_infrastructure.md)**: Hardened Qt shell, built shared UI primitives, implemented dialog and native file helpers, set up the generalized EngineJobWorker thread runner, and deployed PySide6 unit tests.
+
 
 ---
 

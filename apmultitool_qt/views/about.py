@@ -5,6 +5,7 @@
 from PySide6 import QtWidgets, QtCore
 import config
 from apmultitool_qt.core_bridge import DiagnosticWorker
+from apmultitool_qt.components import SectionCard, ActionBar, HintLabel, dialogs
 
 class AboutView(QtWidgets.QWidget):
     """
@@ -19,7 +20,6 @@ class AboutView(QtWidgets.QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        # Two panels: Left is About details & CLI tips; Right is Engine Diagnostic PoC
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(15)
@@ -30,28 +30,22 @@ class AboutView(QtWidgets.QWidget):
         # ----------------------------------------------------
         # Left Panel (App Info Card & CLI Info)
         # ----------------------------------------------------
-        left_panel = QtWidgets.QFrame()
-        left_panel.setObjectName("GroupBoxContainer")
-        left_panel.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-        left_panel.setMinimumWidth(320)
-        left_panel.setMaximumWidth(340)
+        self.left_card = SectionCard()
+        self.left_card.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+        self.left_card.setMinimumWidth(320)
+        self.left_card.setMaximumWidth(340)
 
-        left_layout = QtWidgets.QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(15, 15, 15, 15)
-        left_layout.setSpacing(15)
-
-        # App Identity
         header = QtWidgets.QLabel("ABOUT APMULTITOOL")
         header.setObjectName("GroupHeader")
-        left_layout.addWidget(header)
+        self.left_card.add_widget(header)
 
         lbl_logo = QtWidgets.QLabel("Access Paralegal Multitool")
         lbl_logo.setStyleSheet("font-size: 15px; font-weight: bold; color: #111827;")
-        left_layout.addWidget(lbl_logo)
+        self.left_card.add_widget(lbl_logo)
 
         self.lbl_ver = QtWidgets.QLabel(f"Version: {config.__version__} (Qt/PySide6 Edition)")
         self.lbl_ver.setStyleSheet("color: #4B5563; font-size: 11px;")
-        left_layout.addWidget(self.lbl_ver)
+        self.left_card.add_widget(self.lbl_ver)
 
         lbl_desc = QtWidgets.QLabel(
             "An internal command center designed to automate document "
@@ -59,18 +53,18 @@ class AboutView(QtWidgets.QWidget):
         )
         lbl_desc.setWordWrap(True)
         lbl_desc.setStyleSheet("color: #4B5563; font-size: 11px; line-height: 14px;")
-        left_layout.addWidget(lbl_desc)
+        self.left_card.add_widget(lbl_desc)
 
         # Divider
         divider = QtWidgets.QFrame()
         divider.setFrameShape(QtWidgets.QFrame.HLine)
         divider.setFrameShadow(QtWidgets.QFrame.Sunken)
-        left_layout.addWidget(divider)
+        self.left_card.add_widget(divider)
 
         # CLI Companion Card
         cli_header = QtWidgets.QLabel("💻 CLI COMPANION CARD")
         cli_header.setStyleSheet("font-weight: bold; color: #67BE5E; font-size: 11px;")
-        left_layout.addWidget(cli_header)
+        self.left_card.add_widget(cli_header)
 
         cli_desc = QtWidgets.QLabel(
             "This application includes a powerful CLI engine!\n\n"
@@ -81,25 +75,19 @@ class AboutView(QtWidgets.QWidget):
         )
         cli_desc.setWordWrap(True)
         cli_desc.setStyleSheet("color: #374151; font-family: 'Consolas', monospace; font-size: 10px; padding: 5px;")
-        left_layout.addWidget(cli_desc)
+        self.left_card.add_widget(cli_desc)
 
-        left_layout.addStretch()
-        splitter.addWidget(left_panel)
+        self.left_card.add_stretch()
+        splitter.addWidget(self.left_card)
 
         # ----------------------------------------------------
-        # Right Panel (Engine Diagnostic Thread Verification)
+        # Right Panel (Engine Diagnostic Thread Verification Card)
         # ----------------------------------------------------
-        right_panel = QtWidgets.QFrame()
-        right_panel.setObjectName("GroupBoxContainer")
-
-        right_layout = QtWidgets.QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(15, 15, 15, 15)
-        right_layout.setSpacing(12)
-
-        # Header
+        self.right_card = SectionCard()
+        
         d_header = QtWidgets.QLabel("CORE ENGINE DIAGNOSTIC BRIDGE (POC)")
         d_header.setObjectName("GroupHeader")
-        right_layout.addWidget(d_header)
+        self.right_card.add_widget(d_header)
 
         d_desc = QtWidgets.QLabel(
             "Validate thread-safe communication between the PySide6 UI and the "
@@ -108,14 +96,14 @@ class AboutView(QtWidgets.QWidget):
         )
         d_desc.setWordWrap(True)
         d_desc.setStyleSheet("color: #4B5563; font-size: 11px;")
-        right_layout.addWidget(d_desc)
+        self.right_card.add_widget(d_desc)
 
         # Console Logs
         self.diag_console = QtWidgets.QPlainTextEdit()
         self.diag_console.setObjectName("ConsoleOutput")
         self.diag_console.setReadOnly(True)
         self.diag_console.appendPlainText("DIAGNOSTIC CHANNEL STANDBY...")
-        right_layout.addWidget(self.diag_console)
+        self.right_card.add_widget(self.diag_console)
 
         # Progress Bar
         self.progress_bar = QtWidgets.QProgressBar()
@@ -132,23 +120,23 @@ class AboutView(QtWidgets.QWidget):
                 background-color: #67BE5E;
             }
         """)
-        right_layout.addWidget(self.progress_bar)
+        self.right_card.add_widget(self.progress_bar)
 
-        # Action Buttons
-        btn_layout = QtWidgets.QHBoxLayout()
+        # Action Buttons Row
+        self.btn_layout = ActionBar()
         self.btn_run = QtWidgets.QPushButton("Run Core Engine Diagnostic")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_run.clicked.connect(self.start_diagnostic)
-        btn_layout.addWidget(self.btn_run)
+        self.btn_layout.add_button(self.btn_run)
 
         self.btn_cancel = QtWidgets.QPushButton("Cancel")
         self.btn_cancel.setObjectName("DangerButton")
         self.btn_cancel.setEnabled(False)
         self.btn_cancel.clicked.connect(self.cancel_diagnostic)
-        btn_layout.addWidget(self.btn_cancel)
+        self.btn_layout.add_button(self.btn_cancel)
 
-        right_layout.addLayout(btn_layout)
-        splitter.addWidget(right_panel)
+        self.right_card.add_layout(self.btn_layout.layout_container)
+        splitter.addWidget(self.right_card)
 
     def start_diagnostic(self):
         self.diag_console.clear()
@@ -188,12 +176,12 @@ class AboutView(QtWidgets.QWidget):
         self.btn_cancel.setEnabled(False)
 
         if success:
-            QtWidgets.QMessageBox.information(
+            dialogs.show_info(
                 self, "Diagnostic Pass", 
                 "Core Engine Diagnostic passed successfully! Signals cross thread bounds correctly."
             )
         else:
-            QtWidgets.QMessageBox.warning(
+            dialogs.show_warning(
                 self, "Diagnostic Stopped", 
                 f"Core Engine Diagnostic: {message}"
             )
