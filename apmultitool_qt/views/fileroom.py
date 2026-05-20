@@ -219,7 +219,7 @@ class FileRoomView(QtWidgets.QWidget):
     def rebuild_preview(self):
         """Update structural hierarchy preview inside the QTreeWidget."""
         self.tree_widget.clear()
-        case_id = self.txt_case_id.text().strip() or "Case_Matter"
+        case_id = self.txt_case_id.text().strip() or "Matter_Root"
         root_item = QtWidgets.QTreeWidgetItem(self.tree_widget, [case_id])
         
         # Get active blueprint directories
@@ -374,7 +374,7 @@ class FileRoomView(QtWidgets.QWidget):
         # Prepare parameters and core Job structures
         from core.job import Job, FolderTreeParams, OutputSpec
         
-        case_id = self.txt_case_id.text().strip() or "Case_Matter"
+        case_id = self.txt_case_id.text().strip() or "Matter_Root"
         archetype = self.cb_blueprints.currentText()
         
         job_params = FolderTreeParams(

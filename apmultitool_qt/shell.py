@@ -5,6 +5,8 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 from apmultitool_qt.styles import GLOBAL_STYLE
 from apmultitool_qt.views import CompilerView, BatesView, FileRoomView, AboutView
+from apmultitool_qt.security import vault
+from core import __version__, __channel__
 
 class APMainWindow(QtWidgets.QMainWindow):
     """
@@ -13,10 +15,59 @@ class APMainWindow(QtWidgets.QMainWindow):
     """
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Access Paralegal Multitool (Qt Edition)")
+        self.full_version = f"v{__version__}{__channel__}"
+        self.setWindowTitle(f"Access Paralegal Multitool {self.full_version} (Qt Edition)")
         self.setMinimumSize(960, 760)
         self.setStyleSheet(GLOBAL_STYLE)
         self.setup_ui()
+        QtCore.QTimer.singleShot(0, self.check_security)
+
+    def check_security(self):
+        if not vault.is_pro_activated:
+            self.show_activation_dialog()
+        else:
+            self.load_vault_data()
+
+    def show_activation_dialog(self):
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Pro Activation Required")
+        dialog.setModal(True)
+        dialog.setFixedSize(400, 200)
+        
+        layout = QtWidgets.QVBoxLayout(dialog)
+        
+        lbl_info = QtWidgets.QLabel("Enterprise Security requires hardware lock.")
+        lbl_info.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(lbl_info)
+        
+        layout.addWidget(QtWidgets.QLabel("Enter License Key to Activate:"))
+        
+        key_input = QtWidgets.QLineEdit()
+        layout.addWidget(key_input)
+        
+        btn_activate = QtWidgets.QPushButton("Activate")
+        btn_activate.setObjectName("PrimaryButton")
+        layout.addWidget(btn_activate)
+        
+        def attempt_activation():
+            if vault.activate_license(key_input.text()):
+                QtWidgets.QMessageBox.information(self, "Success", "License activated and locked to this terminal.")
+                dialog.accept()
+                self.load_vault_data()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Error", "Invalid License Key!")
+                
+        btn_activate.clicked.connect(attempt_activation)
+        dialog.exec()
+        
+        if not vault.is_pro_activated:
+            # Quit if they cancel activation
+            QtWidgets.QApplication.quit()
+            
+    def load_vault_data(self):
+        data = vault.load_case_vault()
+        # Optionally distribute 'data' to the views if needed
+        self.set_status("Vault Loaded & Decrypted Successfully")
 
     def setup_ui(self):
         # Main central widget
@@ -75,7 +126,7 @@ class APMainWindow(QtWidgets.QMainWindow):
         sidebar_layout.addStretch()
 
         # Footer Label
-        footer = QtWidgets.QLabel("Access Paralegal v1.0.0")
+        footer = QtWidgets.QLabel(f"Access Paralegal {self.full_version}")
         footer.setStyleSheet("color: #6B7280; font-size: 10px; padding: 15px; text-align: center;")
         footer.setAlignment(QtCore.Qt.AlignCenter)
         sidebar_layout.addWidget(footer)
@@ -154,6 +205,21 @@ class APMainWindow(QtWidgets.QMainWindow):
             }
         """)
         self.status_bar.addPermanentWidget(self.progress_bar)
+
+    def closeEvent(self, event: QtGui.QCloseEvent):
+        """Handle safe termination of background worker threads upon application close."""
+        def safe_stop(view):
+            if getattr(view, "active_worker", None) and hasattr(view.active_worker, "request_cancel"):
+                view.active_worker.request_cancel()
+            if getattr(view, "thread", None) and view.thread.isRunning():
+                view.thread.quit()
+                view.thread.wait()
+
+        safe_stop(self.view_compiler)
+        safe_stop(self.view_bates)
+        safe_stop(self.view_fileroom)
+        
+        event.accept()
 
     def set_status(self, text: str):
         """Update standard statusbar text label."""

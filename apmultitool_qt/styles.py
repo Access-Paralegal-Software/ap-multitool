@@ -88,8 +88,8 @@ QPushButton#PrimaryButton {{
     border-radius: 6px;
     font-size: 13px;
     font-weight: bold;
-    padding: 10px 20px;
-    min-height: 40px;
+    padding: 12px 24px;
+    min-height: 48px;
 }}
 
 QPushButton#PrimaryButton:hover {{
@@ -103,8 +103,8 @@ QPushButton#DangerButton {{
     border-radius: 6px;
     font-size: 13px;
     font-weight: bold;
-    padding: 10px 20px;
-    min-height: 40px;
+    padding: 12px 24px;
+    min-height: 48px;
 }}
 
 QPushButton#DangerButton:hover {{
@@ -118,7 +118,8 @@ QPushButton#SecondaryButton {{
     border-radius: 6px;
     font-size: 11px;
     font-weight: bold;
-    padding: 6px 12px;
+    padding: 8px 16px;
+    min-height: 36px;
 }}
 
 QPushButton#SecondaryButton:hover {{
@@ -129,10 +130,9 @@ QPushButton#SecondaryButton:hover {{
 QLineEdit {{
     border: 1px solid {BRAND_BORDER};
     border-radius: 6px;
-    padding: 8px 12px;
-    background-color: {BRAND_WHITE};
-    color: {BRAND_TEXT_DARK};
-    font-size: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
 }}
 
 QLineEdit:focus {{

@@ -38,7 +38,7 @@ def test_views_structure():
     assert bates.btn_run is not None
 
     fileroom = FileRoomView()
-    assert fileroom.tree is not None
+    assert fileroom.tree_widget is not None
     assert fileroom.txt_case_id.text() == "2026-AP-9908"
     assert fileroom.btn_run is not None
 

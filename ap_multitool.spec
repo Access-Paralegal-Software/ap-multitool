@@ -7,7 +7,7 @@ block_cipher = None
 # Analysis & Build config for GUI
 # ---------------------------------------------------------------------
 a_gui = Analysis(
-    ['gui_apmultitool.py'],
+    ['gui_apmultitool_qt.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -25,7 +25,24 @@ a_gui = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        'PySide6.QtWebEngine',
+        'PySide6.QtWebEngineCore',
+        'PySide6.QtWebEngineWidgets',
+        'PySide6.QtQml',
+        'PySide6.QtQuick',
+        'PySide6.QtNetwork',
+        'PySide6.QtSql',
+        'PySide6.QtBluetooth',
+        'PySide6.QtMultimedia',
+        'PySide6.QtPositioning',
+        'PySide6.QtLocation',
+        'PySide6.QtSensors',
+        'PySide6.QtNfc',
+        'PySide6.QtTextToSpeech',
+        'PySide6.QtWebSockets',
+        'tkinter'
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
@@ -79,7 +96,10 @@ a_cli = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        'PySide6',
+        'tkinter'
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

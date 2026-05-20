@@ -2,7 +2,12 @@
 ; Designed for local/non-elevated installations by default, with optional PATH registration.
 
 #define AppName "APMultitool"
-#define AppVersion "0.5.0"
+#ifndef AppVersion
+#define AppVersion "1.0.0"
+#endif
+#ifndef AppVersionSuffix
+#define AppVersionSuffix "-alpha1"
+#endif
 #define AppPublisher "Access Paralegal Systems"
 #define AppURL "https://accessparalegal.com"
 #define AppExeName "Access_Paralegal_Multitool.exe"
@@ -22,7 +27,7 @@ DefaultGroupName=Access Paralegal
 DisableProgramGroupPage=yes
 LicenseFile=..\..\dist\APMultitool_Bundle\LICENSE
 OutputDir=..\..\dist
-OutputBaseFilename=APMultitool_Setup_v{#AppVersion}
+OutputBaseFilename=APMultitool_Setup_v{#AppVersion}{#AppVersionSuffix}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern

@@ -14,6 +14,7 @@ graph TD
     P3 --> P4
     P4 --> P5[Phase 5: Modals & Settings]
     P5 --> P6[Phase 6: Tablet & Packaging]
+    P6 --> P7[Phase 7: Release Verification]
 ```
 
 ### 🏁 Phase 1: Foundation, Hardened Shell, & Primitives (COMPLETED)
@@ -58,9 +59,17 @@ graph TD
   - License Activation modal with Return key hook.
 
 
-### 📱 Phase 6: Tablet Optimization & Packaging
+### 📱 Phase 6: Tablet Optimization & Packaging (COMPLETED)
 - **Objective**: Refine sizing policies, expand touch targets, and package cross-platform.
 - **Deliverables**:
   - Tablet-first responsive layout tests.
   - PyInstaller compile script updates for Windows, macOS, and Linux.
   - Initial packaging tests for Android tablets.
+
+### 🛡️ Phase 7: Release Verification & Boundary Hardening (COMPLETED)
+- **Objective**: Execute STAX rules parity review, finalize packaging documentation, and verify Engine-to-UI abstractions for the upcoming Web Roadmap.
+- **Deliverables**:
+  - Release QA Checklists (`qt_release_readiness_checklist.md`).
+  - Packaging assumptions per platform (`qt_windows_packaging_validation.md`, macOS, Linux).
+  - Cross-surface alignment mapping (Browser / CLI / Desktop).
+  - Explicit UI-to-Engine boundary and thread-safe shutdown validation.

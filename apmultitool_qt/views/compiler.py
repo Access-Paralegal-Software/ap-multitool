@@ -148,7 +148,7 @@ class CompilerView(QtWidgets.QWidget):
         # Output file name field
         self.output_name_input = QtWidgets.QLineEdit()
         self.output_name_input.setText("compiled_output.pdf")
-        self.output_name_input.setPlaceholderText("e.g. Case_123_Merge.pdf")
+        self.output_name_input.setPlaceholderText("e.g. Matter_123_Merge.pdf")
         self.left_card.add_widget(FormRow("Output PDF Name:", self.output_name_input, label_width=120))
 
         self.left_card.add_stretch()
@@ -304,6 +304,7 @@ class CompilerView(QtWidgets.QWidget):
                     resolved_paths.append(p)
 
         added = False
+        self.table.blockSignals(True)
         for path_str in resolved_paths:
             if path_str not in self.queue_files:
                 self.queue_files.append(path_str)
@@ -322,6 +323,7 @@ class CompilerView(QtWidgets.QWidget):
                 self.table.setItem(row, 5, QtWidgets.QTableWidgetItem("Pending"))
                 
                 added = True
+        self.table.blockSignals(False)
 
         if added:
             self.table_stack.setCurrentIndex(0)  # Show table view
@@ -472,6 +474,11 @@ class CompilerView(QtWidgets.QWidget):
         if not out_name.lower().endswith(".pdf"):
             out_name += ".pdf"
             self.output_name_input.setText(out_name)
+            
+        final_output_path = out_dir / out_name
+        if final_output_path.exists():
+            if not dialogs.show_confirmation(self, "Overwrite PDF?", f"The file '{out_name}' already exists in this folder.\n\nDo you want to overwrite it?"):
+                return
 
         if not dialogs.show_confirmation(self, "Confirm Merge Order", "Please ensure the documents in the list are in the exact order you want them merged.\n\nProceed with compile merge?"):
             return

@@ -1,5 +1,10 @@
 # build_installer.ps1 — Windows Installer Build Orchestrator
 # Run from repository root: powershell -File packaging/windows/build_installer.ps1
+param (
+    [string]$AppVersion = "1.0.0",
+    [string]$ReleaseChannel = "-alpha1",
+    [string]$SignCertThumbprint = ""
+)
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  APMultitool Windows Installer Compiler Pipeline" -ForegroundColor Cyan
@@ -47,6 +52,26 @@ if ($missingCount -gt 0) {
 }
 Write-Host "Bundle validation completed successfully." -ForegroundColor Green
 
+# 2.5. Pre-Installer Codesigning Hook
+if ($SignCertThumbprint) {
+    Write-Host "[2.5/5] Executing Codesigning on Bundle Binaries..." -ForegroundColor Yellow
+    $signtoolPath = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
+    if (Test-Path $signtoolPath) {
+        foreach ($exe in @("$bundleDir\Access_Paralegal_Multitool.exe", "$bundleDir\apmultitool.exe")) {
+            & $signtoolPath sign /sha1 $SignCertThumbprint /t http://timestamp.digicert.com /fd SHA256 $exe
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Signed: $exe" -ForegroundColor Green
+            } else {
+                Write-Host "❌ Failed to sign: $exe" -ForegroundColor Red
+            }
+        }
+    } else {
+        Write-Host "⚠️ signtool.exe not found at standard path. Skipping pre-installer signing." -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "[2.5/5] Skipping Pre-Installer Codesigning (No cert thumbprint provided)" -ForegroundColor Gray
+}
+
 # 3. Locate Inno Setup Compiler (ISCC.exe)
 Write-Host "[3/5] Locating Inno Setup compiler (ISCC.exe)..." -ForegroundColor Yellow
 $isccPath = $null
@@ -92,8 +117,8 @@ if (-not (Test-Path -Path $issScript)) {
     Exit 1
 }
 
-# Run compiler
-& $isccPath $issScript
+# Run compiler with parameterized versioning
+& $isccPath "/DAppVersion=$AppVersion" "/DAppVersionSuffix=$ReleaseChannel" $issScript
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Inno Setup compiler failed with exit code: $LASTEXITCODE"
@@ -102,18 +127,32 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "✅ Inno Setup compilation finished successfully!" -ForegroundColor Green
 
-# 5. Locate Output and Generate Checksum
+# 5. Locate Output, Sign, and Generate Checksum
 Write-Host "[5/5] Generating release metadata & checksums..." -ForegroundColor Yellow
-$setupExe = "dist\APMultitool_Setup_v0.5.0.exe"
+$setupExe = "dist\APMultitool_Setup_v${AppVersion}${ReleaseChannel}.exe"
 
 if (-not (Test-Path -Path $setupExe)) {
     Write-Error "Setup output file not found at: $setupExe. Compilation might have failed silently."
     Exit 1
 }
 
+# Post-Installer Codesigning Hook
+if ($SignCertThumbprint) {
+    Write-Host "Executing Codesigning on final installer..." -ForegroundColor Yellow
+    $signtoolPath = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
+    if (Test-Path $signtoolPath) {
+        & $signtoolPath sign /sha1 $SignCertThumbprint /t http://timestamp.digicert.com /fd SHA256 $setupExe
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Signed final installer: $setupExe" -ForegroundColor Green
+        } else {
+            Write-Host "❌ Failed to sign installer." -ForegroundColor Red
+        }
+    }
+}
+
 # Generate SHA256 checksum
 $sha256 = (Get-FileHash -Path $setupExe -Algorithm SHA256).Hash
-$sha256File = "dist\APMultitool_Setup_v0.5.0.exe.sha256"
+$sha256File = "dist\APMultitool_Setup_v${AppVersion}${ReleaseChannel}.exe.sha256"
 $sha256 | Out-File -FilePath $sha256File -Encoding ascii
 
 Write-Host "✅ Created Installer Executable: $setupExe" -ForegroundColor Green
