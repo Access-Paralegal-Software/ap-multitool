@@ -49,8 +49,8 @@ All Windows beta installer links were updated to point to the new branded URL. N
 
 ## 5. Live Verification
 - **Branded URL Resolution:** Direct browser and curl queries to `https://download.accessparalegalservices.com/ap-multitool/windows/APMultitool-windows-beta.exe` return the `131 MB` installer payload over HTTPS with `200 OK`.
-- **Portal Deploy Status:** Committed and pushed to `origin/main`. Note that `software.accessparalegalservices.com` does not resolve from this workstation, which is consistent with the previously reported blocked GitHub Pages status for private repository hosting. Local verification of the generated workspace build confirms perfect rendering and URL injection.
-- **User Wording & Disclaimers:** All SmartScreen bypass instructions, Microsoft Office requirement notes, Beta 1 limitations, and feedback instructions remain fully intact.
+- **Portal Deploy Status:** Committed and pushed to `origin/main`. Although the custom domain `software.accessparalegalservices.com` does not resolve locally due to missing DNS setup, the live GitHub Pages build was verified directly. Querying the GitHub Pages edge IP (`185.199.108.153`) with the custom header `Host: software.accessparalegalservices.com` successfully returned the live homepage and sub-pages, proving successful compilation and injection of the HTTPS branded download link.
+- **User Wording & Disclaimers:** All SmartScreen bypass instructions, Microsoft Office requirement notes, Beta 1 limitations, and feedback instructions remain fully intact on all pages.
 
 ## 6. Safety & Compliance Confirmations
 - **No Large Binaries:** Verified that no `.exe` or large binary installers were added or committed to `ap-multitool-portal`.
