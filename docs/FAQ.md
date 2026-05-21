@@ -1,33 +1,58 @@
 ---
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
+handoff_id: ho_0061_2026_05_21
+date: 2026-05-21
 title: FAQ
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+project: APMultitool
+status: beta1
+tags:
+  - faq
+  - portal
+  - beta1
+  - docs
 ---
 
-# Access Paralegal Suite — Frequently Asked Questions
+# APMultitool Windows Beta — Frequently Asked Questions
 
-Welcome to the Access Paralegal Suite! If you have questions about how our offline, zero-cloud pipeline works, you're in the right place.
+Welcome to the APMultitool Windows Beta! This FAQ covers everything you need to know about setting up, using, and troubleshooting our 100% offline document compiler.
 
-## 1. Do I need an internet connection to use this software?
-**A:** No! Access Paralegal Suite operates entirely offline on your local machine. Your confidential legal documents never leave your computer, ensuring 100% compliance with strict firm security policies.
+## 1. What is APMultitool?
+APMultitool is a secure, 100% offline local document suite engineered specifically for legal support professionals. It runs directly on your computer to compile court-ready document packets, harvest email attachments, and apply permanent, flattened Bates stamping without uploading any sensitive client files to third-party cloud servers.
 
-## 2. I reordered my PDFs in the queue. How does the software know the right order?
-**A:** The application reads the exact visual order you set in the queue list. What you see is exactly what will be merged.
+## 2. Who should use this beta?
+This early-access Windows beta is designed for trusted legal assistants, freelance paralegals, and early adopters who are comfortable evaluating pre-release software and providing constructive feedback to improve the platform before the final general-audience release.
 
-## 3. How do I force a document to jump to the top of a massive queue?
-**A:** Double-click the `#` column on any specific document and type `1`. The document will instantly jump to the top, and all other documents will shift down accordingly.
+## 3. Is this release Windows-only?
+Yes, the Beta 1 release is Windows-only, supporting 64-bit installations of Windows 10 and 11. macOS and Linux builds are actively in development and will be released in future versions of the software.
 
-## 4. Why did my Bates Stamping number *not* reset to 1 when I opened the app today?
-**A:** The suite features an intelligent offline **Bates Registry Ledger**. If you stamped a document yesterday as `DEF-EX-00045`, the app securely remembers this. If you type `DEF-EX-` again today for the same case, it will auto-populate `46` to prevent you from creating accidental duplicate productions. 
+## 4. Is this software production-ready?
+While fully functional and robust, this is an early beta release. We highly recommend keeping backups of your source documents and double-checking compiled files (such as final exhibit numbering or file sizes) before official court submission.
 
-## 5. Can I override the Bates Ledger if I *want* to start at 1?
-**A:** Yes. Simply click into the "Start Index" box and manually type `1` (or any other number you wish to begin at). 
+## 5. Why might Windows SmartScreen warn me?
+Because APMultitool is a newly compiled release and not yet signed with a commercial certificate, Windows Defender will display a warning dialog (*"Windows protected your PC"*) when running the installer. This is completely normal. To proceed:
+1. Click **"More info"** inside the blue warning dialog.
+2. Click **"Run anyway"** to launch the installation wizard.
 
-## 6. Where is my Audit Log?
-**A:** A text file named `Merge_Audit_Log.txt` is automatically generated and saved directly next to your final PDF output file. It contains the exact timestamps, durations, and document orders for legal defensibility.
+As more beta users run the software, the warning will disappear once the application gains reputation.
+
+## 6. Do I need Microsoft Office installed?
+Yes, locally compiling or converting Microsoft Word (.docx) and Excel (.xlsx) files requires a local installation of Microsoft Office on the same machine. This allows the application to utilize Office's local rendering engine to ensure perfect visual fidelity. Note that standard PDF merging, image handling, and text file operations do not require Office.
+
+## 7. Where do I download the current beta?
+You can download the Windows native installer at our branded download address:
+[https://download.accessparalegalservices.com/ap-multitool/windows/APMultitool-windows-beta.exe](https://download.accessparalegalservices.com/ap-multitool/windows/APMultitool-windows-beta.exe)
+
+## 8. Does the download link stay stable between beta updates?
+Yes! The download URL `https://download.accessparalegalservices.com/ap-multitool/windows/APMultitool-windows-beta.exe` is a branded redirects endpoint that will always point to the most recent, stable release of the APMultitool Windows beta. You do not need to look for new links when updating the software.
+
+## 9. Where do I send bug reports and feedback?
+Please send all bug reports, technical logs, feature requests, and general usage feedback via email to:
+[info@accessparalegalservices.com](mailto:info@accessparalegalservices.com)
+
+## 10. What information should I include in a bug report?
+To help our team troubleshoot and deploy fixes quickly, please try to include the following in your email:
+- **Action Steps:** A brief description of what you were trying to do and what happened instead.
+- **Environment Details:** Which version of Windows you are running.
+- **Visuals:** A screenshot of any error dialogs or UI layout issues (if applicable).
+- **Support Bundle:** A copy of the offline Support Bundle (ZIP).
+
+*How to Export a Support Bundle:* Open the **Help & About** view inside APMultitool and click **"Export Support Bundle"**. This generates a ZIP file on your desktop containing only logs and environment configurations. No document contents or confidential client details are ever collected.
