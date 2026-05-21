@@ -227,9 +227,11 @@ class BatesView(QtWidgets.QWidget):
         self.txt_prefix.editingFinished.connect(self.on_prefix_editing_finished)
         self.left_card.add_widget(FormRow("Bates Prefix:", self.txt_prefix, label_width=90))
 
-        # Start Index
+        # Start Index — integer-only via QIntValidator (min 1, max 9,999,999)
         self.txt_start = QtWidgets.QLineEdit()
         self.txt_start.setText(str(self.bates_opts["start"]))
+        self.txt_start.setValidator(QtGui.QIntValidator(1, 9_999_999, self.txt_start))
+        self.txt_start.setPlaceholderText("e.g. 1")
         self.left_card.add_widget(FormRow("Start Index:", self.txt_start, label_width=90))
 
         # Separator

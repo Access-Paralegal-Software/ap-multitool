@@ -564,6 +564,15 @@ class CompilerView(QtWidgets.QWidget):
             for r in range(self.table.rowCount()):
                 self.table.setItem(r, 5, QtWidgets.QTableWidgetItem("✅ Combined"))
             dialogs.show_info(self, "Compilation Successful", "Documents compiled successfully!")
+            # Surface any per-file warnings (e.g. skipped encrypted or unreadable files)
+            if result and getattr(result, "warnings", None):
+                warn_lines = "\n".join(f"• {w}" for w in result.warnings)
+                dialogs.show_warning(
+                    self,
+                    "Some Files Were Skipped",
+                    f"Compilation completed, but some files could not be included:\n\n{warn_lines}\n\n"
+                    "Check that all source files are accessible and not password-protected.",
+                )
         else:
             if error_msg == "Operation cancelled.":
                 for r in range(self.table.rowCount()):
