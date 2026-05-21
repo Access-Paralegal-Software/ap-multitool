@@ -75,7 +75,30 @@ If the app cannot run at all, manually collect:
 
 ---
 
-## 📂 4. Feedback Collection & Storage Conventions
+## 🔁 4. Updated UI Labels (ho_0045 Patch)
+
+Several button and panel labels were updated after the initial alpha1 build.
+If you are sharing screenshots or written instructions with testers, use the
+updated labels below:
+
+| Tab | Old label | New label |
+|---|---|---|
+| Document Compiler | "Combine & Merge Files" button | **"Compile Documents"** |
+| Bates Stamping | "⚡ FLATTEN & APPLY BATES STAMPS" button | **"Apply Bates Numbers"** |
+| Bates Stamping | " ADVANCED STAMP OPTIONS" button | **"Stamp Options..."** |
+| Bates Stamping | "BATES OUTPUT TERMINAL" panel | **"BATES STAMP LOG"** |
+| File Room | "Spin Up Folder Tree" button | **"Create Folder Structure"** |
+| File Room | "FOLDER TREE ARCHITECTURE PREVIEW" panel | **"FOLDER STRUCTURE PREVIEW"** |
+
+**Workflow note (Compiler):** The "Confirm Merge Order" dialog that previously
+appeared before every compile run has been removed. Users who want to check
+their order should review the queue table before clicking the run button. The
+overwrite protection dialog (shown only when a file already exists at the
+target path) is still in place.
+
+---
+
+## 📂 5. Feedback Collection & Storage Conventions
 
 To maintain a clean repository structure, completed feedback forms should be filed according to the following conventions:
 

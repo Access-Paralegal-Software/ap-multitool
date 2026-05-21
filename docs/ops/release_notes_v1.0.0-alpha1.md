@@ -60,6 +60,50 @@ All 4 playbook staging scenarios have been validated:
 
 ---
 
+---
+
+## 🎨 Flow & Stability Polish (ho_0045 — post-alpha1 patch)
+
+These improvements were applied after the initial alpha1 build based on
+dogfooding and early cohort feedback. No new features were introduced.
+
+### UX & Microcopy Changes
+
+| Location | Before | After | Reason |
+|---|---|---|---|
+| Compiler run button | "Combine & Merge Files" | "Compile Documents" | Matches tab name; shorter and clearer |
+| Compiler success dialog | "Document merge completed successfully!" | "Documents compiled successfully!" | Consistent terminology |
+| Compiler flow | "Confirm Merge Order" dialog shown on every run | Removed | Pure friction; no protective value — overwrite guard still intact |
+| Bates run button | "⚡ FLATTEN & APPLY BATES STAMPS" | "Apply Bates Numbers" | Removed "FLATTEN" (PDF jargon); removed aggressive all-caps |
+| Bates cancel button | "🛑 CANCEL PRODUCTION" | "Cancel" | Simpler, conventional label |
+| Bates stamp options button | " ADVANCED STAMP OPTIONS" | "Stamp Options..." | Sentence case; clearer affordance |
+| Bates right panel header | "BATES OUTPUT TERMINAL" | "BATES STAMP LOG" | Less technical, more descriptive |
+| Bates console init text | "SYSTEM TERMINAL READY. WAITING FOR OPERATION PARAMETERS..." | "Ready — select a PDF and configure parameters above to begin." | Welcoming and instructional |
+| Bates options dialog button | "✅ SAVE PROTOCOL" | "Save Settings" | Removes jargon |
+| Bates options dialog label | "Naming Protocol:" | "Output Naming Style:" | Plain language |
+| Bates clear console | Prompted "Are you sure?" before clearing | Clears immediately | Log is non-destructive; confirmation was friction |
+| File Room run button | "Spin Up Folder Tree" | "Create Folder Structure" | Removes developer jargon |
+| File Room preview header | "FOLDER TREE ARCHITECTURE PREVIEW" | "FOLDER STRUCTURE PREVIEW" | Less verbose |
+| File Room success message | "Instantiated {n} customized subfolders." | "Folder structure created successfully! {n} folders created." | Plain language |
+| File Room error message | "Could not build directory architectures" | "Could not create folder structure" | Plain language |
+| Shell: activation dialog | "Enterprise Security requires hardware lock." | "A license key is required to activate APMultitool." | Less alarming; clearer |
+| Shell: File Room subtitle | "Spin up standardized case directory structures…" | "Create standardized legal matter folder structures from blueprints." | Consistent with button rename |
+| Shell: About subtitle | "System operational metadata metrics and background threading diagnostics." | "Application information, telemetry stats, and diagnostic tools." | Plain language |
+
+### Stability Fixes
+
+- **Bates `on_bates_finished`:** Added guard against `None` or empty `result.outputs`
+  before accessing `result.outputs[0]` and `result.page_count_out`. Previously,
+  a malformed result from an edge-case engine failure could raise `AttributeError`
+  or `IndexError` in the UI thread. Now shows a clear warning dialog instead.
+- **File Room `on_fileroom_finished`:** Added `result and result.outputs` guard
+  before accessing `result.outputs[0]` for the Explorer open call. Prevents
+  silent `AttributeError` on unexpected empty results.
+- **Bates matter ledger lookup:** Wrapped `view_fileroom.txt_case_id` access in a
+  try/except so a widget hierarchy mismatch cannot crash the Bates post-run handler.
+
+---
+
 ## ⚠️ Known Packaging & System Integration Issues
 *   **Unsigned Installer Warnings:** Because the alpha installer is unsigned, Windows SmartScreen will display an "Unknown Publisher" warning block. Testers must click "More info" and then "Run anyway" to proceed.
 *   **PATH Environment Updates:** While the installer broadcasts environment changes (`WM_SETTINGCHANGE`) to active shells, command prompt instances already open *prior* to installation will not see the updated PATH. Testers must open a new terminal window to run `apmultitool` CLI commands.
