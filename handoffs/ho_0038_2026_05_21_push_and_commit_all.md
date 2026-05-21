@@ -18,7 +18,7 @@ This follow-up batch verified the APMultitool repository state, pushed all commi
 - Repository: `C:\Users\aewoo\Desktop\Repos\ap-multitool`
 - Branch: `master`
 - Remote: `origin` at `git@github.com:woodyardae/ap-multitool.git`
-- Push result: `master` advanced from `f17e7275` to `881e1ae6` on `origin/master`.
+- Push result: `master` first advanced from `f17e7275` to `881e1ae6` on `origin/master`, then the final PM report commit advanced it to `a0d850e0`.
 
 ## 3. Commits Pushed
 
@@ -38,4 +38,4 @@ This follow-up batch verified the APMultitool repository state, pushed all commi
 
 ## 5. Final Action
 
-This PM report was created after the push and should be committed and pushed as the final record of the synchronization batch.
+This PM report was created, committed as `a0d850e0`, and pushed to `origin/master` as the final record of the synchronization batch.
