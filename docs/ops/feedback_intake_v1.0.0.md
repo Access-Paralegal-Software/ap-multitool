@@ -53,13 +53,15 @@ Thank you for testing Access Paralegal Multitool! Please answer these quick ques
 ## 🐛 4. Problems, Crashes, or Visual Glitches
 If anything crashed, showed an error message, or looked broken, please describe it here:
 * **What went wrong? / Steps you took:**
+  - *Please list exact sequence of inputs, actions, and buttons pressed (e.g., 1. Added PDF, 2. Switched Font to Courier, 3. Clicked Run).*
   ___________________________________________________________________________
   ___________________________________________________________________________
 * **Support Diagnostics Bundle (Preferred):**
   - Please run the support-bundle generator and attach the ZIP archive file.
   - You can export this via the GUI **Help & About** tab or by running `apmultitool support-bundle` in your command line.
   - Attached ZIP file name: `apmultitool_support_bundle_*.zip` [ ]
-* **Optional - Screenshot or Error Log Text:**
+* **Visual Screenshots & Specific Logs (Highly Recommended):**
+  - For display scaling issues, layout overlaps, or dialog tracebacks, please take a window screenshot (Alt + PrintScreen) and attach it.
   ```
-  [Paste error text or drag-and-drop screenshot here]
+  [Paste error text, traceback window, or drag-and-drop screenshots here]
   ```

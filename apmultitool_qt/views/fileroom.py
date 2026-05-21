@@ -153,7 +153,7 @@ class FileRoomView(QtWidgets.QWidget):
 
         # Primary Run Action Bar
         self.action_bar = ActionBar()
-        self.btn_run = QtWidgets.QPushButton("Spin Up Folder Tree")
+        self.btn_run = QtWidgets.QPushButton("Create Folder Structure")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_run.clicked.connect(self.run_spinup)
         self.action_bar.add_button(self.btn_run)
@@ -166,7 +166,7 @@ class FileRoomView(QtWidgets.QWidget):
         # ----------------------------------------------------
         self.right_card = SectionCard()
         
-        t_header = QtWidgets.QLabel("FOLDER TREE ARCHITECTURE PREVIEW")
+        t_header = QtWidgets.QLabel("FOLDER STRUCTURE PREVIEW")
         t_header.setObjectName("GroupHeader")
         self.right_card.add_widget(t_header)
 
@@ -421,22 +421,22 @@ class FileRoomView(QtWidgets.QWidget):
         self.clear_main_status()
 
         if success:
-            count = len(result.outputs)
+            count = len(result.outputs) if result and result.outputs else 0
             dialogs.show_info(
                 self,
-                "Structure Created",
-                f"Directory Tree construction successfully completed!\n\nInstantiated {count} customized subfolders."
+                "Folders Created",
+                f"Folder structure created successfully!\n\n{count} folders created in the selected location."
             )
             # Open parent directory
-            if result.outputs:
-                parent_dir = os.path.dirname(result.outputs[0])
+            if result and result.outputs:
                 try:
+                    parent_dir = os.path.dirname(result.outputs[0])
                     os.startfile(parent_dir)
                 except Exception:
                     pass
         else:
             dialogs.show_error(
                 self,
-                "Generation Failure",
-                f"Could not build directory architectures: {error_msg}"
+                "Creation Failed",
+                f"Could not create folder structure: {error_msg}"
             )

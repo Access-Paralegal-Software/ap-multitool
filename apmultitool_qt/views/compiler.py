@@ -156,7 +156,7 @@ class CompilerView(QtWidgets.QWidget):
 
         # Primary Run Action Bar
         self.action_bar = ActionBar()
-        self.btn_run = QtWidgets.QPushButton("Combine & Merge Files")
+        self.btn_run = QtWidgets.QPushButton("Compile Documents")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_run.clicked.connect(self.run_merge)
         self.action_bar.add_button(self.btn_run)
@@ -487,9 +487,6 @@ class CompilerView(QtWidgets.QWidget):
             if not dialogs.show_confirmation(self, "Overwrite PDF?", f"The file '{out_name}' already exists in this folder.\n\nDo you want to overwrite it?"):
                 return
 
-        if not dialogs.show_confirmation(self, "Confirm Merge Order", "Please ensure the documents in the list are in the exact order you want them merged.\n\nProceed with compile merge?"):
-            return
-
         # Prepare Core Engine spec structures
         from core.job import Job, InputSpec, MergeParams, OutputSpec
         
@@ -557,7 +554,7 @@ class CompilerView(QtWidgets.QWidget):
 
         self.active_worker = None
         self.toggle_inputs(True)
-        self.btn_run.setText("Combine & Merge Files")
+        self.btn_run.setText("Compile Documents")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_run.setStyleSheet("")
         
@@ -566,7 +563,7 @@ class CompilerView(QtWidgets.QWidget):
         if success:
             for r in range(self.table.rowCount()):
                 self.table.setItem(r, 5, QtWidgets.QTableWidgetItem("✅ Combined"))
-            dialogs.show_info(self, "Compilation Successful", "Document merge completed successfully!")
+            dialogs.show_info(self, "Compilation Successful", "Documents compiled successfully!")
         else:
             if error_msg == "Operation cancelled.":
                 for r in range(self.table.rowCount()):

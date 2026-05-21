@@ -36,11 +36,11 @@ class APMainWindow(QtWidgets.QMainWindow):
         
         layout = QtWidgets.QVBoxLayout(dialog)
         
-        lbl_info = QtWidgets.QLabel("Enterprise Security requires hardware lock.")
+        lbl_info = QtWidgets.QLabel("A license key is required to activate APMultitool.")
         lbl_info.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(lbl_info)
-        
-        layout.addWidget(QtWidgets.QLabel("Enter License Key to Activate:"))
+
+        layout.addWidget(QtWidgets.QLabel("Enter your license key below:"))
         
         key_input = QtWidgets.QLineEdit()
         layout.addWidget(key_input)
@@ -152,7 +152,7 @@ class APMainWindow(QtWidgets.QMainWindow):
         self.lbl_title.setObjectName("BannerTitle")
         header_layout.addWidget(self.lbl_title)
 
-        self.lbl_sub = QtWidgets.QLabel("Queue, convert, and merge multiple documents and exhibits into a single PDF.")
+        self.lbl_sub = QtWidgets.QLabel("Queue documents, set options, and compile them into a single PDF packet.")
         self.lbl_sub.setObjectName("BannerSub")
         header_layout.addWidget(self.lbl_sub)
 
@@ -266,14 +266,14 @@ class APMainWindow(QtWidgets.QMainWindow):
         # Update header banner labels
         if view_id == 0:
             self.lbl_title.setText("Document Compiler")
-            self.lbl_sub.setText("Queue, convert, and merge multiple documents and exhibits into a single PDF.")
+            self.lbl_sub.setText("Queue documents, set options, and compile them into a single PDF packet.")
         elif view_id == 1:
             self.lbl_title.setText("Bates Stamping & Compliance")
             self.lbl_sub.setText("Apply sequential Bates labeling numbering to files with collision avoidance safety.")
         elif view_id == 2:
-            self.lbl_title.setText("File Room Matter Structure Architect")
-            self.lbl_sub.setText("Spin up standardized case directory structures automatically from blueprints.")
+            self.lbl_title.setText("File Room & Matter Structure")
+            self.lbl_sub.setText("Create standardized legal matter folder structures from blueprints.")
         elif view_id == 3:
-            self.lbl_title.setText("Help & Application Support")
-            self.lbl_sub.setText("System operational metadata metrics and background threading diagnostics.")
+            self.lbl_title.setText("Help & About")
+            self.lbl_sub.setText("Application information, telemetry stats, and diagnostic tools.")
 

@@ -122,7 +122,7 @@ class BatesOptionsDialog(QtWidgets.QDialog):
         self.cb_naming = QtWidgets.QComboBox()
         self.cb_naming.addItems(["Prefix_Start-End", "Prefix_StartOnly"])
         self.cb_naming.setCurrentText(self.opts.get("naming", "Prefix_Start-End"))
-        form.addRow("Naming Protocol:", self.cb_naming)
+        form.addRow("Output Naming Style:", self.cb_naming)
 
         # Output dir policy Combo
         self.cb_output = QtWidgets.QComboBox()
@@ -137,7 +137,7 @@ class BatesOptionsDialog(QtWidgets.QDialog):
         layout.addWidget(hint)
 
         # Action Button
-        self.btn_save = QtWidgets.QPushButton("✅ SAVE PROTOCOL")
+        self.btn_save = QtWidgets.QPushButton("Save Settings")
         self.btn_save.setObjectName("PrimaryButton")
         self.btn_save.clicked.connect(self.save_and_close)
         layout.addWidget(self.btn_save)
@@ -239,7 +239,7 @@ class BatesView(QtWidgets.QWidget):
         self.left_card.add_widget(FormRow("Separator:", self.cb_sep, label_width=90))
 
         # Advanced Settings Dialog Trigger
-        self.btn_options = QtWidgets.QPushButton(" ADVANCED STAMP OPTIONS")
+        self.btn_options = QtWidgets.QPushButton(" Stamp Options...")
         self.btn_options.setObjectName("SecondaryButton")
         self.btn_options.setIcon(create_gear_icon("#374151", 16))
         self.btn_options.setIconSize(QtCore.QSize(16, 16))
@@ -250,7 +250,7 @@ class BatesView(QtWidgets.QWidget):
 
         # Primary Run Action Bar
         self.action_bar = ActionBar()
-        self.btn_run = QtWidgets.QPushButton("⚡ FLATTEN & APPLY BATES STAMPS")
+        self.btn_run = QtWidgets.QPushButton("Apply Bates Numbers")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_run.clicked.connect(self.run_bates)
         self.action_bar.add_button(self.btn_run)
@@ -263,7 +263,7 @@ class BatesView(QtWidgets.QWidget):
         # ----------------------------------------------------
         self.right_card = SectionCard()
         
-        c_header = QtWidgets.QLabel("BATES OUTPUT TERMINAL")
+        c_header = QtWidgets.QLabel("BATES STAMP LOG")
         c_header.setObjectName("GroupHeader")
         self.right_card.add_widget(c_header)
 
@@ -271,7 +271,7 @@ class BatesView(QtWidgets.QWidget):
         self.console = QtWidgets.QPlainTextEdit()
         self.console.setObjectName("ConsoleOutput")
         self.console.setReadOnly(True)
-        self.console.appendPlainText("SYSTEM TERMINAL READY. WAITING FOR OPERATION PARAMETERS...")
+        self.console.appendPlainText("Ready — select a PDF and configure parameters above to begin.")
         self.right_card.add_widget(self.console)
 
         # Progress bar
@@ -336,9 +336,13 @@ class BatesView(QtWidgets.QWidget):
             self.txt_target.setText(path)
 
     def clear_console(self):
-        if dialogs.show_confirmation(self, "Clear Console?", "Are you sure you want to clear the terminal output history?"):
+        if dialogs.show_confirmation(
+            self,
+            "Clear Console",
+            "Are you sure you want to clear the console output log history?"
+        ):
             self.console.clear()
-            self.console.appendPlainText("SYSTEM TERMINAL READY. WAITING FOR OPERATION PARAMETERS...")
+            self.console.appendPlainText("READY — select a PDF and configure parameters above to begin.")
 
     def log_message(self, msg):
         """Append log message with current timestamp to terminal."""
@@ -487,7 +491,7 @@ class BatesView(QtWidgets.QWidget):
     def on_bates_started(self):
         """Disable input fields and style run button to show active running state."""
         self.toggle_inputs(False)
-        self.btn_run.setText("🛑 CANCEL PRODUCTION")
+        self.btn_run.setText("Cancel")
         self.btn_run.setObjectName("DangerButton")
         self.btn_run.setStyleSheet("background-color: #DC2626; color: white;")
 
@@ -506,7 +510,7 @@ class BatesView(QtWidgets.QWidget):
 
         self.active_worker = None
         self.toggle_inputs(True)
-        self.btn_run.setText("⚡ FLATTEN & APPLY BATES STAMPS")
+        self.btn_run.setText("Apply Bates Numbers")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_run.setStyleSheet("")
         self.btn_run.setEnabled(True)
@@ -514,31 +518,40 @@ class BatesView(QtWidgets.QWidget):
         self.clear_main_status()
 
         if success:
+            # Guard against malformed result object
+            if result is None or not result.outputs:
+                self.log_message("⚠️ Stamping reported success but no output path was returned.")
+                dialogs.show_warning(self, "Unexpected Result", "Bates stamping completed but no output file path was reported. Check the output folder.")
+                return
+
             out_path = result.outputs[0]
             out_name = os.path.basename(out_path)
-            page_count = result.page_count_out
-            
-            self.log_message("🎉 Production successfully completed.")
+            page_count = getattr(result, "page_count_out", 0) or 0
+
+            self.log_message("Bates numbering completed successfully.")
             self.log_message(f"Output File: {out_name}")
-            self.log_message(f"Stamping completed. Total Pages: {page_count}")
-            
+            self.log_message(f"Pages stamped: {page_count}")
+
             # Update local matter bates index ledger
             main_win = self.get_main_window()
             matter_name = "Default_Matter"
             if main_win and hasattr(main_win, "view_fileroom"):
-                matter_name = main_win.view_fileroom.txt_case_id.text().strip() or "Default_Matter"
-                
+                try:
+                    matter_name = main_win.view_fileroom.txt_case_id.text().strip() or "Default_Matter"
+                except Exception:
+                    pass
+
             prefix = self.bates_opts["prefix"]
             if matter_name not in self.bates_registry:
                 self.bates_registry[matter_name] = {}
-            
-            # Next start index is current index + page count stamped
+
+            # Advance start index by page count for next run
             next_index = self.bates_opts["start"] + page_count
             self.bates_registry[matter_name][prefix] = next_index
             self.txt_start.setText(str(next_index))
 
-            dialogs.show_info(self, "Success", f"Bates Production Complete!\n\nFile: {out_name}\nPages: {page_count}")
-            
+            dialogs.show_info(self, "Bates Complete", f"Bates numbering applied successfully.\n\nFile: {out_name}\nPages stamped: {page_count}")
+
             # Open target directory
             out_dir = os.path.dirname(out_path)
             try:

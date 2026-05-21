@@ -64,6 +64,17 @@ If the app cannot run at all, manually collect:
 
 ---
 
+## ❓ 3b. Troubleshooting FAQ
+
+* **Q: The CLI returns `'apmultitool' is not recognized as an operable program` after installation.**
+  * *A:* This is due to environment variable latency. The tester must close all active PowerShell/Command Prompt windows and open a new terminal session. If it still fails, have them verify that `%LocalAppData%\Programs\APMultitool` was added to their user PATH.
+* **Q: Exporting the support bundle via CLI fails with `FileNotFoundError`.**
+  * *A:* If specifying a custom path using `-o` or `--output-dir`, ensure the target directory exists. If it does not, run without `-o` to output to the current directory or create the target directory first.
+* **Q: A job freezes or aborts silently (e.g., when merging encrypted PDFs or invalid directory characters).**
+  * *A:* Look at the log output in the right panel or run the support bundle tool. Encrypted PDFs are currently not supported and should be decrypted before merging. Filesystem blueprints cannot contain illegal Windows characters like colons (`:`), slashes (`/`, `\`), or quotes.
+
+---
+
 ## 📂 4. Feedback Collection & Storage Conventions
 
 To maintain a clean repository structure, completed feedback forms should be filed according to the following conventions:
