@@ -11,6 +11,14 @@ created_at: 2026-05-21
 
 This note documents small local-only helper tools for diagnostics and maintenance. These scripts do not change application behavior and should be safe to run from a developer checkout or tester workstation when instructed.
 
+Last verified on 2026-05-21.
+
+If you only remember one command, use this:
+
+```powershell
+python scripts/run_core_tests.py --fast
+```
+
 ## scripts/inspect_telemetry.py
 
 Purpose: read the local Qt telemetry aggregate file and print job counts, outcome counts, per-operation counts, and recent error details.
@@ -44,12 +52,14 @@ Purpose: wrap `python -m pytest` with named subsets that match the current test 
 Common usage:
 
 ```powershell
+python scripts/run_core_tests.py --fast
 python scripts/run_core_tests.py
 python scripts/run_core_tests.py --subset unit
 python scripts/run_core_tests.py --subset integration
 python scripts/run_core_tests.py --subset qt -- -q
 python scripts/run_core_tests.py --subset core -- --maxfail=1
 python scripts/run_core_tests.py --subset all --dry-run
+python scripts/run_core_tests.py --list-subsets
 ```
 
 Available subsets:
@@ -66,6 +76,13 @@ Available subsets:
 | `packaging` | Packaging and version metadata tests. |
 
 The wrapper forwards any arguments after `--` directly to pytest.
+
+QoL additions:
+
+- `--fast` runs the common local loop with the `core` subset.
+- `--list-subsets` prints the available named subsets without starting pytest.
+- If pytest is missing, the wrapper exits early with a direct install-the-deps message instead of a module import traceback.
+- Extra pytest arguments must be passed after `--`, which avoids accidental flag parsing mistakes.
 
 Prerequisite: run from a Python environment with `pytest` and the subset's application dependencies installed.
 
@@ -139,6 +156,7 @@ python cli.py --silent merge -i input.pdf -o out
 Effect on troubleshooting and support bundles:
 
 - `APMULTITOOL_LOG_LEVEL=DEBUG` increases detail for the pilot logging slice.
+- Default logging stays at `INFO`; the Qt bridge now sends per-progress chatter to `DEBUG` so the shared log file is easier to scan.
 - `APMULTITOOL_LOG_FILE` redirects the shared local log file to an isolated location.
 - `create_support_bundle()` collects the current shared local log file and telemetry JSON when present.
 
@@ -149,34 +167,71 @@ Scope reviewed: `core/`, `apmultitool_qt/`, `cli.py`, and `email_processing.py`.
 Current status:
 
 - Central logging configuration now exists for the pilot slice in `core/logging_config.py`.
-- The conversion path and support-bundle helper now use named `apmultitool.*` loggers.
-- The broader Qt layer and `email_processing.py` still contain legacy direct output or older logger patterns.
+- The conversion path, support-bundle helper, Qt core bridge, and Qt security helper now use named `apmultitool.*` loggers.
+- Other Qt modules and `email_processing.py` still contain legacy direct output or older logger patterns.
 
 Use `scripts/audit_logging.py` together with `docs/ops/logging_audit_overview.md` and `docs/ops/logging_discipline.md` before broadening the migration beyond the pilot slice.
 
----
+## Get Unstuck Fast
 
-## 🔬 Alpha1 Specific Diagnostics
+If something feels broken or confusing, try these first:
+
+1. Run the fastest headless loop:
+
+```powershell
+python scripts/run_core_tests.py --fast
+```
+
+2. Validate the telemetry file before sharing it:
+
+```powershell
+python scripts/validate_telemetry_schema.py
+```
+
+3. Generate an offline support bundle:
+
+```powershell
+python cli.py support-bundle -o .
+```
+
+4. Check the shared local log file location:
+
+```powershell
+echo $env:APMULTITOOL_LOG_FILE
+```
+
+If `APMULTITOOL_LOG_FILE` is unset, use the default per-user path described in `core/logging_config.py`.
+
+5. Check current CI and packaging status docs:
+
+- `docs/ops/ci_overview.md`
+- `docs/ops/ci_known_issues.md`
+- `docs/ops/windows_alpha_support_bundle_spec.md`
+- `docs/ops/macos_packaging_overview.md`
+
+## Alpha1 Specific Diagnostics
 
 Here are common diagnostic flows tailored for the `v1.0.0-alpha1` release cycle:
 
 ### 1. Verification of Tester Build ID
+
 When a tester submits their telemetry JSON snapshot, operators can verify they were running the correct `v1.0.0-alpha1` binary:
+
 ```powershell
-# Filter output for the build identity field
 python scripts/inspect_telemetry.py --file .\docs\feedback\v1.0.0-alpha1\telemetry_tester_smith_j.json | Select-String "Build:"
 ```
+
 Expected output:
+
 ```text
 Build: v1.0.0-alpha1
 ```
 
 ### 2. Validating Telemetry Code Paths Locally
-Before shipping code edits to master, developers can run focused tests validating the local telemetry schema and About screen widget bindings:
-```powershell
-# Run the telemetry test suite
-python scripts/run_core_tests.py --subset telemetry
 
-# Run the packaging test suite (verifies versioning consistency)
+Before shipping code edits to master, developers can run focused tests validating the local telemetry schema and About screen widget bindings:
+
+```powershell
+python scripts/run_core_tests.py --subset telemetry
 python scripts/run_core_tests.py --subset packaging
 ```

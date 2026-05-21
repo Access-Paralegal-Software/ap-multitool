@@ -5,10 +5,14 @@ import hashlib
 import platform
 import subprocess
 from datetime import datetime
+
 from cryptography.fernet import Fernet
+
+from core.logging_config import get_logger
 
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
+logger = get_logger("qt.security")
 
 class VaultSecurityManager:
     def __init__(self):
@@ -60,8 +64,8 @@ class VaultSecurityManager:
             with open(CASE_VAULT_FILE, 'wb') as f:
                 f.write(encrypted)
             return True
-        except Exception as e:
-            print(f"Failed to secure Case Vault: {e}")
+        except Exception:
+            logger.exception("case vault save failed")
             return False
 
     def load_case_vault(self) -> dict:
@@ -75,8 +79,8 @@ class VaultSecurityManager:
             cipher = Fernet(self.get_crypto_key())
             decrypted = cipher.decrypt(encrypted).decode()
             return json.loads(decrypted)
-        except Exception as e:
-            print(f"Failed to load Case Vault: {e}")
+        except Exception:
+            logger.exception("case vault load failed")
             return {}
 
     def activate_license(self, key: str) -> bool:
