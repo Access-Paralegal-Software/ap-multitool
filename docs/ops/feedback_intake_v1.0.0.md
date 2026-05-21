@@ -55,6 +55,10 @@ If anything crashed, showed an error message, or looked broken, please describe 
 * **What went wrong? / Steps you took:**
   ___________________________________________________________________________
   ___________________________________________________________________________
+* **Support Diagnostics Bundle (Preferred):**
+  - Please run the support-bundle generator and attach the ZIP archive file.
+  - You can export this via the GUI **Help & About** tab or by running `apmultitool support-bundle` in your command line.
+  - Attached ZIP file name: `apmultitool_support_bundle_*.zip` [ ]
 * **Optional - Screenshot or Error Log Text:**
   ```
   [Paste error text or drag-and-drop screenshot here]

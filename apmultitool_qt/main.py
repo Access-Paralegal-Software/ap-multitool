@@ -11,6 +11,14 @@ def main() -> int:
     Main application bootstrap entry point.
     Configures DPI scaling policies, instantiates QApplication, and displays shell window.
     """
+    # 0. Configure rotating file logging
+    try:
+        from core.support import setup_app_logging
+        logger = setup_app_logging()
+        logger.info("APMultitool GUI application starting...")
+    except Exception as e:
+        sys.stderr.write(f"Failed to configure file logging: {e}\n")
+
     # 1. Enforce High-DPI scaling parameters for Retina and High-DPI displays (tablet compatibility)
     # Note: Attribute configurations must occur prior to QApplication construction.
     if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):

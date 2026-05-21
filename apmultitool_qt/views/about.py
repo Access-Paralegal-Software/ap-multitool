@@ -2,7 +2,7 @@
 
 """Help & About View widget class for APMultitool Qt."""
 
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 import config
 from apmultitool_qt.core_bridge import DiagnosticWorker
 from apmultitool_qt.components import SectionCard, ActionBar, HintLabel, dialogs
@@ -115,6 +115,13 @@ class AboutView(QtWidgets.QWidget):
         self.lbl_tel_last_err.setStyleSheet("color: #DC2626; font-size: 10px; font-style: italic;")
         self.lbl_tel_last_err.setVisible(False)
         self.left_card.add_widget(self.lbl_tel_last_err)
+
+        # Export Support Bundle Button
+        self.btn_export_support = QtWidgets.QPushButton("Export Support Bundle...")
+        self.btn_export_support.setObjectName("SecondaryButton")
+        self.btn_export_support.setFixedHeight(24)
+        self.btn_export_support.clicked.connect(self.export_support_bundle)
+        self.left_card.add_widget(self.btn_export_support)
 
         # Reset Button
         self.btn_reset_tel = QtWidgets.QPushButton("Reset Telemetry")
@@ -276,3 +283,33 @@ class AboutView(QtWidgets.QWidget):
                 self.update_telemetry_display()
             except Exception as e:
                 dialogs.show_error(self, "Error", f"Failed to reset telemetry: {str(e)}")
+
+    def export_support_bundle(self):
+        """Export the diagnostic support bundle ZIP archive."""
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        try:
+            from core.support import create_support_bundle
+            zip_path = create_support_bundle()
+        except Exception as e:
+            QtWidgets.QApplication.restoreOverrideCursor()
+            import traceback
+            details = traceback.format_exc()
+            dialogs.show_error(
+                self, "Export Failed",
+                f"Failed to generate support bundle: {str(e)}",
+                details=details
+            )
+            return
+
+        QtWidgets.QApplication.restoreOverrideCursor()
+
+        msg = f"Support bundle generated successfully at:\n{zip_path}\n\nWould you like to open the containing folder in Windows Explorer?"
+        if dialogs.show_confirmation(self, "Export Successful", msg):
+            try:
+                folder_path = zip_path.parent
+                QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(folder_path.resolve())))
+            except Exception as e:
+                dialogs.show_error(
+                    self, "Error Opening Folder",
+                    f"Could not open containing folder: {str(e)}"
+                )

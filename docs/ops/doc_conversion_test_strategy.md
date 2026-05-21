@@ -6,6 +6,7 @@ project: APMultitool
 status: current
 created_at: 2026-05-21
 updated_at: 2026-05-21
+hardened_at: 2026-05-21
 ---
 
 # Document Conversion Test Strategy
@@ -14,10 +15,11 @@ Test matrix and approach for `core/operations/docx_to_pdf.py`,
 `core/operations/xlsx_to_pdf.py`, and `core/operations/_conversion_backend.py`.
 
 Test files:
-- `tests/test_docx_xlsx_bates.py` — existing engine-level tests (7 tests)
-- `tests/test_conversion_backend.py` — new abstraction + detection tests (39 tests)
+- `tests/test_docx_xlsx_bates.py` — engine-level tests (7 tests, `core` + `integration`)
+- `tests/test_conversion_backend.py` — abstraction + detection unit tests (39 tests, `core` + `conversion`)
+- `tests/test_conversion_integration.py` — fixture-based integration tests (25 tests total: 17 always-run unit + 8 LibreOffice-skipped)
 
-All tests are platform-agnostic. No real Office or LibreOffice installation required.
+All non-`libreoffice`-marked tests are platform-agnostic. No real Office or LibreOffice installation required.
 
 ---
 
@@ -210,8 +212,85 @@ pytest tests/test_conversion_backend.py tests/test_docx_xlsx_bates.py -v \
 
 ---
 
+---
+
+## 5. Fixture library
+
+Fixtures live in `tests/fixtures/conversion/`.  All files are programmatically
+generated with `python-docx` and `openpyxl` — no third-party content, no
+licensing restrictions.  Regenerate with `python scripts/_gen_fixtures.py`.
+
+### Word fixtures
+
+| File | Contents | Fidelity aspects exercised |
+|------|----------|---------------------------|
+| `simple_text.docx` | 3 plain paragraphs, Heading 0 | Basic text flow, paragraph spacing |
+| `headings_and_lists.docx` | H0/H1/H2 headings; bullet + numbered lists | Heading hierarchy, list styles, indentation |
+| `basic_table.docx` | 4×4 table with bold header row | Table borders, cell alignment, bold text |
+
+### Excel fixtures
+
+| File | Contents | Fidelity aspects exercised |
+|------|----------|---------------------------|
+| `simple_spreadsheet.xlsx` | 1 sheet, 5 columns, 4 data rows, bold/shaded header | Single-sheet export, header styling |
+| `multi_sheet.xlsx` | 2 sheets ("Summary", "Detail"); bold headers | Multi-sheet export, sheet boundary handling |
+
+### Interpretation guide for integration test results
+
+| Outcome | Interpretation |
+|---------|----------------|
+| Output PDF exists, pikepdf opens it, ≥1 page | ✅ Pass — structurally valid |
+| Output PDF exists but pypdf text extraction is empty | ⚠️ Investigate — possible rendering issue; not a hard failure |
+| Key heading text not found in extracted text | ⚠️ Note — LibreOffice may have altered text encoding; document but do not fail |
+| Page count < expected for multi-sheet xlsx | ❌ Fail — all sheets must export |
+| RuntimeError or FileNotFoundError | ❌ Fail — conversion did not complete |
+
+---
+
+## 6. CI integration strategy
+
+**Decision: Option B — disabled in CI matrix, easy to run locally.**
+
+LibreOffice is not installed on GitHub-hosted runners (`windows-latest`,
+`macos-latest`, `ubuntu-latest`).  Installing it would add 300–700 MB of
+download time to every CI run.
+
+LibreOffice tests auto-skip when `soffice` is not on PATH — they will not cause
+CI failures.  The `libreoffice` subset is intentionally excluded from the CI
+matrix in `tests.yml`.
+
+### To run LibreOffice integration tests locally
+
+Install LibreOffice on your machine, then:
+
+```bash
+# Run only the LibreOffice integration tests
+python scripts/run_core_tests.py --subset libreoffice -v
+
+# Run all conversion tests (LibreOffice tests auto-skip if soffice absent)
+python scripts/run_core_tests.py --subset conversion -v
+
+# Force LibreOffice even on Windows
+APM_CONVERSION_BACKEND=libreoffice python scripts/run_core_tests.py --subset libreoffice -v
+```
+
+### What runs in CI (unchanged matrix)
+
+The `conversion` marker **is** part of the `core` and `integration` subsets via
+the test file `pytestmark` declarations.  The CI matrix (`unit`, `core`,
+`integration`) will automatically pick up all non-`libreoffice` conversion tests.
+
+| CI subset | Picks up conversion tests? |
+|-----------|---------------------------|
+| `unit` / `core` | ✅ TestFixturePresence, TestBackendSelection, TestConversionWithMockedBackend |
+| `integration` | ✅ same (also tagged `integration`) |
+| `libreoffice` | ❌ not in CI matrix; local-only |
+
+---
+
 ## Related docs
 
 - `docs/ops/doc_conversion_pipeline_overview.md` — pipeline architecture
-- `docs/ops/doc_conversion_fallback_design.md` — implementation design
-- `handoffs/ho_0034_2026_05_21_doc_conversion_super_batch.md` — this batch's handoff
+- `docs/ops/doc_conversion_fallback_design.md` — implementation design + fidelity expectations
+- `docs/ops/ci_overview.md` — CI test matrix and developer quickstart
+- `handoffs/ho_0040_pm_report_2026_05_21_libreoffice_fallback_hardening.md` — this batch's PM report

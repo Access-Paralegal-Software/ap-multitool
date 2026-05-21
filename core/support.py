@@ -17,7 +17,7 @@ import shutil
 import json
 import platform
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import getpass
 import re
@@ -96,6 +96,8 @@ def check_ms_office_presence() -> tuple[bool, bool, bool]:
 
     word_present = False
     excel_present = False
+    word = None
+    excel = None
 
     try:
         import win32com.client
@@ -110,6 +112,8 @@ def check_ms_office_presence() -> tuple[bool, bool, bool]:
                 pass
         except Exception:
             pass
+        finally:
+            word = None
 
         try:
             excel = win32com.client.DispatchEx("Excel.Application")
@@ -120,6 +124,9 @@ def check_ms_office_presence() -> tuple[bool, bool, bool]:
                 pass
         except Exception:
             pass
+        finally:
+            excel = None
+
         pythoncom.CoUninitialize()
     except Exception:
         pass
@@ -210,7 +217,7 @@ def create_support_bundle(target_dir: Path | None = None, display_scaling: str |
 
     target_dir.mkdir(parents=True, exist_ok=True)
     
-    timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     file_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     zip_name = f"apmultitool_support_bundle_{file_timestamp}.zip"
     zip_path = target_dir / zip_name

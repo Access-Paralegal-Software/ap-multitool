@@ -6,6 +6,7 @@ project: APMultitool
 status: implemented
 created_at: 2026-05-21
 updated_at: 2026-05-21
+hardened_at: 2026-05-21
 ---
 
 # Document Conversion Fallback Design
@@ -233,27 +234,85 @@ else (NONE):
 
 ---
 
-## 5. Known limitations
+## 5. Fidelity expectations for LibreOffice output
+
+LibreOffice renders most documents correctly for paralegal use, but differs from
+Microsoft Office in predictable ways.  The following table records what is expected
+to survive and what may not.
+
+### What survives (expected ✅)
+
+| Element | Notes |
+|---------|-------|
+| Plain text paragraphs | Always preserved |
+| Headings and paragraph hierarchy | Preserved; font and spacing may differ slightly |
+| Bullet and numbered lists | Items preserved; indentation may vary |
+| Basic tables (uniform column widths) | Cell content preserved; border styling may differ |
+| Multi-sheet spreadsheets | All sheets converted; sheet boundaries preserved as page breaks |
+| Numeric cell values | Always preserved |
+| Column header formatting (bold) | Generally preserved |
+
+### What may differ (known fidelity gaps ⚠️)
+
+| Element | Behaviour |
+|---------|-----------|
+| Complex table layouts (merged cells, nested tables) | May reflow or lose merge structure |
+| Advanced Word styles / custom themes | May fall back to generic formatting |
+| Charts and embedded images in .xlsx | May not render or may be omitted |
+| Page size and margin settings | May default to LibreOffice defaults if not explicitly set |
+| Fonts not installed on the host | Substituted; may change layout |
+| `.xls` (legacy binary format) | Conversion attempted; fidelity lower than `.xlsx` |
+
+### What constitutes "good enough" for integration tests
+
+A passing integration test requires:
+1. Output PDF file exists and is non-empty.
+2. `pikepdf.open()` succeeds without error.
+3. Page count ≥ 1.
+
+Optional secondary checks (text extraction via `pypdf`):
+- Key strings from headings or cell headers are present in extracted text.
+- Exact layout, font size, or visual rendering is **not** asserted.
+
+---
+
+## 6. Known limitations
 
 | Limitation | Status |
 |------------|--------|
 | soffice not verified at startup — absent soffice only fails at conversion time | Open |
-| Formatting fidelity: LibreOffice may render some Office formatting differently | Open (validation required) |
 | `grayscale` param not applied by either backend (modelled but ignored) | Open |
 | Concurrent soffice calls share user profile directory (no `--env:UserInstallation` isolation) | Open |
 | No macOS/Linux packaging — application currently distributed for Windows only | Open |
-| LibreOffice output fidelity not validated against a test corpus | Open (required before recommending as default) |
+| LibreOffice output fidelity not validated beyond structural checks | Open (real-Office comparison required before recommending as default) |
+| No macOS/Linux smoke test performed — Windows-only development environment | **Not a support claim; macOS/Linux not supported** |
 
 ---
 
-## 6. Future work
+## 7. Non-Windows environment status
+
+This implementation was developed and tested exclusively on **Windows**.
+
+The LibreOffice path uses only `subprocess` (no platform-specific Python code),
+so it is expected to work on macOS and Linux wherever `soffice` is on PATH.
+However:
+
+- **No macOS or Linux smoke test has been performed.**
+- **No fidelity comparison against reference output has been done.**
+- APMultitool is currently **distributed and supported on Windows only**.
+
+Do not cite this document as evidence of macOS or Linux support.
+
+---
+
+## 8. Future work
 
 | Item | Priority |
 |------|----------|
 | Add soffice availability check at startup | Medium |
 | Implement `--env:UserInstallation` isolation per soffice call | Medium |
-| Validate LibreOffice fidelity against test corpus | High |
-| Apply `grayscale` param in both backends | Low |
+| Compare LibreOffice output fidelity against real-Office reference PDFs | High |
+| Apply `grayscale` param via pikepdf post-processing | Low |
 | macOS/Linux packaging (see `docs/ops/macos_linux_packaging_plan.md`) | Low (blocked on fidelity validation) |
 
 ---
@@ -261,5 +320,5 @@ else (NONE):
 ## Related docs
 
 - `docs/ops/doc_conversion_pipeline_overview.md` — pipeline architecture
-- `docs/ops/doc_conversion_test_strategy.md` — test matrix
-- `handoffs/ho_0034_2026_05_21_doc_conversion_super_batch.md` — this batch's handoff
+- `docs/ops/doc_conversion_test_strategy.md` — test matrix (updated with fixture table)
+- `handoffs/ho_0040_pm_report_2026_05_21_libreoffice_fallback_hardening.md` — this batch's PM report

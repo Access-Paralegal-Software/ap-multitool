@@ -39,6 +39,8 @@ SUBSET_MARKERS: dict[str, str | None] = {
     "packaging":   "packaging",
     "smoke":       "smoke",
     "slow":        "slow",
+    "conversion":  "conversion",    # document conversion subsystem (docx/xlsx to PDF)
+    "libreoffice": "libreoffice",   # requires LibreOffice installed locally; not in CI matrix
 }
 
 
@@ -61,8 +63,8 @@ def main(argv: list[str] | None = None) -> int:
         metavar="EXPR",
         help=(
             "Pytest marker expression. Valid markers: core, qt, cli, integration, "
-            "slow, telemetry, packaging, smoke. Combine with 'and'/'or'/'not'. "
-            "Mutually exclusive with --subset."
+            "slow, telemetry, packaging, smoke, conversion, libreoffice. "
+            "Combine with 'and'/'or'/'not'. Mutually exclusive with --subset."
         ),
     )
 

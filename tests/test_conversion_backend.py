@@ -13,6 +13,10 @@ from unittest import mock
 import pytest
 from reportlab.pdfgen import canvas as rl_canvas
 
+# All tests in this module are platform-agnostic core tests;
+# no real Office or LibreOffice installation is required.
+pytestmark = [pytest.mark.core, pytest.mark.conversion]
+
 from core.operations._conversion_backend import (
     ConversionBackend,
     detect_backend,

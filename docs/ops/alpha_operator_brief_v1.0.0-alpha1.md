@@ -38,20 +38,29 @@ This brief outlines instructions for STAX Operators distributing the **v1.0.0-al
 
 ## 🛠️ 3. Troubleshooting & Diagnostics Intake
 
-If a tester encounters an installer or runtime failure, instruct them to retrieve the following:
+If a tester encounters a failure, the most efficient way to diagnose it is to ask them to export a **Support Bundle**:
 
-1. **Local Telemetry File:**
-   * **Path:** `%USERPROFILE%\.access_paralegal_telemetry.json` (e.g. `C:\Users\tester\.access_paralegal_telemetry.json`)
-   * **Purpose:** Contains run histories, operation success rates, and the exact text/timestamp of the last encountered error.
-2. **UI Console Output:**
-   * If the app won't boot, request they run it via the command prompt:
+1. **How to Export via the GUI:**
+   * Open APMultitool.
+   * Go to the **Help & About** tab.
+   * Click **Export Support Bundle...** on the telemetry card.
+   * Save the ZIP file (defaults to the Desktop) and click **Yes** to open the containing folder.
+2. **How to Export via the CLI:**
+   * If the GUI fails to open or is unresponsive, open a terminal (PowerShell or Command Prompt) and run:
      ```cmd
-     %LocalAppData%\Programs\APMultitool\Access_Paralegal_Multitool.exe
+     apmultitool support-bundle
      ```
-   * Ask them to copy any traceback errors printed to the console window.
-3. **UAC/Installer Log:**
-   * For installer errors, look for logs inside the temporary folder:
-     * `%TEMP%\Setup Log *.txt`
+   * This generates the ZIP support bundle in the current folder or Desktop.
+3. **What is Included & Privacy Safeguards:**
+   * **Included:** Environment metadata (OS, scaling, Python version, MS Office/LibreOffice checks), application log files (`apmultitool.log*`), and local telemetry metrics.
+   * **Excluded/Scrubbed:** Absolute user profile directories and system usernames are automatically replaced with `<USERPROFILE>` in all logs and metadata. Zero client data, case files, keys, or document contents are ever collected.
+
+If the app cannot run at all, manually collect:
+* **UAC/Installer Log:** For installer errors, look for logs inside: `%TEMP%\Setup Log *.txt`
+* **UI Console Output:** Launch the app via Command Prompt to capture startup tracebacks:
+  ```cmd
+  %LocalAppData%\Programs\APMultitool\Access_Paralegal_Multitool.exe
+  ```
 
 ---
 

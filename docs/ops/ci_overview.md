@@ -46,8 +46,8 @@ Named subsets (used in the CI matrix) map to pytest marker expressions via `run_
 
 | Subset / Marker | What it covers | Test files |
 |---|---|---|
-| `unit` → `core` | Headless engine tests — no UI dependency | test_core_folder_tree, test_docx_xlsx_bates, test_email_to_pdf, test_stability |
-| `integration` | Multi-component end-to-end tests | test_cli_ux, test_core_folder_tree, test_docx_xlsx_bates, test_email_to_pdf, test_stability |
+| `unit` → `core` | Headless engine tests — no UI dependency | test_core_folder_tree, test_docx_xlsx_bates, test_email_to_pdf, test_stability, test_conversion_backend, test_conversion_integration (non-libreoffice) |
+| `integration` | Multi-component end-to-end tests | test_cli_ux, test_core_folder_tree, test_docx_xlsx_bates, test_email_to_pdf, test_stability, test_conversion_integration (non-libreoffice) |
 | `core` | Same as unit | (see above) |
 | `qt` | Tests requiring a live `QApplication` / PySide6 display | all test_qt_* files, test_telemetry, test_versioning |
 | `cli` | Tests invoking the CLI via subprocess | test_cli_ux |
@@ -55,6 +55,8 @@ Named subsets (used in the CI matrix) map to pytest marker expressions via `run_
 | `packaging` | Installer/packaging script checks | test_packaging |
 | `smoke` | Quick import and wiring sanity | test_qt_foundation, test_versioning |
 | `slow` | Computationally heavy (large PDFs, all Bates variants) | test_stability |
+| `conversion` | Document conversion subsystem — all non-LibreOffice tests | test_conversion_backend, test_conversion_integration |
+| `libreoffice` | LibreOffice integration tests — **local only, not in CI matrix** | test_conversion_integration (TestLibreOfficeIntegration) |
 
 ---
 
