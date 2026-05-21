@@ -3,19 +3,22 @@ id: doc_conversion_fallback_design
 title: Document Conversion Fallback Design
 type: ops
 project: APMultitool
-status: current
+status: implemented
 created_at: 2026-05-21
+updated_at: 2026-05-21
 ---
 
 # Document Conversion Fallback Design
 
-Architecture design for the cross-platform Word/Excel → PDF conversion layer,
-covering the abstraction boundary, current Windows implementation, LibreOffice
-fallback strategy, and environment detection logic.
+Architecture and implementation record for the cross-platform Word/Excel → PDF
+conversion layer.  Covers the abstraction boundary, current Windows implementation,
+LibreOffice fallback strategy, environment detection logic, and the feature flag.
 
 ---
 
 ## 1. Abstraction boundary
+
+### Engine-level contract (unchanged)
 
 All conversion operations conform to the engine's standard operation contract:
 
@@ -23,47 +26,47 @@ All conversion operations conform to the engine's standard operation contract:
 def handle(job: Job, progress: Callable[[str, float], None]) -> JobResult
 ```
 
-The caller (DocEngine) knows nothing about COM automation or LibreOffice. It
-submits a `Job` and receives a `JobResult`. Backend selection is entirely
-internal to the handler.
+The caller (DocEngine) knows nothing about COM automation or LibreOffice.
 
-### Effective public signatures
+### Implemented public abstraction functions
+
+Two public functions now expose the conversion logic independently of the Job
+model.  They are directly callable and directly testable without a full engine
+invocation:
 
 **Word conversion** (`core/operations/docx_to_pdf.py`)
 ```python
-handle(job: Job, progress: Callable[[str, float], None]) -> JobResult
-# job.operation == "docx_to_pdf"
-# job.params    == DocxToPdfParams(grayscale: bool, output_name: str | None)
-# job.inputs[0].path must be an existing .docx or .doc file
+def convert_docx_to_pdf(
+    src_path: Path,
+    out_path: Path,
+    backend: ConversionBackend | None = None,
+) -> list[str]:
+    ...
 ```
 
 **Excel conversion** (`core/operations/xlsx_to_pdf.py`)
 ```python
-handle(job: Job, progress: Callable[[str, float], None]) -> JobResult
-# job.operation == "xlsx_to_pdf"
-# job.params    == XlsxToPdfParams(grayscale: bool, output_name: str | None)
-# job.inputs[0].path must be an existing .xlsx, .xls, or .csv file
+def convert_xlsx_to_pdf(
+    src_path: Path,
+    out_path: Path,
+    backend: ConversionBackend | None = None,
+) -> list[str]:
+    ...
 ```
 
-### Expected behaviour — success
+Both functions:
+- Accept `backend=None` (auto-detect) or an explicit `ConversionBackend` value.
+- Return a list of warning strings (empty on clean success).
+- Raise `FileNotFoundError` if the source file is missing.
+- Raise `RuntimeError` if all available backends fail.
 
-On success the handler returns a `JobResult` with:
-- `outputs` — single-element list containing the absolute path to the produced PDF
-- `page_count_in` / `page_count_out` — page count read back from the output PDF
-- `warnings` — empty list (or non-empty if the primary path failed and the
-  fallback succeeded)
-- `error` — `None`
+### Private backend implementations
 
-### Expected behaviour — failure modes
+Each module contains a private function for the Windows COM path:
+- `docx_to_pdf._convert_via_win32com_word(src_path, out_path) → None`
+- `xlsx_to_pdf._convert_via_win32com_excel(src_path, out_path) → None`
 
-| Scenario | Result |
-|----------|--------|
-| Input file does not exist | `FileNotFoundError` raised before conversion starts |
-| `job.inputs` length ≠ 1 | `ValueError` raised |
-| Win32com fails, soffice also fails | `RuntimeError` with both error messages |
-| Win32com fails, soffice succeeds | `JobResult` with warning message, `error=None` |
-| Conversion succeeds but output PDF is unreadable by pikepdf | `JobResult` with `page_count=0`; not treated as failure |
-| Job cancelled mid-flight | `OperationCancelled` raised; temp files cleaned up |
+The LibreOffice path is shared via `_conversion_backend.run_soffice_convert(src_path, out_path)`.
 
 ---
 
@@ -80,19 +83,20 @@ On success the handler returns a `JobResult` with:
 ### Environment assumptions
 
 - Operating system: Windows (`os.name == 'nt'`)
-- Microsoft Office (Word and/or Excel) is installed and licensed
+- Microsoft Office (Word and/or Excel) installed and licensed
 - The process has permission to instantiate COM objects (`DispatchEx`)
-- No other Word/Excel process is holding a conflicting lock on the file
+- No other Word/Excel process holds a conflicting lock on the file
 
 ### Invocation pattern — Word
 
 ```python
+# inside _convert_via_win32com_word()
 pythoncom.CoInitialize()
 word = win32com.client.DispatchEx("Word.Application")
 word.Visible = False
 word.DisplayAlerts = False
 doc = word.Documents.Open(str(src_path.resolve()), ReadOnly=True)
-doc.SaveAs(str(tmp_pdf.resolve()), FileFormat=17)  # 17 = wdFormatPDF
+doc.SaveAs(str(out_path.resolve()), FileFormat=17)  # 17 = wdFormatPDF
 ```
 
 Cleanup is unconditional (runs in `finally`):
@@ -105,33 +109,33 @@ pythoncom.CoUninitialize()
 ### Invocation pattern — Excel
 
 ```python
+# inside _convert_via_win32com_excel()
 pythoncom.CoInitialize()
 excel = win32com.client.DispatchEx("Excel.Application")
 excel.Visible = False
 excel.DisplayAlerts = False
 wb = excel.Workbooks.Open(str(src_path.resolve()), ReadOnly=True)
-wb.ExportAsFixedFormat(0, str(tmp_pdf.resolve()))  # 0 = xlTypePDF
+wb.ExportAsFixedFormat(0, str(out_path.resolve()))  # 0 = xlTypePDF
 ```
 
 ### Known failure cases
 
 - **Office not installed** — `win32com.client.DispatchEx` raises `pywintypes.com_error`
-- **File password-protected** — Word/Excel prompts; `word.DisplayAlerts = False` will
-  silently fail; `SaveAs` will raise
+- **File password-protected** — Word/Excel prompts; `DisplayAlerts = False` silently fails
 - **Macro/security dialog** — Office macro security prompts block headless runs
-- **Thread-safety** — COM must be initialised per-thread; calling from a worker
-  thread without `CoInitialize()` raises `CoUninitializedException`
-- **Licence / activation dialog** — an unlicensed Office install may raise or hang
+- **Thread-safety** — COM must be initialised per-thread; calling from a worker thread
+  without `CoInitialize()` raises
+- **Licence/activation dialog** — an unlicensed Office install may raise or hang
 
 ---
 
-## 3. Fallback implementation (LibreOffice / soffice)
+## 3. LibreOffice fallback implementation
 
 ### Overview
 
-When the Windows COM path is unavailable or fails, both handlers fall back to
-headless LibreOffice via the `soffice` CLI. This path works on macOS, Linux, and
-Windows (if LibreOffice is installed).
+`core/operations/_conversion_backend.run_soffice_convert()` is the shared
+LibreOffice invocation used by both `convert_docx_to_pdf` and `convert_xlsx_to_pdf`.
+It works on macOS, Linux, and Windows (if LibreOffice is installed).
 
 ### Dependencies
 
@@ -143,129 +147,114 @@ Windows (if LibreOffice is installed).
 ### Invocation pattern
 
 ```python
-result = subprocess.run(
-    [
-        "soffice",
-        "--headless",
-        "--convert-to", "pdf",
-        "--outdir", str(output_directory),
-        str(src_path.resolve()),
-    ],
-    capture_output=True,
-    timeout=60,
-    check=True,        # raises CalledProcessError on non-zero exit
-)
+# inside run_soffice_convert()
+with tempfile.TemporaryDirectory() as _tmp:
+    tmp_dir = Path(_tmp)
+    subprocess.run(
+        ["soffice", "--headless", "--convert-to", "pdf",
+         "--outdir", str(tmp_dir), str(src_path.resolve())],
+        capture_output=True, timeout=60, check=True,
+    )
+    converted = tmp_dir / (src_path.stem + ".pdf")
+    shutil.move(str(converted), str(out_path))
 ```
 
-soffice writes the converted file as `{src_stem}.pdf` into `--outdir`. The
-handler moves this to the expected `tmp_pdf` path immediately after:
-
-```python
-converted_file = tmp_pdf.parent / (src_path.stem + ".pdf")
-if converted_file.exists():
-    shutil.move(str(converted_file), str(tmp_pdf))
-```
+An isolated `TemporaryDirectory` is used for soffice output to prevent file naming
+collisions between the source stem and the destination path.
 
 ### Expected return codes
 
 | Exit code | Meaning |
 |-----------|---------|
-| 0 | Conversion succeeded; output file is in `--outdir` |
-| Non-zero | Conversion failed; `check=True` raises `CalledProcessError` |
-| Timeout | `subprocess.run` raises `TimeoutExpired` after 60 seconds |
+| 0 | Conversion succeeded; output file is in temp dir |
+| Non-zero | `CalledProcessError` → wrapped in `RuntimeError` |
+| Timeout | `subprocess.TimeoutExpired` propagates uncaught |
 
-### Error handling strategy
+### Error handling
 
-All LibreOffice errors are caught and wrapped in a `RuntimeError` that includes
-both the win32com error message (if any) and the subprocess error. This gives
-operators a single error that explains the full failure chain.
-
-### Known limitations of the LibreOffice path
-
-- **Formatting fidelity** — LibreOffice may render some Word/Excel formatting
-  slightly differently from native Office.
-- **soffice not on PATH** — raises `FileNotFoundError` (subprocess.run on
-  Windows) or `CalledProcessError`; no installation check at startup.
-- **Concurrent calls** — headless LibreOffice uses a user profile directory;
-  parallel calls may conflict. Mitigation: pass `--env:UserInstallation=...` to
-  isolate per-call (not yet implemented; tracked as future work).
-- **Output file naming** — soffice derives the output filename from the source
-  stem; if the stem contains characters invalid on the host filesystem, the
-  output path lookup may fail.
+| Exception type | Cause | Result |
+|----------------|-------|--------|
+| `FileNotFoundError` | soffice not on PATH | re-raised with clear install message |
+| `CalledProcessError` | non-zero exit | wrapped in `RuntimeError` with exit code + stderr |
+| `TimeoutExpired` | soffice took > 60 s | propagates to caller |
+| Output file absent | soffice exit 0 but no file | `RuntimeError` with path details |
 
 ---
 
 ## 4. Environment detection and selection
 
-### Current detection logic
+### Feature flag
 
-Both handlers apply this selection inline:
+| Setting | Env var | Default |
+|---------|---------|---------|
+| Enable/disable LibreOffice fallback | `APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK` | `1` (enabled) |
+| Override primary backend | `APM_CONVERSION_BACKEND` | (auto-detect) |
 
-```python
-success = False
+```bash
+# Disable LibreOffice fallback (Windows users who want Office-only)
+set APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK=0
 
-if os.name == 'nt':          # Windows
-    try:
-        # attempt win32com path
-        success = ...
-    except Exception as exc:
-        warnings.append(f"Win32com ... failed: {exc}. Attempting LibreOffice fallback.")
-
-if not success:              # macOS / Linux / Windows fallback
-    # attempt soffice path
+# Force LibreOffice as primary backend (any platform)
+set APM_CONVERSION_BACKEND=libreoffice
 ```
 
-### Centralised detection helper
+`config.py` exposes these as `LIBREOFFICE_FALLBACK_ENABLED` and
+`CONVERSION_BACKEND_OVERRIDE` for use by other modules.
 
-`core/operations/_conversion_backend.py` provides `detect_backend()` as a
-single, testable function that encapsulates the selection rule:
+### Backend selection — `detect_backend(override=None)`
 
-```python
-from core.operations._conversion_backend import detect_backend, ConversionBackend
+Selection order:
+1. `override` parameter (testing / programmatic override)
+2. `APM_CONVERSION_BACKEND` env var
+3. Windows (`os.name == 'nt'`) → `WIN32COM`
+4. Non-Windows + soffice on PATH + fallback enabled → `LIBREOFFICE`
+5. → `NONE`
 
-backend = detect_backend()
-# ConversionBackend.WIN32COM    — Windows, Office expected
-# ConversionBackend.LIBREOFFICE — soffice on PATH
-# ConversionBackend.NONE        — nothing available
+### Backend cascade inside `convert_docx/xlsx_to_pdf()`
+
 ```
+backend = detect_backend()   # WIN32COM on Windows
 
-Selection order implemented by `detect_backend(override=None)`:
+if WIN32COM:
+    try: _convert_via_win32com_*()
+    except:
+        if libreoffice_fallback_enabled() AND soffice_available():
+            warnings.append(...)
+            run_soffice_convert()     ← LibreOffice fallback
+        else:
+            raise RuntimeError(...)  ← fail with clear message
 
-1. If `override` is set (e.g. from a config flag), use it.
-2. On Windows (`os.name == 'nt'`), return `WIN32COM`.
-3. If `shutil.which("soffice")` is not None, return `LIBREOFFICE`.
-4. Otherwise return `NONE`.
+elif LIBREOFFICE:
+    run_soffice_convert()             ← non-Windows primary path
 
-### Config override hook
-
-`detect_backend()` accepts an `override: str | None` parameter. Future
-integration paths:
-
-- Read `config.CONVERSION_BACKEND_OVERRIDE` from `config.py`
-- Expose as a CLI flag: `--backend libreoffice`
-- Expose as an environment variable: `APM_CONVERSION_BACKEND=libreoffice`
-
-None of these are wired today; the override parameter exists as the hook point.
-
-### Rationale for current inline approach
-
-The current inline `if os.name == 'nt'` check was sufficient for the initial
-Windows-only release. The `_conversion_backend.py` module is the designated
-location for this logic once the fallback path is exercised in production on
-macOS/Linux. The handlers will be updated to call `detect_backend()` in a
-future batch.
+else (NONE):
+    raise RuntimeError(...)           ← no backend available
+```
 
 ---
 
-## 5. Future work
+## 5. Known limitations
 
-| Item | Priority | Notes |
-|------|----------|-------|
-| Wire `detect_backend()` into both handlers | High | Replace inline `if os.name == 'nt'` |
-| Add soffice availability check at startup | Medium | Surface clear error before conversion attempt |
-| Implement `--env:UserInstallation` isolation for parallel calls | Medium | Prevent concurrent soffice profile conflicts |
-| Apply `grayscale` param in LibreOffice path | Low | Not supported by soffice CLI; may require post-processing |
-| Validate LibreOffice output fidelity against test corpus | High | Required before enabling as default on macOS/Linux |
+| Limitation | Status |
+|------------|--------|
+| soffice not verified at startup — absent soffice only fails at conversion time | Open |
+| Formatting fidelity: LibreOffice may render some Office formatting differently | Open (validation required) |
+| `grayscale` param not applied by either backend (modelled but ignored) | Open |
+| Concurrent soffice calls share user profile directory (no `--env:UserInstallation` isolation) | Open |
+| No macOS/Linux packaging — application currently distributed for Windows only | Open |
+| LibreOffice output fidelity not validated against a test corpus | Open (required before recommending as default) |
+
+---
+
+## 6. Future work
+
+| Item | Priority |
+|------|----------|
+| Add soffice availability check at startup | Medium |
+| Implement `--env:UserInstallation` isolation per soffice call | Medium |
+| Validate LibreOffice fidelity against test corpus | High |
+| Apply `grayscale` param in both backends | Low |
+| macOS/Linux packaging (see `docs/ops/macos_linux_packaging_plan.md`) | Low (blocked on fidelity validation) |
 
 ---
 
@@ -273,4 +262,4 @@ future batch.
 
 - `docs/ops/doc_conversion_pipeline_overview.md` — pipeline architecture
 - `docs/ops/doc_conversion_test_strategy.md` — test matrix
-- `handoffs/ho_0029_2026_05_21_doc_conversion_architecture.md` — future work handoff
+- `handoffs/ho_0034_2026_05_21_doc_conversion_super_batch.md` — this batch's handoff

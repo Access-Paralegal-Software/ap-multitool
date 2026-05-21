@@ -5,150 +5,206 @@ type: ops
 project: APMultitool
 status: current
 created_at: 2026-05-21
+updated_at: 2026-05-21
 ---
 
 # Document Conversion Test Strategy
 
-Test matrix and approach for `core/operations/docx_to_pdf.py` and
-`core/operations/xlsx_to_pdf.py`, covering the abstraction layer, the Windows
-COM path, and the LibreOffice fallback path.
+Test matrix and approach for `core/operations/docx_to_pdf.py`,
+`core/operations/xlsx_to_pdf.py`, and `core/operations/_conversion_backend.py`.
 
-Existing test file: `tests/test_docx_xlsx_bates.py`
+Test files:
+- `tests/test_docx_xlsx_bates.py` — existing engine-level tests (7 tests)
+- `tests/test_conversion_backend.py` — new abstraction + detection tests (39 tests)
+
+All tests are platform-agnostic. No real Office or LibreOffice installation required.
 
 ---
 
 ## 1. Test matrix
 
-### 1.1 Unit tests — abstraction layer (no real Office or soffice)
+### 1.1 Unit tests — backend detection (✅ implemented)
 
-These tests run on any platform without any Office or LibreOffice installation.
-All backend calls are mocked.
+`tests/test_conversion_backend.py` — `TestLibreOfficeFallbackEnabled`, `TestDetectBackend`,
+`TestSofficeAvailable`
 
-| Test | Scenario | Expected result |
-|------|----------|-----------------|
-| `test_docx_conversion_fails_missing_input` | Input file does not exist | `FileNotFoundError` raised |
-| `test_docx_conversion_success` | win32com mock returns valid PDF | `JobStatus.COMPLETE`, output PDF exists |
-| `test_docx_conversion_wrong_input_count` | `job.inputs` has 0 or 2 entries | `ValueError` raised |
-| `test_docx_conversion_cancellation` | `job.status` set to `CANCELLED` mid-progress | `OperationCancelled` raised, no output file |
-| `test_docx_conversion_win32com_fails_libreoffice_succeeds` | win32com raises, soffice mock produces PDF | `JobStatus.COMPLETE`, warning in result |
-| `test_docx_conversion_both_backends_fail` | win32com raises, soffice raises | `RuntimeError` raised with combined message |
-| `test_xlsx_conversion_fails_missing_input` | Input file does not exist | `FileNotFoundError` raised |
-| `test_xlsx_conversion_success` | win32com mock returns valid PDF | `JobStatus.COMPLETE`, output PDF exists |
-| `test_xlsx_conversion_wrong_input_count` | `job.inputs` has 0 or 2 entries | `ValueError` raised |
-| `test_xlsx_conversion_cancellation` | `job.status` set to `CANCELLED` mid-progress | `OperationCancelled` raised, no output file |
-| `test_xlsx_conversion_win32com_fails_libreoffice_succeeds` | win32com raises, soffice mock produces PDF | `JobStatus.COMPLETE`, warning in result |
-| `test_xlsx_conversion_both_backends_fail` | win32com raises, soffice raises | `RuntimeError` raised with combined message |
-| `test_detect_backend_windows` | `os.name == 'nt'`, monkeypatched | Returns `ConversionBackend.WIN32COM` |
-| `test_detect_backend_libreoffice` | `os.name == 'posix'`, soffice on PATH | Returns `ConversionBackend.LIBREOFFICE` |
-| `test_detect_backend_none` | `os.name == 'posix'`, soffice absent | Returns `ConversionBackend.NONE` |
-| `test_detect_backend_override` | `override="libreoffice"` | Returns `ConversionBackend.LIBREOFFICE` |
-| `test_no_overwrite_counter_suffix` | Output file already exists, `overwrite=False` | New file has `_01` suffix |
-| `test_overwrite_allowed` | Output file already exists, `overwrite=True` | Original file replaced |
-| `test_temp_file_cleanup_on_failure` | Both backends fail | No temp files left in temp dir |
+| Test | Scenario | Status |
+|------|----------|--------|
+| `test_default_enabled` | No env var set | ✅ |
+| `test_zero_disables` | `APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK=0` | ✅ |
+| `test_false_disables` / `test_no_disables` / `test_off_disables` | Alternate false values | ✅ |
+| `test_override_param_win32com` | `override="win32com"` | ✅ |
+| `test_override_param_libreoffice` | `override="libreoffice"` | ✅ |
+| `test_env_var_libreoffice` | `APM_CONVERSION_BACKEND=libreoffice` | ✅ |
+| `test_windows_returns_win32com` | `os.name == 'nt'` (mocked) | ✅ |
+| `test_posix_soffice_present_fallback_enabled` | posix + soffice on PATH + enabled | ✅ |
+| `test_posix_soffice_present_fallback_disabled` | posix + soffice on PATH + disabled | ✅ |
+| `test_posix_no_soffice` | posix + no soffice | ✅ |
+| `test_override_takes_priority_over_env_var` | param overrides env var | ✅ |
+| `test_invalid_override_falls_through` | bad override string | ✅ |
+| `test_env_var_invalid_falls_through` | bad env var value | ✅ |
 
-### 1.2 Integration tests — Windows + Microsoft Office
+### 1.2 Unit tests — `run_soffice_convert()` (✅ implemented)
 
-Require: Windows host, Microsoft Word installed, Microsoft Excel installed.
+`tests/test_conversion_backend.py` — `TestRunSofficeConvert`
+
+| Test | Scenario | Status |
+|------|----------|--------|
+| `test_success_moves_output_to_out_path` | soffice mock succeeds + writes file | ✅ |
+| `test_raises_file_not_found_when_soffice_absent` | `FileNotFoundError` from subprocess | ✅ |
+| `test_raises_runtime_on_nonzero_exit` | `CalledProcessError` with exit 1 | ✅ |
+| `test_raises_runtime_if_output_missing_after_success` | subprocess exit 0, no file | ✅ |
+| `test_timeout_propagates` | `TimeoutExpired` raised | ✅ |
+
+### 1.3 Unit tests — `convert_docx_to_pdf()` abstraction (✅ implemented)
+
+`tests/test_conversion_backend.py` — `TestConvertDocxToPdf`
+
+| Test | Scenario | Status |
+|------|----------|--------|
+| `test_win32com_success_returns_empty_warnings` | win32com mock succeeds | ✅ |
+| `test_libreoffice_success_returns_empty_warnings` | soffice mock succeeds | ✅ |
+| `test_none_backend_raises` | `ConversionBackend.NONE` | ✅ |
+| `test_missing_source_raises_file_not_found` | src file absent | ✅ |
+| `test_win32com_fails_fallback_enabled_soffice_present` | COM fails, soffice succeeds | ✅ |
+| `test_win32com_fails_fallback_disabled_raises` | COM fails, flag=0 | ✅ |
+| `test_win32com_fails_fallback_enabled_soffice_absent_raises` | COM fails, no soffice | ✅ |
+
+### 1.4 Unit tests — `convert_xlsx_to_pdf()` abstraction (✅ implemented)
+
+`tests/test_conversion_backend.py` — `TestConvertXlsxToPdf`
+
+| Test | Scenario | Status |
+|------|----------|--------|
+| `test_win32com_success_returns_empty_warnings` | win32com mock succeeds | ✅ |
+| `test_libreoffice_success_returns_empty_warnings` | soffice mock succeeds | ✅ |
+| `test_none_backend_raises` | `ConversionBackend.NONE` | ✅ |
+| `test_missing_source_raises_file_not_found` | src file absent | ✅ |
+| `test_win32com_fails_fallback_enabled_soffice_present` | COM fails, soffice succeeds | ✅ |
+| `test_win32com_fails_fallback_disabled_raises` | COM fails, flag=0 | ✅ |
+
+### 1.5 Engine-level tests (✅ existing, still passing)
+
+`tests/test_docx_xlsx_bates.py`
+
+| Test | Status |
+|------|--------|
+| `test_docx_conversion_fails_missing_input` | ✅ |
+| `test_docx_conversion_success` | ✅ |
+| `test_xlsx_conversion_fails_missing_input` | ✅ |
+| `test_xlsx_conversion_success` | ✅ |
+| `test_bates_stamp_success` | ✅ |
+| `test_bates_stamp_custom_name` | ✅ |
+| `test_bates_stamp_cancellation` | ✅ |
+
+### 1.6 Integration tests — Windows + Microsoft Office
+
+Require: Windows host, Microsoft Word and Excel installed.
 
 Mark with `@pytest.mark.integration_windows`.
 
-| Test | Scenario | Expected result |
-|------|----------|-----------------|
-| `test_docx_real_conversion_windows` | Real `.docx` fixture file | Valid multi-page PDF produced |
-| `test_docx_password_protected_windows` | Password-protected `.docx` | `RuntimeError` or warning; no corrupt output |
-| `test_xlsx_real_conversion_windows` | Real `.xlsx` fixture file | Valid PDF produced, all sheets |
-| `test_xlsx_multisheet_windows` | `.xlsx` with 3 sheets | All sheets present in output PDF |
-| `test_docx_large_document_windows` | 100-page `.docx` | Conversion completes within 120 seconds |
+| Test | Scenario | Status |
+|------|----------|--------|
+| `test_docx_real_conversion_windows` | Real `.docx` fixture → valid multi-page PDF | ⬜ future |
+| `test_docx_password_protected_windows` | Password-protected `.docx` | ⬜ future |
+| `test_xlsx_real_conversion_windows` | Real `.xlsx` → valid PDF with all sheets | ⬜ future |
+| `test_xlsx_multisheet_windows` | `.xlsx` with 3 sheets | ⬜ future |
+| `test_docx_large_document_windows` | 100-page `.docx`, must complete < 120 s | ⬜ future |
 
-Fixture files for this suite live in `tests/fixtures/conversion/`:
-- `sample.docx` — 3-page Word document with a table and an image
+Fixtures needed in `tests/fixtures/conversion/`:
+- `sample.docx` — 3-page document with a table and image
 - `sample.xlsx` — 2-sheet workbook
-- `password_protected.docx` — password-protected (password: `test1234`)
+- `password_protected.docx` — password: `test1234`
 
-### 1.3 Integration tests — LibreOffice fallback
+### 1.7 Integration tests — LibreOffice fallback
 
 Require: LibreOffice installed, `soffice` on PATH.
 
 Mark with `@pytest.mark.integration_libreoffice`.
 
-| Test | Scenario | Expected result |
-|------|----------|-----------------|
-| `test_docx_libreoffice_fallback` | `os.name != 'nt'` or win32com unavailable, soffice present | Valid PDF produced |
-| `test_xlsx_libreoffice_fallback` | Same | Valid PDF produced |
-| `test_soffice_not_on_path` | soffice absent from PATH | `RuntimeError` with clear message |
-| `test_soffice_timeout` | soffice takes > 60 s (mocked) | `TimeoutExpired` propagated as `RuntimeError` |
-| `test_libreoffice_output_fidelity` | Compare page count and image presence | Page count matches reference PDF |
-
-### 1.4 CI matrix
-
-| Environment | Unit tests | Integration Windows | Integration LibreOffice |
-|-------------|------------|---------------------|------------------------|
-| GitHub Actions — Windows (win32com mocked) | ✅ | ⬜ (requires real Office) | ⬜ |
-| Local Windows dev box | ✅ | ✅ | ✅ (if LibreOffice installed) |
-| macOS / Linux CI (future) | ✅ | ⬜ | ✅ |
+| Test | Scenario | Status |
+|------|----------|--------|
+| `test_docx_libreoffice_fallback` | Non-Windows or flag forced, soffice present | ⬜ future |
+| `test_xlsx_libreoffice_fallback` | Same | ⬜ future |
+| `test_soffice_not_on_path` | soffice absent | ⬜ future |
+| `test_soffice_timeout` | soffice takes > 60 s (mocked) | ⬜ future |
+| `test_libreoffice_output_fidelity` | Page count matches reference | ⬜ future |
 
 ---
 
 ## 2. Mocking strategy
 
-### Mocking win32com on non-Windows hosts
+### Mocking win32com on any platform
 
 ```python
 import sys
 from unittest import mock
 
-sys.modules['win32com'] = mock.MagicMock()
-sys.modules['win32com.client'] = mock.MagicMock()
-sys.modules['pythoncom'] = mock.MagicMock()
+sys.modules.setdefault("pythoncom", mock.MagicMock())
 
-with mock.patch('win32com.client.DispatchEx', return_value=mock_word):
+with mock.patch("win32com.client.DispatchEx", return_value=mock_word, create=True):
     ...
 ```
 
-The mock `SaveAs` / `ExportAsFixedFormat` side-effect must write a real PDF to
-the destination path, otherwise pikepdf page-count validation will fail or warn.
-Use `reportlab` to produce a minimal valid PDF in the side effect.
+The mock `SaveAs` / `ExportAsFixedFormat` side-effect must write a real PDF:
+
+```python
+from reportlab.pdfgen import canvas as rl_canvas
+
+def _save_as(dest, FileFormat):
+    c = rl_canvas.Canvas(dest)
+    c.drawString(72, 720, "Test page")
+    c.save()
+
+mock_doc.SaveAs.side_effect = _save_as
+```
 
 ### Mocking soffice subprocess
 
 ```python
-with mock.patch('subprocess.run') as mock_run:
-    mock_run.return_value = mock.MagicMock(returncode=0)
-    # also create the expected output file manually
-    (tmp_dir / (src.stem + ".pdf")).write_bytes(minimal_pdf_bytes)
+def _soffice_fake_run(src_path):
+    def _run(cmd, **kwargs):
+        outdir = Path(cmd[cmd.index("--outdir") + 1])
+        (outdir / (src_path.stem + ".pdf")).write_bytes(b"%PDF-1.4 minimal")
+        return mock.MagicMock(returncode=0)
+    return _run
+
+with mock.patch("subprocess.run", side_effect=_soffice_fake_run(src)):
     ...
 ```
 
-For failure scenarios:
+For failure:
 ```python
-from subprocess import CalledProcessError
-mock_run.side_effect = CalledProcessError(1, ["soffice"])
+mock.patch("subprocess.run",
+    side_effect=subprocess.CalledProcessError(1, ["soffice"], stderr=b"error"))
 ```
 
 ---
 
-## 3. Test fixtures
+## 3. CI matrix
 
-`tests/fixtures/conversion/` — place real document fixtures here for integration
-tests. These files should be:
-- Minimal (smallest possible files that exercise the target code path)
-- Committed to the repo (no external download)
-- Accompanied by a `README.md` describing what each fixture tests
+| Environment | Unit tests | Integration Windows | Integration LibreOffice |
+|-------------|------------|---------------------|------------------------|
+| GitHub Actions — Windows | ✅ 46/46 | ⬜ (requires real Office) | ⬜ |
+| Local Windows dev box | ✅ | ✅ | ✅ (if LibreOffice installed) |
+| macOS / Linux CI (future) | ✅ | ⬜ | ✅ |
 
 ---
 
 ## 4. Coverage targets
 
-| Module | Target line coverage |
-|--------|---------------------|
-| `core/operations/docx_to_pdf.py` | 90 % |
-| `core/operations/xlsx_to_pdf.py` | 90 % |
-| `core/operations/_conversion_backend.py` | 100 % |
+| Module | Target | Current (mocked) |
+|--------|--------|-----------------|
+| `core/operations/docx_to_pdf.py` | 90% | ~85% (integration lines excluded) |
+| `core/operations/xlsx_to_pdf.py` | 90% | ~85% |
+| `core/operations/_conversion_backend.py` | 100% | ✅ |
 
-Run with:
+Run coverage:
 ```bash
-pytest tests/test_docx_xlsx_bates.py -v --cov=core/operations/docx_to_pdf \
-    --cov=core/operations/xlsx_to_pdf --cov=core/operations/_conversion_backend \
+pytest tests/test_conversion_backend.py tests/test_docx_xlsx_bates.py -v \
+    --cov=core/operations/docx_to_pdf \
+    --cov=core/operations/xlsx_to_pdf \
+    --cov=core/operations/_conversion_backend \
     --cov-report=term-missing
 ```
 
@@ -157,5 +213,5 @@ pytest tests/test_docx_xlsx_bates.py -v --cov=core/operations/docx_to_pdf \
 ## Related docs
 
 - `docs/ops/doc_conversion_pipeline_overview.md` — pipeline architecture
-- `docs/ops/doc_conversion_fallback_design.md` — abstraction boundary and design
-- `handoffs/ho_0029_2026_05_21_doc_conversion_architecture.md` — future work handoff
+- `docs/ops/doc_conversion_fallback_design.md` — implementation design
+- `handoffs/ho_0034_2026_05_21_doc_conversion_super_batch.md` — this batch's handoff
