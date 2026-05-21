@@ -94,7 +94,37 @@ pytestmark = [
 
 ---
 
-## 5. Slow tests inflate CI wall time on Windows
+## 5. LibreOffice integration tests auto-skip when soffice is absent
+
+**Affected file:** `test_conversion_integration.py`
+
+**Marker:** `libreoffice`
+
+**Symptom (expected, not a bug):** `TestLibreOfficeIntegration` contains an `autouse` fixture (`require_soffice`) that calls `soffice_available()` at test setup time. If `soffice` is not on PATH — which is always the case on GitHub-hosted runners — every test in that class is skipped with the message:
+
+```
+SKIPPED [reason: LibreOffice not installed (soffice not on PATH)]
+```
+
+This produces 8 skips in the CI run. The overall job still passes (skips are not failures).
+
+**Why it's excluded from the CI matrix:** Installing LibreOffice on GitHub-hosted runners would add 300–700 MB of download time to every run. The `libreoffice` subset is intentionally absent from `tests.yml`. Unit tests and mocked-backend integration tests continue to run in CI under the `core`, `conversion`, and `integration` subsets.
+
+**To run LibreOffice tests locally:**
+```bash
+# Requires LibreOffice installed with soffice on PATH
+python scripts/run_core_tests.py --subset libreoffice -v
+
+# Force LibreOffice on any platform (even Windows if LibreOffice is installed)
+set APM_CONVERSION_BACKEND=libreoffice
+python scripts/run_core_tests.py --subset libreoffice -v
+```
+
+**Future option:** If a self-hosted runner with LibreOffice pre-installed is introduced, add a `libreoffice` job leg to `tests.yml` conditioned on `runner.os != 'GitHub-hosted'` or a dedicated `libreoffice` runner label.
+
+---
+
+## 6. Slow tests inflate CI wall time on Windows
 
 **Affected file:** `test_stability.py`
 
