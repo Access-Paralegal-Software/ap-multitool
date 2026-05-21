@@ -5,7 +5,7 @@ type: ops-audit
 ---
 
 # Windows Alpha Staging Playbook Test Results
-Date: 2026-05-20
+Date: 2026-05-21
 Status: VERIFIED (ALL TESTS PASSED)
 
 This document registers the test execution logs and validation outcome of the 4 core workflows defined in the [windows_alpha_staging_playbook.md](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_alpha_staging_playbook.md).
@@ -22,7 +22,7 @@ This document registers the test execution logs and validation outcome of the 4 
 ## Detailed Execution Logs
 
 ```
-run_staging_tests.py Sandbox Location: C:\Users\aewoo\AppData\Local\Temp\tmpqf8x2es4
+run_staging_tests.py Sandbox Location: C:\Users\aewoo\AppData\Local\Temp\tmppj5sh7_j
 [Test 1/4] Overwrite Trap confirmation intercepts existing file correctly.
 [Test 2/4] Rearranged index check passed. Merged output contains 55 pages.
 [Test 3/4] Cancellation caught. Partial file handles closed and output deleted.

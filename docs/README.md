@@ -82,9 +82,25 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 *   **[`ops/release_notes_draft_vnext.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/release_notes_draft_vnext.md)**: Draft notes detailing v1.0.0 release changelog highlights.
 *   **[`ops/release_notes_v1.0.0-alpha1.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/release_notes_v1.0.0-alpha1.md)**: Release notes detailing the v1.0.0-alpha1 Windows Alpha build.
 *   **[`ops/alpha_operator_brief_v1.0.0-alpha1.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/alpha_operator_brief_v1.0.0-alpha1.md)**: Operator brief for distributing the Windows Alpha v1.0.0-alpha1 build and troubleshooting.
+*   **[`ops/alpha_distribution_plan_v1.0.0-alpha1.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/alpha_distribution_plan_v1.0.0-alpha1.md)**: [NEW] Cohort size, timeline, and collection protocols for Windows Alpha1.
+*   **[`ops/macos_packaging_overview.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/macos_packaging_overview.md)**: [NEW] Guide to build_app.sh and macOS DMG generation.
+*   **[`ops/macos_signing_requirements.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/macos_signing_requirements.md)**: [NEW] Details on Hardened Runtime, signing order, and Gatekeeper notarization.
+*   **[`ops/ci_overview.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/ci_overview.md)**: [NEW] GitHub Actions workflow schedules, subsets, and headless Linux Qt virtualization.
+*   **[`ops/cross_platform_risk_checklist.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/cross_platform_risk_checklist.md)**: [NEW] Matrix mapping Win32com, Gatekeeper, and Hardware ID risks.
 *   **[`ops/macos_linux_packaging_plan.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/macos_linux_packaging_plan.md)**: Packaging strategy, sandboxing, and signing procedures for Unix platforms.
 *   **[`operations/cli_overview.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/operations/cli_overview.md)**: Headless operation manual and script examples for developers/IT.
 *   **[`ops/marketing_snippets_apmultitool.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/marketing_snippets_apmultitool.md)**: Promotional descriptions and core value assertions.
+
+> [!NOTE]
+> macOS packaging and continuous integration workflows are fully prepared, but live codesigning and notarization remain blocked pending Apple Developer credentials. Windows remains the only active, verified release lane.
+
+### 📦 Windows Alpha Tester Packet
+These resources constitute the onboarding packet distributed to the `v1.0.0-alpha1` cohort testers:
+- **Installer Executable**: `dist/APMultitool_Setup_v1.0.0-alpha1.exe`
+- **Verification Hash File**: `dist/APMultitool_Setup_v1.0.0-alpha1.exe.sha256`
+- **Bypass Tutorial**: [`docs/ops/windows_smartscreen_alpha_notes.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_smartscreen_alpha_notes.md)
+- **Feedback Questionnaire**: [`docs/ops/feedback_intake_v1.0.0.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/feedback_intake_v1.0.0.md)
+
 
 ---
 
