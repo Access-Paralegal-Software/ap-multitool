@@ -1,78 +1,210 @@
 ---
 id: macos_packaging_overview
-title: macOS Packaging Overview
-type: ops-manual
-status: active
-project: APMultitool
-created_at: 2026-05-21
+title: macOS Packaging Overview — Build, Sign, Notarize, Staple
+type: ops
+status: in-progress
+project: Access Paralegal / APMultitool
+created: 2026-05-21
 ---
 
 # macOS Packaging Overview
 
-This document details the macOS packaging process for the Access Paralegal Multitool (APMultitool). macOS packaging produces both a standalone CLI binary (`apmultitool`) and a graphical Application Bundle (`Access_Paralegal_Multitool.app`) wrapped inside a native Apple Disk Image (`.dmg`) installer.
+## 1. Current State
 
----
+A shell script scaffold exists at `packaging/macos/build_app.sh`. It implements the full four-phase pipeline with graceful degradation — phases are skipped when required credentials are absent:
 
-## 🛠️ Build Script: `packaging/macos/build_app.sh`
+- **PyInstaller compilation** of the CLI binary (`apmultitool`) and GUI app bundle (`Access_Paralegal_Multitool.app`).
+- **Codesigning** using `codesign --options runtime` (skipped when no signing identity is passed).
+- **DMG creation** via native `hdiutil` with an `/Applications` symlink for drag-and-drop installation.
+- **Notarization and stapling** via `xcrun notarytool submit` + `xcrun stapler staple` (skipped when credentials are absent).
 
-The compilation is automated by the [build_app.sh](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/packaging/macos/build_app.sh) orchestrator.
+**Known gap:** `build_app.sh` currently targets `gui_apmultitool.py` (legacy CustomTkinter GUI). The active Qt rewrite entry point is `gui_apmultitool_qt.py`. Updating the build script to the Qt entry point is a prerequisite for any production macOS release but is out of scope for this CI probe lane.
 
-### Parameters
-The script accepts the following parameters:
+**CI status prior to this lane:** The legacy `build.yml` included a `macos-latest` matrix job but had no signing or notarization hooks and referenced an outdated entry point (`gui_merger.py`). No dedicated macOS signing workflow existed.
+
+### Build Script Parameters
+
 ```bash
 bash packaging/macos/build_app.sh [AppVersion] [ReleaseChannel] [SignIdentity] [TeamId] [AppleID] [ApplePasswordVarName]
 ```
-1. **`AppVersion`**: The application version (defaults to `1.0.0`).
-2. **`ReleaseChannel`**: Channel suffix (defaults to `-alpha1`).
-3. **`SignIdentity`**: The common name of the Apple Developer ID Application certificate.
-4. **`TeamId`**: The 10-character Apple Developer Team ID.
-5. **`AppleID`**: The Apple Developer email account.
-6. **`ApplePasswordVarName`**: The name of the environment variable storing the Apple App-Specific Password.
+
+| Parameter | Default | Description |
+|---|---|---|
+| `AppVersion` | `1.0.0` | Semantic version string |
+| `ReleaseChannel` | `-alpha1` | Channel suffix appended to version |
+| `SignIdentity` | _(empty)_ | Developer ID Application cert common name; omit to skip signing |
+| `TeamId` | _(empty)_ | 10-character Apple Team ID |
+| `AppleID` | _(empty)_ | Apple Developer account email |
+| `ApplePasswordVarName` | _(empty)_ | Name of env var holding the app-specific password |
 
 ---
 
-## 🏗️ Compilation & Packaging Flow
+## 2. Target Output
 
-```mermaid
-graph TD
-    A[Start: build_app.sh] --> B[Clean build/ and dist/ dirs]
-    B --> C[Compile Standalone CLI via PyInstaller]
-    C --> D[Compile Windowed GUI App Bundle via PyInstaller]
-    D --> E{Is Apple Developer ID provided?}
-    E -- Yes --> F[Sign CLI, Inner Libraries, and GUI App Bundle]
-    E -- No --> G[Skip Codesigning]
-    F --> H[Copy .app to Staging & Create Applications Symlink]
-    G --> H
-    H --> I[Build DMG via macOS hdiutil]
-    I --> J{Are Notarization credentials provided?}
-    J -- Yes --> K[Submit to Apple Notary Service & Staple Ticket]
-    J -- No --> L[Skip Notarization]
-    K --> M[End: DMG Output in dist/]
-    L --> M
+| Artifact | Description |
+|---|---|
+| `dist/Access_Paralegal_Multitool.app` | Signed macOS GUI app bundle |
+| `dist/apmultitool` | Signed CLI binary |
+| `dist/APMultitool_Setup_v<version>.dmg` | Notarized and stapled disk image for distribution |
+
+---
+
+## 3. High-Level Pipeline Steps
+
+### Step 1 — Build
+
+```bash
+bash packaging/macos/build_app.sh <APP_VERSION> <RELEASE_CHANNEL>
 ```
 
-### 1. PyInstaller Bundling
-PyInstaller compiles two executable artifacts:
-- **CLI Binary (`dist/apmultitool`)**: Compiled from `cli.py` in console mode.
-- **GUI Application Bundle (`dist/Access_Paralegal_Multitool.app`)**: Compiled from `gui_apmultitool.py` in windowed mode with embedded resource assets (`logo_small.png` and `water_texture.png`).
+Runs PyInstaller for both the GUI app bundle and the CLI binary. Stages the `.app` into a DMG layout with an `/Applications` symlink and packages it using `hdiutil`. No signing arguments are passed in probe mode.
 
-> [!IMPORTANT]
-> The macOS directory separator parameter syntax for `--add-data` is a colon (`:`), e.g., `logo_small.png:.`, which differs from the semicolon (`;`) separator required by Windows.
+### Step 2 — Codesign
 
-### 2. Disk Image (DMG) Creation
-To package the app for standard macOS installations:
-1. The script creates a staging area (`dist/dmg_stage`).
-2. It copies the `Access_Paralegal_Multitool.app` bundle into it.
-3. It creates a symlink to `/Applications` (`ln -s /Applications dist/dmg_stage/Applications`).
-4. It calls native macOS `hdiutil` to package the staging folder into a read-only, compressed DMG:
-   ```bash
-   hdiutil create -volname "APMultitool Installer" -srcfolder dist/dmg_stage -ov -format UDZO dist/APMultitool_Setup_v1.0.0-alpha1.dmg
-   ```
+Signing requires a **Developer ID Application** certificate from the Apple Developer Program. All inner binaries must be signed before the outer bundle, and the Hardened Runtime flag is required by Apple's notarization service.
+
+```bash
+# 1. Sign inner .so / .dylib / Python libraries
+find dist/Access_Paralegal_Multitool.app -type f \( -name "*.so" -o -name "*.dylib" -o -name "Python" \) | \
+    while read -r lib; do
+        codesign --force --options runtime --sign "$SIGN_IDENTITY" "$lib"
+    done
+
+# 2. Sign CLI binary
+codesign --force --options runtime --sign "$SIGN_IDENTITY" dist/apmultitool
+
+# 3. Sign outer app bundle
+codesign --force --options runtime --deep --sign "$SIGN_IDENTITY" dist/Access_Paralegal_Multitool.app
+
+# 4. Verify
+codesign --verify --verbose=2 dist/Access_Paralegal_Multitool.app
+```
+
+`$SIGN_IDENTITY` takes the form `Developer ID Application: <Org Name> (<TEAM_ID>)`.
+
+### Step 3 — Notarize
+
+Submit the final signed DMG to Apple's notarization service using the modern `notarytool` interface (Xcode 13+, replaces the deprecated `altool`):
+
+```bash
+xcrun notarytool submit dist/APMultitool_Setup_v<version>.dmg \
+    --apple-id "$APPLE_ID" \
+    --password "$APP_SPECIFIC_PASSWORD" \
+    --team-id "$TEAM_ID" \
+    --wait
+```
+
+The `--wait` flag blocks until Apple returns a result (typically seconds to a few minutes). To retrieve the full log for a submission:
+
+```bash
+xcrun notarytool log <SUBMISSION_ID> \
+    --apple-id "$APPLE_ID" \
+    --password "$APP_SPECIFIC_PASSWORD" \
+    --team-id "$TEAM_ID"
+```
+
+### Step 4 — Staple
+
+After successful notarization, staple the ticket directly to the DMG so Gatekeeper can verify it offline without a network check:
+
+```bash
+xcrun stapler staple dist/APMultitool_Setup_v<version>.dmg
+```
+
+Stapling is required for distribution outside the Mac App Store. Without it, opening the DMG on a machine without internet access triggers a Gatekeeper failure.
 
 ---
 
-## ⚠️ Prerequisites & Hardware Blockers
-Executing this packaging script requires:
-- A macOS workstation or runner (running macOS Catalina 10.15 or newer).
-- PySide6 and standard application Python dependencies installed.
-- **Developer Credentials**: To run outside developer workstations without security warnings, the bundle must undergo the signing and notarization process (documented in [macos_signing_requirements.md](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/macos_signing_requirements.md)).
+## 4. Required Dependencies
+
+| Dependency | Purpose |
+|---|---|
+| Developer ID Application certificate | Identifies the app to macOS Gatekeeper; issued under the Apple Developer Program |
+| Apple ID | Used for notarytool authentication |
+| App-Specific Password | Generated at appleid.apple.com; replaces raw Apple ID password for notarytool |
+| Team ID | 10-character alphanumeric identifier from the Apple Developer portal |
+| Xcode Command Line Tools | Provides `codesign`, `xcrun`, `notarytool`, `stapler`, `hdiutil` |
+| Python 3.11 + PyInstaller | Compiles the app bundle and CLI binary |
+
+Full secrets inventory: see `docs/ops/macos_signing_requirements.md`.
+
+---
+
+## 5. CI Gating Strategy
+
+**Chosen strategy: manual trigger (`workflow_dispatch`) + push to `release/**` branches.**
+
+The macOS packaging probe workflow (`.github/workflows/macos_packaging_probe.yml`) is **not triggered on every push to `master`**. Rationale:
+
+- GitHub-hosted macOS runners are billed at approximately 10× the Linux runner rate.
+- A full macOS build job on every commit to `master` would generate significant unnecessary cost during the Windows-primary alpha phase.
+- The existing `build.yml` handles smoke-testing on `master`; the probe workflow is a dedicated packaging and notarization gate.
+
+The `release/**` trigger ensures the probe runs automatically when a release branch is cut, which is the natural checkpoint for macOS artifact readiness.
+
+---
+
+## 6. Runner Options Analysis
+
+### Option A: GitHub-Hosted `macos-latest`
+
+| Factor | Assessment |
+|---|---|
+| **Latency** | Queuing adds several minutes; no persistent disk cache across runs |
+| **Reliability** | High; GitHub-managed with SLA |
+| **Environment control** | Limited; Xcode and macOS versions change with image updates |
+| **Certificate handling** | Must import `.p12` into an ephemeral keychain each job; destroyed automatically after the run |
+| **Cost** | ~10× Linux rate; expensive at high frequency |
+| **Maintenance burden** | None; no hardware to manage |
+
+**Best for:** CI probe, infrequent release packaging, teams without macOS hardware.
+
+### Option B: Self-Hosted Mac Mini
+
+| Factor | Assessment |
+|---|---|
+| **Latency** | Near-zero queue; persistent build cache between runs |
+| **Reliability** | Depends on local uptime and network; no GitHub SLA |
+| **Environment control** | Full; pin Xcode version, manage keychain centrally |
+| **Certificate handling** | Certificate can be pre-installed in a persistent keychain; avoids repeated import per job |
+| **Cost** | Hardware CAPEX; no per-minute runner billing |
+| **Maintenance burden** | High; runner agent, macOS updates, Xcode management |
+
+**Best for:** High-frequency builds, production release pipelines, teams with macOS hardware already available.
+
+### Recommendation
+
+Use GitHub-hosted `macos-latest` for the probe and early release gating. Revisit self-hosted when macOS release frequency justifies the hardware investment.
+
+---
+
+## 7. Gatekeeper — Manual Bypass for Pre-Notarization Testers
+
+If alpha testers receive a build that is signed but not yet notarized, Gatekeeper will block it with:
+
+> **"Access_Paralegal_Multitool" cannot be opened because it is from an unidentified developer.**
+
+One-time bypass procedure (macOS):
+1. Double-click the DMG and drag `Access_Paralegal_Multitool` to `/Applications`.
+2. Open `/Applications` in **Finder** (not Launchpad or terminal).
+3. Right-click (or Control-click) → **Open**.
+4. A dialog appears with an **Open** button. Click it.
+5. macOS stores the exception; subsequent launches proceed normally.
+
+This bypass is only for developer testing. Distribute only notarized + stapled builds to end users.
+
+---
+
+## 8. Status
+
+| Item | Status |
+|---|---|
+| `build_app.sh` scaffold | ✅ Exists at `packaging/macos/build_app.sh` |
+| Unsigned build in CI | ✅ Implemented (probe workflow) |
+| Developer ID certificate | ❌ Not provisioned |
+| Keychain import in CI | ⏳ Placeholder guarded step in probe workflow |
+| Codesigning in CI | ⏳ Placeholder guarded step in probe workflow |
+| Notarization in CI | ⏳ Placeholder guarded step in probe workflow |
+| Stapling in CI | ⏳ Placeholder guarded step in probe workflow |
+| Qt entrypoint in build_app.sh | ⚠️ Pending — currently targets legacy `gui_apmultitool.py` |
+| macOS support declared | ❌ Not claimed — Windows alpha is the active release track |

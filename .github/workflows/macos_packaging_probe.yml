@@ -1,0 +1,194 @@
+# macos_packaging_probe.yml — APMultitool macOS CI Packaging Probe
+#
+# STATUS: Build-only phase is ACTIVE.
+#         Signing and notarization steps are INACTIVE (guarded behind secrets).
+#         See docs/ops/macos_signing_requirements.md for the full secrets inventory.
+#
+# GATING: Not triggered on every push to master (macOS runners bill at ~10x Linux rate).
+#         Triggers: manual dispatch or push to release/** branches.
+#         The existing build.yml handles master-branch smoke tests.
+
+name: macOS Packaging Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'App version (e.g. 1.0.0)'
+        required: false
+        default: '1.0.0'
+      release_channel:
+        description: 'Release channel suffix (e.g. -alpha1)'
+        required: false
+        default: '-alpha1'
+  push:
+    branches:
+      - 'release/**'
+
+jobs:
+  macos-package-probe:
+    name: macOS Package Probe
+    runs-on: macos-latest
+
+    steps:
+
+      # ── Phase 1: Setup ──────────────────────────────────────────────────────
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            pyinstaller \
+            pypdf \
+            reportlab \
+            pikepdf \
+            pillow \
+            customtkinter \
+            pymupdf \
+            extract-msg \
+            cryptography
+
+      # ── Phase 2: Build (ACTIVE — unsigned, probe mode) ───────────────────────
+
+      - name: Make build script executable
+        run: chmod +x packaging/macos/build_app.sh
+
+      - name: Run macOS build (unsigned — probe mode)
+        # Signing identity, Team ID, Apple ID, and app password are intentionally
+        # omitted. build_app.sh detects their absence and skips signing/notarization,
+        # producing an unsigned DMG for artifact inspection.
+        run: |
+          bash packaging/macos/build_app.sh \
+            "${{ github.event.inputs.app_version || '1.0.0' }}" \
+            "${{ github.event.inputs.release_channel || '-alpha1' }}"
+
+      - name: Upload unsigned DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg-unsigned
+          path: dist/*.dmg
+          if-no-files-found: warn
+
+      # ── Phase 3: Certificate Import (FUTURE — inactive until secrets configured) ──
+      #
+      # The steps in Phase 3 and 4 are guarded behind GitHub Actions secret checks.
+      # They silently skip when secrets are absent. Add the secrets listed in
+      # docs/ops/macos_signing_requirements.md to this repository to activate them.
+
+      - name: "[FUTURE] Import Developer ID certificate into ephemeral keychain"
+        # INACTIVE: Requires APPLE_DEV_ID_CERT and APPLE_DEV_ID_CERT_PASSWORD secrets.
+        # Creates a temporary keychain scoped to this runner job and imports the
+        # base64-encoded .p12 Developer ID Application certificate.
+        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_DEV_ID_CERT_PASSWORD != '' }}
+        env:
+          APPLE_DEV_ID_CERT: ${{ secrets.APPLE_DEV_ID_CERT }}
+          APPLE_DEV_ID_CERT_PASSWORD: ${{ secrets.APPLE_DEV_ID_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+          KEYCHAIN_PASS=$(openssl rand -hex 16)
+
+          # Decode the base64-encoded .p12 bundle
+          echo "$APPLE_DEV_ID_CERT" | base64 --decode -o "$RUNNER_TEMP/cert.p12"
+
+          # Create a temporary keychain for this job only
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+
+          # Import the certificate
+          security import "$RUNNER_TEMP/cert.p12" \
+            -P "$APPLE_DEV_ID_CERT_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Make the keychain available to codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          # Export for subsequent steps
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+          echo "KEYCHAIN_PASS=$KEYCHAIN_PASS" >> $GITHUB_ENV
+
+      # ── Phase 3: Codesign (FUTURE — inactive until signing secrets configured) ─
+
+      - name: "[FUTURE] Codesign app bundle and CLI binary (Hardened Runtime)"
+        # INACTIVE: Requires APPLE_DEV_ID_CERT and APPLE_TEAM_ID secrets.
+        # Signs all inner libraries first, then the CLI, then the outer app bundle.
+        # --options runtime (Hardened Runtime) is required by Apple notarytool.
+        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' }}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          SIGN_IDENTITY="Developer ID Application: Access Paralegal Systems LLC ($APPLE_TEAM_ID)"
+          GUI_APP="dist/Access_Paralegal_Multitool.app"
+          CLI_EXE="dist/apmultitool"
+
+          # Sign inner .so / .dylib / Python libraries first
+          find "$GUI_APP" -type f \( -name "*.so" -o -name "*.dylib" -o -name "Python" \) | \
+            while read -r lib; do
+              codesign --force --options runtime --sign "$SIGN_IDENTITY" "$lib"
+            done
+
+          # Sign CLI binary
+          codesign --force --options runtime --sign "$SIGN_IDENTITY" "$CLI_EXE"
+
+          # Sign outer app bundle
+          codesign --force --options runtime --deep --sign "$SIGN_IDENTITY" "$GUI_APP"
+
+          # Verify outer bundle signature
+          codesign --verify --verbose=2 "$GUI_APP"
+
+          # Rebuild the DMG with the signed app
+          VERSION="${{ github.event.inputs.app_version || '1.0.0' }}"
+          CHANNEL="${{ github.event.inputs.release_channel || '-alpha1' }}"
+          STAGE_DIR="dist/dmg_stage_signed"
+          mkdir -p "$STAGE_DIR"
+          cp -R "$GUI_APP" "$STAGE_DIR/"
+          ln -s /Applications "$STAGE_DIR/Applications"
+          SIGNED_DMG="dist/APMultitool_Setup_v${VERSION}${CHANNEL}_signed.dmg"
+          hdiutil create -volname "APMultitool Installer" \
+            -srcfolder "$STAGE_DIR" -ov -format UDZO "$SIGNED_DMG"
+          rm -rf "$STAGE_DIR"
+          echo "SIGNED_DMG=$SIGNED_DMG" >> $GITHUB_ENV
+
+      # ── Phase 4: Notarization (FUTURE — inactive until all notarization secrets configured) ──
+
+      - name: "[FUTURE] Submit signed DMG to Apple notarytool"
+        # INACTIVE: Requires APPLE_DEV_ID_CERT, APPLE_TEAM_ID, APPLE_APPLE_ID,
+        #           and APPLE_APP_SPECIFIC_PASSWORD secrets.
+        # Uses xcrun notarytool (Xcode 13+). The legacy altool is deprecated.
+        # --wait blocks until Apple returns a result (typically seconds to minutes).
+        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APPLE_ID: ${{ secrets.APPLE_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          xcrun notarytool submit "${{ env.SIGNED_DMG }}" \
+            --apple-id "$APPLE_APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+      - name: "[FUTURE] Staple notarization ticket to DMG"
+        # INACTIVE: Requires all four notarization secrets.
+        # Stapling embeds the ticket in the DMG so Gatekeeper can verify offline.
+        # Without stapling, Gatekeeper requires a network check on every mount.
+        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        run: |
+          xcrun stapler staple "${{ env.SIGNED_DMG }}"
+
+      - name: "[FUTURE] Upload signed and notarized DMG artifact"
+        # INACTIVE: Uploads the notarized DMG when all signing steps succeed.
+        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg-signed-notarized
+          path: dist/*_signed.dmg
+          if-no-files-found: warn
