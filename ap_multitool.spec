@@ -73,6 +73,7 @@ exe_gui = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
+    version='packaging/windows/apmultitool_version_info.txt',
     codesign_identity=None,
     entitlements_file=None,
 )
@@ -130,6 +131,7 @@ exe_cli = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
+    version='packaging/windows/apmultitool_version_info.txt',
     codesign_identity=None,
     entitlements_file=None,
 )

@@ -5,6 +5,7 @@
 import sys
 from PySide6 import QtWidgets, QtCore, QtGui
 from apmultitool_qt.shell import APMainWindow
+from core import __version__, __channel__
 
 def main() -> int:
     """
@@ -30,7 +31,7 @@ def main() -> int:
     
     # 2. Configure basic application metadata
     app.setApplicationName("APMultitool")
-    app.setApplicationVersion("1.0.0")
+    app.setApplicationVersion(f"{__version__}{__channel__}")
     app.setOrganizationName("Access Paralegal")
     app.setOrganizationDomain("accessparalegal.com")
 

@@ -1,5 +1,10 @@
-# prepare_bundle.ps1 — Prototype script to prepare APMultitool installer folder layout
+# prepare_bundle.ps1 - Prepare the APMultitool installer folder layout
 # Run from repository root: powershell -File packaging/windows/prepare_bundle.ps1
+
+$version = python -c "from core import __version__, __channel__; print(f'v{__version__}{__channel__}')" 2>$null
+if (-not $version) {
+    $version = "v1.0.0-beta1"
+}
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  APMultitool Windows Installer-Ready Bundler" -ForegroundColor Cyan
@@ -39,7 +44,7 @@ if (-not (Test-Path -Path $guiExe) -or -not (Test-Path -Path $cliExe)) {
 Copy-Item -Path $guiExe -Destination $bundleDir
 Copy-Item -Path $cliExe -Destination $bundleDir
 
-# Copy GUI Assets
+# Copy GUI assets
 Copy-Item -Path "logo_small.png" -Destination $bundleDir
 Copy-Item -Path "water_texture.png" -Destination $bundleDir
 
@@ -48,7 +53,7 @@ $licenseContent = @"
 Access Paralegal Multitool License
 Copyright (c) 2026 Access Paralegal Systems
 
-Redistribution and use in binary form, without modification, are permitted 
+Redistribution and use in binary form, without modification, are permitted
 solely for local internal operations of Access Paralegal and related entities.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
@@ -66,12 +71,15 @@ APMultitool Windows Application Bundle
 This folder contains a fully self-contained distribution of APMultitool
 including both the Desktop GUI and the Command Line Interface (CLI).
 
+Build Version:
+- $version
+
 LAUNCHING:
 - GUI App: Double-click 'Access_Paralegal_Multitool.exe'
 - CLI App: Open cmd/powershell in this folder and run './apmultitool'
 
 DISTRIBUTION AND INSTALLER NEXT STEPS:
-To create a true, user-friendly installer (.exe/.msi), configure Inno Setup 
+To create a true, user-friendly installer (.exe/.msi), configure Inno Setup
 (or WiX) to compile this directory structure:
 1. Target Install Location: C:\Users\<Username>\AppData\Local\Programs\APMultitool
 2. Shortcuts: Link to 'Access_Paralegal_Multitool.exe'
@@ -83,9 +91,7 @@ $readmeContent | Out-File -FilePath "$bundleDir\README_BUNDLE.txt" -Encoding utf
 $batContent = '@echo off' + "`r`n" + 'cmd /k "%~dp0apmultitool.exe" --help'
 $batContent | Out-File -FilePath "$bundleDir\launch_cli_help.bat" -Encoding ascii
 
-
-
-Write-Host "✅ Unified Bundle prepared successfully at: $bundleDir" -ForegroundColor Green
+Write-Host "OK Unified Bundle prepared successfully at: $bundleDir" -ForegroundColor Green
 Write-Host "Structure inside bundle:" -ForegroundColor Cyan
 Get-ChildItem -Path $bundleDir | Select-Object Name, Length | Format-Table | Out-String | Write-Host
 Write-Host "==========================================================" -ForegroundColor Cyan

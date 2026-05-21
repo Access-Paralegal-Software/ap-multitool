@@ -6,7 +6,7 @@
 #define AppVersion "1.0.0"
 #endif
 #ifndef AppVersionSuffix
-#define AppVersionSuffix "-alpha1"
+#define AppVersionSuffix "-beta1"
 #endif
 #define AppPublisher "Access Paralegal Systems"
 #define AppURL "https://accessparalegal.com"
@@ -17,11 +17,17 @@
 AppId={{D0DF16A3-78B1-40EA-B366-D0DF16A3DF53}}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppVerName={#AppName} v{#AppVersion}
+AppVerName={#AppName} v{#AppVersion}{#AppVersionSuffix}
 AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
+VersionInfoVersion={#AppVersion}
+VersionInfoCompany={#AppPublisher}
+VersionInfoDescription=APMultitool Windows Setup Installer
+VersionInfoProductName={#AppName}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoTextVersion=v{#AppVersion}{#AppVersionSuffix}
 DefaultDirName={localappdata}\Programs\{#AppName}
 DefaultGroupName=Access Paralegal
 DisableProgramGroupPage=yes

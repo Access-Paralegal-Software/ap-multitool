@@ -66,4 +66,4 @@ def test_shell_structure():
 
     window.switch_view(3)
     assert window.stacked_widget.currentIndex() == 3
-    assert window.lbl_title.text() == "Help & Application Support"
+    assert window.lbl_title.text() == "Help & About"

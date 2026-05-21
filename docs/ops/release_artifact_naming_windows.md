@@ -21,6 +21,7 @@ All Windows distribution artifacts (installers and standalone bundles) generated
 
 ## Examples
 - `APMultitool_Setup_v1.0.0-alpha1.exe`
+- `APMultitool_Setup_v1.0.0-beta1.exe`
 - `APMultitool_Setup_v1.0.0-rc2.exe`
 - `APMultitool_Setup_v1.0.0.exe`
 

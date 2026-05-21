@@ -44,6 +44,25 @@ def test_installer_script_version_matches():
     semver_pattern = r'^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$'
     assert re.match(semver_pattern, version_str), f"AppVersion '{version_str}' is not a valid semantic version"
 
+
+def test_installer_script_default_channel_is_beta1():
+    """Verify the default release channel points at the beta1 Windows lane."""
+    with open(ISS_SCRIPT, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert '#define AppVersionSuffix "-beta1"' in content
+
+
+def test_build_script_exposes_signing_inputs():
+    """Verify the build script supports unsigned and signed modes via local inputs."""
+    with open(BUILD_SCRIPT, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert 'APM_SIGN_CERT_THUMBPRINT' in content
+    assert 'APM_SIGN_PFX_PATH' in content
+    assert 'APM_SIGN_PFX_PASSWORD' in content
+    assert 'Get-AuthenticodeSignature' in content
+
 def test_installer_script_contains_path_registration():
     """Verify that Inno Setup script contains optional registry PATH hooks."""
     with open(ISS_SCRIPT, "r", encoding="utf-8") as f:

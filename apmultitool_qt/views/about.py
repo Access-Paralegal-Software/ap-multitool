@@ -89,7 +89,7 @@ class AboutView(QtWidgets.QWidget):
         self.left_card.add_widget(tel_header)
 
         # Telemetry Build ID
-        self.lbl_tel_build = QtWidgets.QLabel("Build ID: v1.0.0-alpha1")
+        self.lbl_tel_build = QtWidgets.QLabel("Build ID: v1.0.0-beta1")
         self.lbl_tel_build.setStyleSheet("color: #374151; font-size: 11px; font-weight: bold;")
         self.left_card.add_widget(self.lbl_tel_build)
 
@@ -251,7 +251,7 @@ class AboutView(QtWidgets.QWidget):
             stats = telemetry_manager.stats
             rate = telemetry_manager.get_success_rate()
             
-            self.lbl_tel_build.setText(f"Build ID: {stats.get('build_id', 'v1.0.0-alpha1')}")
+            self.lbl_tel_build.setText(f"Build ID: {stats.get('build_id', 'v1.0.0-beta1')}")
             self.lbl_tel_total.setText(f"Total runs: {stats['total_runs']}")
             self.lbl_tel_rate.setText(f"Success Rate: {rate:.1f}%")
             self.lbl_tel_failed.setText(f"Failed runs: {stats['failed_runs']}")

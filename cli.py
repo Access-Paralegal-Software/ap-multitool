@@ -9,6 +9,7 @@ import sys
 import json
 from pathlib import Path
 
+from core import __version__ as CORE_VERSION, __channel__ as CORE_CHANNEL
 from core.logging_config import configure_cli_logging
 from core.engine import DocEngine
 from core.job import (
@@ -17,6 +18,7 @@ from core.job import (
 )
 
 logger = None
+CLI_VERSION = f"v{CORE_VERSION}{CORE_CHANNEL}"
 
 
 def configure_logging(args):
@@ -387,7 +389,7 @@ def handle_support_bundle(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="APMultitool Command-Line Interface (Core v1.2.0)",
+        description=f"APMultitool Command-Line Interface (Core {CLI_VERSION})",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples of usage:
@@ -430,7 +432,7 @@ Examples of usage:
     parser.add_argument(
         "--version",
         action="version",
-        version="APMultitool CLI v1.2.0",
+        version=f"APMultitool CLI {CLI_VERSION}",
         help="Show program's version number and exit"
     )
 

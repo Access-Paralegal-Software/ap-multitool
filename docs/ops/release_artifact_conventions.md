@@ -2,67 +2,58 @@
 
 This document specifies the standard locations, file names, structure, and git tagging conventions for release builds of APMultitool.
 
----
+Last verified on 2026-05-21 for the `v1.0.0-beta1` Windows lane.
 
-## 📦 Directory Structure of Release Artifacts
+## Directory Structure of Release Artifacts
 
 All release builds are compiled into the `dist/` directory at the repository root.
 
-```
+```text
 dist/
-├── APMultitool_Bundle/                     # Staging directory for the raw executables
-│   ├── Access_Paralegal_Multitool.exe      # GUI executable (compiled from main_gui.py)
-│   ├── apmultitool.exe                     # CLI executable (compiled from cli.py)
-│   ├── logo_small.png                      # App UI logo image
-│   ├── water_texture.png                   # App UI background image
-│   ├── LICENSE                             # License agreement
-│   ├── README_BUNDLE.txt                   # Quick start manual for raw files
-│   └── launch_cli_help.bat                 # Helper script to launch CLI help
-│
-├── APMultitool_Setup_v0.5.0.exe            # Consolidated Windows Setup Installer
-└── APMultitool_Setup_v0.5.0.exe.sha256     # SHA-256 Checksum hash file for setup verification
+|-- APMultitool_Bundle/                         raw staged executables and assets
+|   |-- Access_Paralegal_Multitool.exe
+|   |-- apmultitool.exe
+|   |-- logo_small.png
+|   |-- water_texture.png
+|   |-- LICENSE
+|   |-- README_BUNDLE.txt
+|   `-- launch_cli_help.bat
+|-- APMultitool_Setup_v1.0.0-beta1.exe
+`-- APMultitool_Setup_v1.0.0-beta1.exe.sha256
 ```
 
----
+## Artifact Naming Conventions
 
-## 🏷️ Artifact Naming Conventions
+All Windows setup installers must follow:
 
-To maintain consistency across releases, all compiled setup installers must adhere to the following naming pattern:
+- installer: `APMultitool_Setup_v<Version><Channel>.exe`
+- checksum: `APMultitool_Setup_v<Version><Channel>.exe.sha256`
 
-- **Installer executable**: `APMultitool_Setup_v<Version>.exe`
-  - Example: `APMultitool_Setup_v0.5.0.exe`
-- **Hash file**: `APMultitool_Setup_v<Version>.exe.sha256`
-  - Example: `APMultitool_Setup_v0.5.0.exe.sha256`
+Examples:
 
-The `<Version>` token must follow standard **Semantic Versioning** (`MAJOR.MINOR.PATCH`).
+- `APMultitool_Setup_v1.0.0-beta1.exe`
+- `APMultitool_Setup_v1.0.0-rc1.exe`
+- `APMultitool_Setup_v1.0.0.exe`
 
----
+`<Version>` must follow semantic versioning. `<Channel>` may be empty for stable releases.
 
-## 🛡️ Hash Code Generation
+## Hash Generation
 
-The SHA-256 checksum is generated using the PowerShell command `Get-FileHash`. It produces a uppercase hex string of the file's hash, which is stored in a corresponding `.sha256` file:
+```powershell
+$sha256 = (Get-FileHash -Path "dist\APMultitool_Setup_v1.0.0-beta1.exe" -Algorithm SHA256).Hash
+$sha256 | Out-File -FilePath "dist\APMultitool_Setup_v1.0.0-beta1.exe.sha256" -Encoding ascii
+Get-FileHash -Path "dist\APMultitool_Setup_v1.0.0-beta1.exe" -Algorithm SHA256
+```
 
-- Command used:
-  ```powershell
-  $sha256 = (Get-FileHash -Path "dist\APMultitool_Setup_v0.5.0.exe" -Algorithm SHA256).Hash
-  $sha256 | Out-File -FilePath "dist\APMultitool_Setup_v0.5.0.exe.sha256" -Encoding ascii
-  ```
-- Verification: Users can verify the downloaded installer integrity in PowerShell:
-  ```powershell
-  Get-FileHash -Path "dist\APMultitool_Setup_v0.5.0.exe" -Algorithm SHA256
-  ```
+## Git Tagging
 
----
+Suggested format:
 
-## 🏷️ Git Tagging & Release Conventions
+- `v<Version><Channel>-apmultitool-release`
 
-Releases are tracked using git tags linked directly to build commits.
+Example:
 
-- **Tag format**: `v<Version>-apmultitool-release`
-  - Example: `v0.5.0-apmultitool-release`
-- **Tag Description**: Include the release changelog overview.
-- **Commands to tag and push**:
-  ```bash
-  git tag -a v0.5.0-apmultitool-release -m "Release v0.5.0: Windows Installer & CLI Path Integration"
-  git push origin v0.5.0-apmultitool-release
-  ```
+```bash
+git tag -a v1.0.0-beta1-apmultitool-release -m "Release v1.0.0-beta1: signed installer and uninstall validation"
+git push origin v1.0.0-beta1-apmultitool-release
+```

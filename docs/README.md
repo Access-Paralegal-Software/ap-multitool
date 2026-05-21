@@ -60,11 +60,15 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 *   **[`ops/windows_installer_spec.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_installer_spec.md)**: Branding, layout, and configuration specifications for Inno Setup.
 *   **[`ops/windows_installer_build.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_installer_build.md)**: Build prerequisites and compile workflow for Inno Setup 6.
 *   **[`ops/windows_installer_validation.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_installer_validation.md)**: Smoke-testing protocols and silent deployment parameters verification.
+*   **[`ops/windows_beta1_signing_overview.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_beta1_signing_overview.md)**: Beta1 signing inputs, unsigned fallback, and signature verification steps.
+*   **[`ops/windows_uninstall_behavior_beta1.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_uninstall_behavior_beta1.md)**: Conservative uninstall expectations and leftover artifact review rubric.
 *   **[`ops/release_artifact_conventions.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/release_artifact_conventions.md)**: Output directory layout, checksum mappings, and Git tagging policies.
 *   **[`ops/release_artifact_naming_windows.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/release_artifact_naming_windows.md)**: Windows deployment naming and versioning standards.
 *   **[`ops/qt_release_readiness_checklist.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/qt_release_readiness_checklist.md)**: Final Release QA and stability checklist.
 *   **[`ops/windows_alpha_staging_playbook.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_alpha_staging_playbook.md)**: Rollout playbook for the first STAX testing cohort.
 *   **[`ops/windows_smartscreen_alpha_notes.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_smartscreen_alpha_notes.md)**: Expected SmartScreen behaviors and manual bypass notes for alpha testers.
+*   **[`ops/windows_beta1_smartscreen_strategy.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_beta1_smartscreen_strategy.md)**: [NEW] Details Microsoft Defender SmartScreen reputation criteria and action plan.
+*   **[`ops/windows_beta1_smartscreen_operator_guide.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_beta1_smartscreen_operator_guide.md)**: [NEW] Plain-language support and operator troubleshooting steps for bypassing SmartScreen warnings.
 *   **[`ops/staging_test_results.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/staging_test_results.md)**: Results of automated staging tests validation.
 *   **[`ops/feedback_intake_v1.0.0.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/feedback_intake_v1.0.0.md)**: Standardized cohort feedback form for Windows Alpha testers.
 *   **[`ops/windows_alpha_issue_deck_v1.0.0-alpha1.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_alpha_issue_deck_v1.0.0-alpha1.md)**: Triaged feedback, severity prioritization, and action items from the first guided alpha sessions.
@@ -96,11 +100,12 @@ These handbooks support installation, licensing sandbox, and QA troubleshooting:
 > [!NOTE]
 > macOS packaging and continuous integration workflows are fully prepared, but live codesigning and notarization remain blocked pending Apple Developer credentials. Windows remains the only active, verified release lane.
 
-### 📦 Windows Alpha Tester Packet
-These resources constitute the onboarding packet distributed to the `v1.0.0-alpha1` cohort testers:
-- **Installer Executable**: `dist/APMultitool_Setup_v1.0.0-alpha1.exe`
-- **Verification Hash File**: `dist/APMultitool_Setup_v1.0.0-alpha1.exe.sha256`
-- **Bypass Tutorial**: [`docs/ops/windows_smartscreen_alpha_notes.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_smartscreen_alpha_notes.md)
+### 📦 Windows Beta 1 Tester Packet
+These resources constitute the onboarding packet distributed to the `v1.0.0-beta1` cohort testers:
+- **Installer Executable**: `dist/APMultitool_Setup_v1.0.0-beta1.exe`
+- **Verification Hash File**: `dist/APMultitool_Setup_v1.0.0-beta1.exe.sha256`
+- **Bypass Tutorial & Operator Guide**: [`docs/ops/windows_beta1_smartscreen_operator_guide.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_beta1_smartscreen_operator_guide.md)
+- **Reputation Strategy**: [`docs/ops/windows_beta1_smartscreen_strategy.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/windows_beta1_smartscreen_strategy.md)
 - **Feedback Questionnaire**: [`docs/ops/feedback_intake_v1.0.0.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/ops/feedback_intake_v1.0.0.md)
 
 
@@ -138,6 +143,7 @@ These historical documents track sprint execution timelines and developmental pr
 *   **[`ho_0026_2026_05_20_sprint_audit_and_release_readiness_summary.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/handoffs/ho_0026_2026_05_20_sprint_audit_and_release_readiness_summary.md)**: Summary of release readiness tasks and installer compiling checks.
 *   **[`ho_0027_2026_05_21_windows_alpha_readiness_sprint.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/handoffs/ho_0027_2026_05_21_windows_alpha_readiness_sprint.md)**: Windows Alpha Readiness sprint reports covering PySide6 animations, overwriting traps, and staging validation execution.
 *   **[`ho_0028_2026_05_21_windows_alpha_polish.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/handoffs/ho_0028_2026_05_21_windows_alpha_polish.md)**: Windows Alpha 1 polish sprint covering build ID telemetry payload injection, operator briefs, and testing intake forms.
+*   **[`ho_0051_2026_05_21_windows_smartscreen_and_trust_posture.md`](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/docs/handoffs/ho_0051_2026_05_21_windows_smartscreen_and_trust_posture.md)**: [NEW] Windows SmartScreen & Trust Posture Lane report covering metadata alignment, reputation strategy, and codesigning verifications.
 
 ---
 
