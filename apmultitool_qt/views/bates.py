@@ -18,6 +18,59 @@ from apmultitool_qt.components import (
 from apmultitool_qt.core_bridge import EngineJobWorker
 
 
+def create_gear_icon(color_hex="#374151", size=16):
+    """Draw a clean, high-resolution vector gear icon using QPainter."""
+    pixmap = QtGui.QPixmap(size * 2, size * 2)
+    pixmap.fill(QtCore.Qt.transparent)
+    
+    painter = QtGui.QPainter(pixmap)
+    painter.setRenderHint(QtGui.QPainter.Antialiasing)
+    painter.scale(2.0, 2.0)
+    
+    color = QtGui.QColor(color_hex)
+    painter.setBrush(color)
+    painter.setPen(QtCore.Qt.NoPen)
+    
+    cx, cy = size / 2.0, size / 2.0
+    
+    path = QtGui.QPainterPath()
+    # Outer circle
+    path.addEllipse(QtCore.QPointF(cx, cy), size * 0.30, size * 0.30)
+    
+    # Add 8 teeth
+    for i in range(8):
+        angle = i * 45.0
+        r1 = size * 0.26
+        r2 = size * 0.44
+        w1 = size * 0.12
+        w2 = size * 0.08
+        
+        polygon = QtGui.QPolygonF([
+            QtCore.QPointF(cx - w1/2, cy - r1),
+            QtCore.QPointF(cx - w2/2, cy - r2),
+            QtCore.QPointF(cx + w2/2, cy - r2),
+            QtCore.QPointF(cx + w1/2, cy - r1)
+        ])
+        
+        transform = QtGui.QTransform()
+        transform.translate(cx, cy)
+        transform.rotate(angle)
+        transform.translate(-cx, -cy)
+        
+        rotated_poly = transform.map(polygon)
+        path.addPolygon(rotated_poly)
+        
+    # Subtract center hole
+    hole = QtGui.QPainterPath()
+    hole.addEllipse(QtCore.QPointF(cx, cy), size * 0.12, size * 0.12)
+    
+    final_path = path.subtracted(hole)
+    painter.drawPath(final_path)
+    painter.end()
+    
+    return QtGui.QIcon(pixmap)
+
+
 class BatesOptionsDialog(QtWidgets.QDialog):
     """Advanced stamp configurations modal dialog."""
     def __init__(self, parent, current_opts):
@@ -186,8 +239,10 @@ class BatesView(QtWidgets.QWidget):
         self.left_card.add_widget(FormRow("Separator:", self.cb_sep, label_width=90))
 
         # Advanced Settings Dialog Trigger
-        self.btn_options = QtWidgets.QPushButton("⚙️ ADVANCED STAMP OPTIONS")
+        self.btn_options = QtWidgets.QPushButton(" ADVANCED STAMP OPTIONS")
         self.btn_options.setObjectName("SecondaryButton")
+        self.btn_options.setIcon(create_gear_icon("#374151", 16))
+        self.btn_options.setIconSize(QtCore.QSize(16, 16))
         self.btn_options.clicked.connect(self.show_options)
         self.left_card.add_widget(self.btn_options)
 

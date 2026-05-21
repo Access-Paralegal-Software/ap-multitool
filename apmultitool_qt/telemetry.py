@@ -6,6 +6,7 @@ import os
 import json
 import threading
 from datetime import datetime
+from core import __version__, __channel__
 
 # Telemetry file saved to user's home folder (matches security license file strategy)
 TELEMETRY_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_telemetry.json")
@@ -15,6 +16,7 @@ class TelemetryManager:
     def __init__(self):
         self._lock = threading.Lock()
         self.stats = {
+            "build_id": f"v{__version__}{__channel__}",
             "total_runs": 0,
             "success_runs": 0,
             "failed_runs": 0,
@@ -32,6 +34,8 @@ class TelemetryManager:
     def load(self):
         """Loads telemetry logs from the local filesystem."""
         with self._lock:
+            current_build = f"v{__version__}{__channel__}"
+            self.stats["build_id"] = current_build
             if os.path.exists(TELEMETRY_FILE):
                 try:
                     with open(TELEMETRY_FILE, 'r') as f:
@@ -43,6 +47,8 @@ class TelemetryManager:
                                     self.stats[k].update(v)
                                 else:
                                     self.stats[k] = v
+                        # Force overwrite with current build ID
+                        self.stats["build_id"] = current_build
                 except Exception:
                     pass
 
@@ -111,6 +117,7 @@ class TelemetryManager:
         """Resets all aggregated metrics back to zeroes."""
         with self._lock:
             self.stats = {
+                "build_id": f"v{__version__}{__channel__}",
                 "total_runs": 0,
                 "success_runs": 0,
                 "failed_runs": 0,

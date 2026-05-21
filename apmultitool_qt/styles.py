@@ -196,4 +196,51 @@ QStatusBar {{
     border-top: 1px solid {BRAND_BORDER};
     font-size: 11px;
 }}
+
+/* Custom Styled Scrollbars to match premium dark-mode / light-grey theme */
+QScrollBar:vertical {{
+    border: none;
+    background-color: {BRAND_LIGHT_GREY};
+    width: 10px;
+    margin: 0px;
+    border-radius: 5px;
+}}
+QScrollBar::handle:vertical {{
+    background-color: #D1D5DB;
+    min-height: 20px;
+    border-radius: 5px;
+}}
+QScrollBar::handle:vertical:hover {{
+    background-color: #9CA3AF;
+}}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0px;
+    background: none;
+}}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+    background: none;
+}}
+
+QScrollBar:horizontal {{
+    border: none;
+    background-color: {BRAND_LIGHT_GREY};
+    height: 10px;
+    margin: 0px;
+    border-radius: 5px;
+}}
+QScrollBar::handle:horizontal {{
+    background-color: #D1D5DB;
+    min-width: 20px;
+    border-radius: 5px;
+}}
+QScrollBar::handle:horizontal:hover {{
+    background-color: #9CA3AF;
+}}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+    width: 0px;
+    background: none;
+}}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+    background: none;
+}}
 """

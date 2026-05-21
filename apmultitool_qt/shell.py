@@ -238,8 +238,30 @@ class APMainWindow(QtWidgets.QMainWindow):
         self.set_status(msg)
 
     def switch_view(self, view_id):
+        # Stop any existing tab transition animation
+        if hasattr(self, "fade_animation") and self.fade_animation.state() == QtCore.QPropertyAnimation.Running:
+            self.fade_animation.stop()
+
+        target_widget = self.stacked_widget.widget(view_id)
+        
+        # Apply graphics opacity effect for fade-in transition
+        opacity_effect = QtWidgets.QGraphicsOpacityEffect(target_widget)
+        target_widget.setGraphicsEffect(opacity_effect)
+        
+        self.fade_animation = QtCore.QPropertyAnimation(opacity_effect, b"opacity")
+        self.fade_animation.setDuration(200)  # Snappy 200ms transition
+        self.fade_animation.setStartValue(0.0)
+        self.fade_animation.setEndValue(1.0)
+        self.fade_animation.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        
+        # Remove the effect after animation finishes to prevent rendering overhead
+        self.fade_animation.finished.connect(lambda w=target_widget: w.setGraphicsEffect(None))
+        
         # Switch stacked widget active index
         self.stacked_widget.setCurrentIndex(view_id)
+        
+        # Start transition
+        self.fade_animation.start()
 
         # Update header banner labels
         if view_id == 0:
@@ -254,3 +276,4 @@ class APMainWindow(QtWidgets.QMainWindow):
         elif view_id == 3:
             self.lbl_title.setText("Help & Application Support")
             self.lbl_sub.setText("System operational metadata metrics and background threading diagnostics.")
+

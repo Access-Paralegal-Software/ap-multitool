@@ -45,4 +45,4 @@ Get-FileHash -Path "path\to\APMultitool_Setup_v1.0.0-alpha1.exe" -Algorithm SHA2
 ```
 
 Confirm that the output hash matches the release signature file:
-- **Expected Hash:** `ADB7CC6B49A8B0026F87A65BF3FE7D24F31BEBE75DA360372B077F805C606564`
+- **Expected Hash:** `F0706FC434E4753219008EC13096A21DD34EA36B92470A3E3F178CA7DA97344C`

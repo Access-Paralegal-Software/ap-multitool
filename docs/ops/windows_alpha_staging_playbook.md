@@ -15,7 +15,7 @@ Before transitioning APMultitool to a fully public Stable release, it will under
 - **Technical Literacy:** Mid-level (comfortable navigating directories, unzipping files, but relying on GUI cues for advanced parameters).
 
 ## Deployment Protocol
-1. **Artifact Delivery:** Distribute `APMultitool_Setup_v1.0.0-rc1.exe` via secure, tracked link.
+1. **Artifact Delivery:** Distribute `APMultitool_Setup_v1.0.0-alpha1.exe` via secure, tracked link.
 2. **SmartScreen Warning:** Explicitly notify the cohort that they will encounter a Windows SmartScreen warning because this is a newly minted cryptographic certificate. Provide instructions to click "More Info" -> "Run anyway".
 
 ## Requested Testing Workflows

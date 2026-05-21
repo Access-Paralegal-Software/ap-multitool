@@ -149,6 +149,7 @@ class CompilerView(QtWidgets.QWidget):
         self.output_name_input = QtWidgets.QLineEdit()
         self.output_name_input.setText("compiled_output.pdf")
         self.output_name_input.setPlaceholderText("e.g. Matter_123_Merge.pdf")
+        self.output_name_input.editingFinished.connect(self.on_output_name_editing_finished)
         self.left_card.add_widget(FormRow("Output PDF Name:", self.output_name_input, label_width=120))
 
         self.left_card.add_stretch()
@@ -270,6 +271,12 @@ class CompilerView(QtWidgets.QWidget):
         main_win = self.get_main_window()
         if main_win:
             main_win.hide_progress("Ready")
+
+    def on_output_name_editing_finished(self):
+        """Ensure cleared output file name falls back to a safe default."""
+        text = self.output_name_input.text().strip()
+        if not text:
+            self.output_name_input.setText("compiled.pdf")
 
     def browse_output_dir(self):
         """Select a target save folder and update field path."""
