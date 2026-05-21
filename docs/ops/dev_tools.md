@@ -69,6 +69,42 @@ The wrapper forwards any arguments after `--` directly to pytest.
 
 Prerequisite: run from a Python environment with `pytest` and the subset's application dependencies installed.
 
+## scripts/audit_logging.py
+
+Purpose: scan production Python layers for direct `print()` calls, global logging configuration, and logger usage. The script is read-only and does not import application modules.
+
+Common usage:
+
+```powershell
+python scripts/audit_logging.py
+python scripts/audit_logging.py --json
+```
+
+The Markdown output is intended for developer review. The JSON output is intended for future automation or support bundle tooling.
+
+## scripts/validate_telemetry_schema.py
+
+Purpose: validate the local telemetry JSON structure before a developer or tester shares the file for diagnosis.
+
+Common usage:
+
+```powershell
+python scripts/validate_telemetry_schema.py
+python scripts/validate_telemetry_schema.py --json
+python scripts/validate_telemetry_schema.py --file C:\Users\tester\.access_paralegal_telemetry.json
+```
+
+Validation checks:
+
+- Required fields, including `build_id`.
+- Expected string and integer types.
+- Non-negative count values.
+- Aggregate outcome counts do not exceed total counts.
+
+The script returns exit code `0` when the schema passes and `1` when validation fails.
+
+CLI hookup decision: no `cli.py` subcommand was added in this batch. The current CLI imports core PDF dependencies before argument dispatch, so a telemetry-only command would still require the full runtime dependency set. Keeping the validator as a standalone script is safer for tester and support machines.
+
 ## Logging Review
 
 Scope reviewed: `core/`, `apmultitool_qt/`, `cli.py`, and `email_processing.py`.
@@ -83,4 +119,31 @@ Current findings:
 
 Decision for this tooling lane: no runtime logging cleanup was applied. The obvious inconsistencies are low-risk legacy/standalone diagnostics, and changing them could alter visible behavior or hide tester-facing messages. A future logging pass should introduce named loggers consistently as `APMultitool.<layer>` and keep core operations Qt-unaware.
 
-Future tooling idea: add a static logging audit script that reports direct `print()` calls in production modules and classifies them as CLI output, user-facing diagnostics, or cleanup candidates.
+Follow-up tooling now exists in `scripts/audit_logging.py`; use `docs/ops/logging_audit_overview.md` to interpret the report before making any cleanup changes.
+
+---
+
+## 🔬 Alpha1 Specific Diagnostics
+
+Here are common diagnostic flows tailored for the `v1.0.0-alpha1` release cycle:
+
+### 1. Verification of Tester Build ID
+When a tester submits their telemetry JSON snapshot, operators can verify they were running the correct `v1.0.0-alpha1` binary:
+```powershell
+# Filter output for the build identity field
+python scripts/inspect_telemetry.py --file .\docs\feedback\v1.0.0-alpha1\telemetry_tester_smith_j.json | Select-String "Build:"
+```
+Expected output:
+```text
+Build: v1.0.0-alpha1
+```
+
+### 2. Validating Telemetry Code Paths Locally
+Before shipping code edits to master, developers can run focused tests validating the local telemetry schema and About screen widget bindings:
+```powershell
+# Run the telemetry test suite
+python scripts/run_core_tests.py --subset telemetry
+
+# Run the packaging test suite (verifies versioning consistency)
+python scripts/run_core_tests.py --subset packaging
+```
