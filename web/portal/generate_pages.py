@@ -31,7 +31,7 @@ PAIN_POINTS = {
     "bates-stamping": {
         "hook": "Flattened Bates Stamping",
         "sub": "Stop paying $300/mo for Adobe Acrobat just to Bates stamp local discovery.",
-        "body": "Federal and State rules require un-editable, chronological Bates serialization. Access Paralegal Suite permanently fuses numbers into the vector layer locally on your PC.",
+        "body": "Federal and State rules require un-editable, chronological Bates serialization. APMultitool permanently fuses numbers into the vector layer locally on your PC.",
         "seo": "how to bates stamp pdf offline without acrobat"
     },
     "email-harvesting": {
@@ -49,7 +49,7 @@ PAIN_POINTS = {
     "redaction-flatten": {
         "hook": "Indelible Redaction Preservation",
         "sub": "Ensure opposing counsel cannot 'undo' your redaction blocks.",
-        "body": "Privacy is paramount. Access Paralegal Suite fuses all layers, flattening the document to prevent metadata leakage and HIPAA/PII violations.",
+        "body": "Privacy is paramount. APMultitool fuses all layers, flattening the document to prevent metadata leakage and HIPAA/PII violations.",
         "seo": "how to flatten pdf redaction permanently"
     },
     "freelance-edge": {
@@ -77,8 +77,8 @@ def get_template(state, court, spec, key, data):
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Professional {data['hook']} optimized for {state} {court} {spec} litigation requirements. Get the 100% offline Access Paralegal Suite.">
-    <title>{state} {court} {spec} {data['hook']} Utility | Access Paralegal Suite</title>
+    <meta name="description" content="Professional {data['hook']} optimized for {state} {court} {spec} litigation requirements. Get the 100% offline APMultitool.">
+    <title>{state} {court} {spec} {data['hook']} Utility | APMultitool</title>
     <link rel="icon" type="image/png" href="../assets/suite_logo.png">
     <style>
         :root {{ --accent: #288F4F; --accent-hover: #1E6C3A; --silver: #F3F4F6; --dark: #1F2937; }}
@@ -127,21 +127,29 @@ def get_template(state, court, spec, key, data):
 
         <!-- DOWNLOAD OPTIONS BAR -->
         <div class="dls">
-            <a href="../Access_Paralegal_Merge_Setup_v1.8.1.exe" class="dl-card">
+            <a href="https://github.com/woodyardae/ap-multitool/releases/download/v1.0.0-beta1/APMultitool_Setup_v1.0.0-beta1.exe" class="dl-card" style="border: 2px solid var(--accent); background: rgba(40, 143, 79, 0.01);">
                 <span class="ico">🪟</span>
                 <h4>Windows Setup</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">v1.8.1 (.exe) <span style="display:inline-block; background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 4px; font-size:0.65rem; color:#4B5563; font-weight:bold;">BETA</span></span>
+                <span style="color:#6B7280; font-size:0.85rem;">v1.0.0-beta1 (.exe) <span style="display:inline-block; background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 4px; font-size:0.65rem; color:#4B5563; font-weight:bold;">BETA</span></span>
             </a>
-            <a href="../Access_Paralegal_Mac_Installer.dmg" class="dl-card">
+            <div class="dl-card" style="opacity:0.5; cursor:not-allowed; border-color:#E5E7EB;">
                 <span class="ico">🍏</span>
-                <h4>macOS Disk Image</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">Apple Silicon & Intel</span>
-            </a>
-            <a href="../Access_Paralegal_Linux_Installer.deb" class="dl-card">
+                <h4>macOS App</h4>
+                <span style="color:#6B7280; font-size:0.85rem;">Not Available</span>
+            </div>
+            <div class="dl-card" style="opacity:0.5; cursor:not-allowed; border-color:#E5E7EB;">
                 <span class="ico">🐧</span>
                 <h4>Linux Package</h4>
-                <span style="color:#6B7280; font-size:0.85rem;">Ubuntu / Debian</span>
-            </a>
+                <span style="color:#6B7280; font-size:0.85rem;">Not Available</span>
+            </div>
+        </div>
+
+        <!-- SMARTSCREEN & SECURITY DISCLOSURE -->
+        <div style="margin-top: 3rem; background: #FFFBEB; border: 1px solid #FDE68A; padding: 1.5rem; border-radius: 8px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <strong style="color: #B45309; font-size: 0.95rem; display: block; margin-bottom: 0.25rem;">🛡️ Windows Defender SmartScreen Note</strong>
+            <p style="margin: 0; font-size: 0.85rem; color: #78350F; line-height: 1.5;">
+                APMultitool for Windows is a newly compiled release and not yet signed with a commercial certificate. If Windows Defender displays a protection prompt during installation, click <strong>"More info"</strong> then <strong>"Run anyway"</strong> to proceed. Word and Excel conversions require Microsoft Office.
+            </p>
         </div>
 
         <div class="footer">
@@ -165,7 +173,7 @@ def generate_sitemap_xml(filenames):
     return "\n".join(xml_lines)
 
 def main():
-    output_dir = "web_portal/pages"
+    output_dir = "pages"
     # Clean existing pages to avoid bloating
     if os.path.exists(output_dir):
         import shutil
@@ -198,11 +206,11 @@ def main():
                 
     # Save Sitemap.xml
     sitemap_content = generate_sitemap_xml(all_filenames)
-    with open("web_portal/sitemap.xml", "w", encoding="utf-8") as sf:
+    with open("sitemap.xml", "w", encoding="utf-8") as sf:
         sf.write(sitemap_content)
                 
     print(f"SUCCESS! Synthesized {count} hyper-targeted, scalable SEO landing pages!")
-    print(f"Generated XML sitemap at 'web_portal/sitemap.xml' listing all {count} URLs!")
+    print(f"Generated XML sitemap at 'sitemap.xml' listing all {count} URLs!")
 
 if __name__ == "__main__":
     main()

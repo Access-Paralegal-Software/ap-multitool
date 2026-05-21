@@ -17,7 +17,7 @@ TEMPLATES = {
     </div>
     <!-- EMAIL CAPTURE -->
     <form action="#" style="text-align: center; background: #EBF8F1; padding: 1.5rem; border-radius: 8px; border: 1px solid #A7F3D0;">
-        <h4 style="margin: 0 0 0.5rem 0; color: #065F46;">Get the Access Paralegal Suite Demo</h4>
+        <h4 style="margin: 0 0 0.5rem 0; color: #065F46;">Get the APMultitool Demo</h4>
         <p style="font-size: 0.85rem; margin: 0 0 1rem 0;">Includes our "E-Filing Optimization Guide"</p>
         <input type="email" placeholder="Work Email" required style="padding: 0.75rem; border: 1px solid #C4B5FD; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">🔓 Get Free Download</button>
@@ -56,7 +56,7 @@ TEMPLATES = {
     </div>
     <!-- Quote Card -->
     <div style="border-left: 4px solid #288F4F; padding: 1rem 1.5rem; background: #F9FAFB; border-radius: 0 8px 8px 0; margin-bottom: 2rem; font-style: italic;">
-        "The big firms use Relativity. Independent contractors couldn't compete until Access Paralegal Suite. Now I harvest 500 email attachments in 1 minute."
+        "The big firms use Relativity. Independent contractors couldn't compete until APMultitool. Now I harvest 500 email attachments in 1 minute."
     </div>
     <!-- EMAIL CAPTURE -->
     <form action="#" style="text-align: center; background: #EBF8F1; padding: 1.5rem; border-radius: 8px; border: 1px solid #A7F3D0;">
@@ -87,7 +87,7 @@ TEMPLATES = {
     <form action="#" style="text-align: center; background: #F3F4F6; padding: 1.5rem; border-radius: 8px;">
         <h4 style="margin: 0 0 1rem 0;">Unlock Hyper-Speed Compiling</h4>
         <input type="email" placeholder="Email Address" required style="padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
-        <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Download Access Paralegal Suite (Beta)</button>
+        <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Download APMultitool (Beta)</button>
     </form>
 </div>""",
 
@@ -119,7 +119,7 @@ TEMPLATES = {
         <p style="font-size: 1.1rem; color: #4B5563; max-width: 600px; margin: 0 auto 2rem auto;">Feed us .MSG or .EML files. We rip the PDF attachments, auto-format professional correspondence cover sheets, and nest them into a table of contents instantly.</p>
     </div>
     <div style="background: #F0FDF4; border: 1px solid #DCFCE7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-        <strong>🕒 Time-Tracking Stats:</strong> Batch extracting 200 Outlook emails manually takes 2.5 hours. Access Paralegal Suite does it in <strong>12 seconds.</strong>
+        <strong>🕒 Time-Tracking Stats:</strong> Batch extracting 200 Outlook emails manually takes 2.5 hours. APMultitool does it in <strong>12 seconds.</strong>
     </div>
     <!-- EMAIL CAPTURE -->
     <form action="#" style="text-align: center; background: #F3F4F6; padding: 1.5rem; border-radius: 8px;">
@@ -131,7 +131,7 @@ TEMPLATES = {
 }
 
 def main():
-    out_dir = "web_portal/squarespace_ab_tests"
+    out_dir = "squarespace_ab_tests"
     os.makedirs(out_dir, exist_ok=True)
     for name, html in TEMPLATES.items():
         with open(os.path.join(out_dir, name), "w", encoding="utf-8") as f:
