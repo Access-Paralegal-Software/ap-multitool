@@ -5,7 +5,7 @@ Welcome to the Access Paralegal Suite testing team! Your mission is to push this
 ## Step 1: Download & Activation
 
 You are going to act exactly like a standard end-user. 
-1. **Download:** Go to our temporary GitHub landing page at `[Insert GitHub Pages URL Here]` and download the `Access_Paralegal_Merge_Setup_v1.8.1.exe` file. *(We are using GitHub Pages right now while the Squarespace site is still under construction).*
+1. **Download:** Go to our portal landing page at [software.accessparalegalservices.com](https://software.accessparalegalservices.com) and download the `APMultitool-windows-beta.exe` file.
 2. **Launch:** Double-click the downloaded `.exe` file.
 3. **Activate Your Pro Key:** When the app opens, look for the lock/activation prompt. Enter your secure testing key: `ACCESS_QA_MASTER_KEY` (or the specific key provided to you) to bypass the free-tier limits and unlock all Enterprise features.
 
@@ -46,4 +46,4 @@ Read the official FAQ here: `[Insert Link to Github Repo FAQ.md Here]`
 
 ***
 
-*Happy Hunting! If you encounter an error, take a screenshot of the error message and write down exactly what you clicked right before it happened.*
+*Happy Hunting! If you encounter an error, take a screenshot of the error message, export your Support Bundle (details in index.html), and send it to **info@accessparalegalservices.com**.*

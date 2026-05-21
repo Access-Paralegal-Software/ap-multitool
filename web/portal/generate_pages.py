@@ -147,8 +147,11 @@ def get_template(state, court, spec, key, data):
         <!-- SMARTSCREEN & SECURITY DISCLOSURE -->
         <div style="margin-top: 3rem; background: #FFFBEB; border: 1px solid #FDE68A; padding: 1.5rem; border-radius: 8px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
             <strong style="color: #B45309; font-size: 0.95rem; display: block; margin-bottom: 0.25rem;">🛡️ Windows Defender SmartScreen Note</strong>
-            <p style="margin: 0; font-size: 0.85rem; color: #78350F; line-height: 1.5;">
+            <p style="margin: 0; font-size: 0.85rem; color: #78350F; line-height: 1.5; margin-bottom: 0.75rem;">
                 APMultitool for Windows is a newly compiled release and not yet signed with a commercial certificate. If Windows Defender displays a protection prompt during installation, click <strong>"More info"</strong> then <strong>"Run anyway"</strong> to proceed. Word and Excel conversions require Microsoft Office.
+            </p>
+            <p style="margin: 0; font-size: 0.85rem; color: #78350F; line-height: 1.5;">
+                <strong>📬 Beta Feedback & Support:</strong> If you encounter bugs, installation issues, or confusing behavior, please email us a short description at <a href="mailto:info@accessparalegalservices.com" style="color: #B45309; font-weight: 600; text-decoration: underline;">info@accessparalegalservices.com</a>.
             </p>
         </div>
 

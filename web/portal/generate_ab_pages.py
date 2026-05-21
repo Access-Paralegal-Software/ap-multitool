@@ -22,6 +22,7 @@ TEMPLATES = {
         <input type="email" placeholder="Work Email" required style="padding: 0.75rem; border: 1px solid #C4B5FD; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">🔓 Get Free Download</button>
     </form>
+    <p style="font-size: 0.75rem; text-align: center; color: #6B7280; margin-top: 1.5rem; margin-bottom: 0;">Beta questions or support? Contact us at <a href="mailto:info@accessparalegalservices.com" style="color: #288F4F; text-decoration: underline;">info@accessparalegalservices.com</a></p>
 </div>""",
 
     "Squarespace_B1_Fear_Privacy.html": """<!-- HOOK: Avoid Cloud Security Malpractice -->
@@ -45,6 +46,7 @@ TEMPLATES = {
         <input type="email" placeholder="Your Secure Email" required style="padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #1F2937; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">🛡️ Download Secure Installer</button>
     </form>
+    <p style="font-size: 0.75rem; text-align: center; color: #6B7280; margin-top: 1.5rem; margin-bottom: 0;">Beta questions or support? Contact us at <a href="mailto:info@accessparalegalservices.com" style="color: #1F2937; text-decoration: underline;">info@accessparalegalservices.com</a></p>
 </div>""",
 
     "Squarespace_A2_Social_Review.html": """<!-- HOOK: Built by Paralegals -->
@@ -64,6 +66,7 @@ TEMPLATES = {
         <input type="email" placeholder="Paralegal Email" required style="padding: 0.75rem; border: 1px solid #C4B5FD; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Get Started Free</button>
     </form>
+    <p style="font-size: 0.75rem; text-align: center; color: #6B7280; margin-top: 1.5rem; margin-bottom: 0;">Beta questions or support? Contact us at <a href="mailto:info@accessparalegalservices.com" style="color: #288F4F; text-decoration: underline;">info@accessparalegalservices.com</a></p>
 </div>""",
 
     "Squarespace_B2_Product_Speed.html": """<!-- HOOK: Tech Specs & Raw Speed -->
@@ -89,6 +92,7 @@ TEMPLATES = {
         <input type="email" placeholder="Email Address" required style="padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #288F4F; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Download APMultitool (Beta)</button>
     </form>
+    <p style="font-size: 0.75rem; text-align: center; color: #6B7280; margin-top: 1.5rem; margin-bottom: 0;">Beta questions or support? Contact us at <a href="mailto:info@accessparalegalservices.com" style="color: #288F4F; text-decoration: underline;">info@accessparalegalservices.com</a></p>
 </div>""",
 
     "Squarespace_A3_Bates_Flatten.html": """<!-- FEATURE HOOK: Bates Stamping Focus -->
@@ -109,6 +113,7 @@ TEMPLATES = {
         <input type="email" placeholder="Enter Work Email" required style="padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #D97706; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">🔓 Download Bates Utility</button>
     </form>
+    <p style="font-size: 0.75rem; text-align: center; color: #6B7280; margin-top: 1.5rem; margin-bottom: 0;">Beta questions or support? Contact us at <a href="mailto:info@accessparalegalservices.com" style="color: #D97706; text-decoration: underline;">info@accessparalegalservices.com</a></p>
 </div>""",
 
     "Squarespace_B3_Email_Harvester.html": """<!-- FEATURE HOOK: Email attachment Harvesting -->
@@ -127,6 +132,7 @@ TEMPLATES = {
         <input type="email" placeholder="Email Address" required style="padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 4px; width: 60%; margin-bottom: 1rem;"><br>
         <button style="background: #059669; color: white; border: none; padding: 0.75rem 2rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 60%;">Download Now</button>
     </form>
+    <p style="font-size: 0.75rem; text-align: center; color: #6B7280; margin-top: 1.5rem; margin-bottom: 0;">Beta questions or support? Contact us at <a href="mailto:info@accessparalegalservices.com" style="color: #059669; text-decoration: underline;">info@accessparalegalservices.com</a></p>
 </div>"""
 }
 
