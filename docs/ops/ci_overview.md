@@ -1,61 +1,165 @@
 ---
 id: ci_overview
-title: Continuous Integration (CI) Overview
-type: ops-manual
+title: CI Overview — Test Workflows and Developer Ergonomics
+type: ops
 status: active
-project: APMultitool
-created_at: 2026-05-21
+project: Access Paralegal / APMultitool
+created: 2026-05-21
 ---
 
-# Continuous Integration (CI) Overview
-
-This document describes the Continuous Integration (CI) pipelines configured for APMultitool. The CI workflows automate test execution across multiple operating systems and handle cross-platform packaging.
-
----
-
-## ⚙️ Workflows
-
-The repository contains two main GitHub Actions workflows under `.github/workflows/`:
-
-1.  **`tests.yml` (CI Test Suite)**: Executes unit and integration test subsets on every push or pull request targeting `master`.
-2.  **`build.yml` (Cross-Platform Build Master)**: Compiles standalone executable bundles and installer files on commits to `master` or manual triggering.
+# CI Overview — Test Workflows and Developer Ergonomics
 
 ---
 
-## 🧪 CI Test Runner: `tests.yml`
+## 1. Workflows at a Glance
 
-To ensure changes do not break core logic or UI structures, `tests.yml` runs a matrix job testing the subsets defined by [run_core_tests.py](file:///C:/Users/aewoo/Desktop/Repos/ap-multitool/scripts/run_core_tests.py).
+| Workflow | File | Trigger | Purpose |
+|---|---|---|---|
+| **CI Test Suite** | `.github/workflows/tests.yml` | Push/PR to `master`, manual | Runs pytest on 3-platform × subset matrix |
+| **Cross-Platform Build** | `.github/workflows/build.yml` | Push to `master`, manual | Legacy packaging probe (outdated entry point — see ho_0026) |
+| **macOS Packaging Probe** | `.github/workflows/macos_packaging_probe.yml` | Manual, `release/**` push | macOS build probe; signing/notarization guarded |
+| **Notion Sync** | `.github/workflows/notion-sync.yml` | Push any branch | Syncs commit metadata to Notion |
 
-### Test Matrix
-- **Operating Systems**: `windows-latest`, `macos-latest`, `ubuntu-latest`
-- **Subsets**: `unit`, `integration`, `core`, `qt`, `cli`, `telemetry`, `packaging`
+The **CI Test Suite** is the primary gate for code correctness.
 
-### Headless Linux Qt Test Execution
-Qt/PySide6 GUI widgets require a windowing system server (like X11 or Wayland) to instantiate and layout widgets. Because Linux runners are headless server environments, directly launching GUI tests will fail with connection errors.
+---
 
-**Mitigation**: The Linux workflow installs a virtual framebuffer (`xvfb`) and uses `xvfb-run` to execute the Python test launcher:
-```yaml
-- name: Run Tests with Xvfb (Linux)
-  if: runner.os == 'Linux'
-  run: |
-    xvfb-run --auto-servernum python scripts/run_core_tests.py --subset ${{ matrix.subset }}
+## 2. Test Matrix
+
+The test workflow runs a matrix of **3 operating systems × 7 named subsets**, producing 21 parallel jobs.
+
+| OS | Qt tests | Packaging tests | Display |
+|---|---|---|---|
+| `windows-latest` | ✅ Native | ✅ Native | Native |
+| `macos-latest` | ✅ Native | ✅ File checks pass | Native |
+| `ubuntu-latest` | ✅ via xvfb | ✅ File checks pass | Virtual (xvfb) |
+
+Linux installs `xvfb` and system Qt dependencies, then wraps the test runner with `xvfb-run --auto-servernum` to provide a virtual framebuffer. This allows PySide6 to instantiate `QApplication` without a real display server.
+
+See `docs/ops/ci_known_issues.md` for platform-specific caveats.
+
+---
+
+## 3. Test Subsets and Markers
+
+Named subsets (used in the CI matrix) map to pytest marker expressions via `run_core_tests.py`. Markers are declared in `pytest.ini`; all test files carry a `pytestmark` module-level variable.
+
+| Subset / Marker | What it covers | Test files |
+|---|---|---|
+| `unit` → `core` | Headless engine tests — no UI dependency | test_core_folder_tree, test_docx_xlsx_bates, test_email_to_pdf, test_stability |
+| `integration` | Multi-component end-to-end tests | test_cli_ux, test_core_folder_tree, test_docx_xlsx_bates, test_email_to_pdf, test_stability |
+| `core` | Same as unit | (see above) |
+| `qt` | Tests requiring a live `QApplication` / PySide6 display | all test_qt_* files, test_telemetry, test_versioning |
+| `cli` | Tests invoking the CLI via subprocess | test_cli_ux |
+| `telemetry` | Telemetry subsystem | test_telemetry |
+| `packaging` | Installer/packaging script checks | test_packaging |
+| `smoke` | Quick import and wiring sanity | test_qt_foundation, test_versioning |
+| `slow` | Computationally heavy (large PDFs, all Bates variants) | test_stability |
+
+---
+
+## 4. Developer Quickstart — Run Tests Locally
+
+Install dependencies the same way CI does:
+
+```bash
+pip install pytest pytest-qt PySide6 pypdf reportlab pikepdf pymupdf extract-msg cryptography pillow
 ```
-This isolates the graphical elements in virtual memory, allowing test assertions (like widget states, label values, and model bindings) to run successfully without graphical displays.
+
+**Run all tests:**
+```bash
+pytest
+python scripts/run_core_tests.py
+```
+
+**Run a named subset (mirrors CI matrix):**
+```bash
+python scripts/run_core_tests.py --subset core
+python scripts/run_core_tests.py --subset qt
+python scripts/run_core_tests.py --subset cli
+python scripts/run_core_tests.py --subset unit
+python scripts/run_core_tests.py --subset telemetry
+```
+
+**Run with a marker expression (ad-hoc):**
+```bash
+pytest -m core
+pytest -m "core and not slow"
+pytest -m "not qt and not packaging"
+python scripts/run_core_tests.py --marker "core and not slow"
+python scripts/run_core_tests.py --marker slow
+```
+
+**Fastest feedback loop:**
+```bash
+pytest -m smoke
+python scripts/run_core_tests.py --subset smoke
+```
+
+**Print what would run without executing:**
+```bash
+python scripts/run_core_tests.py --subset qt --dry-run
+```
+
+**Generate a JUnit XML report:**
+```bash
+pytest --junitxml=test-results.xml
+python scripts/run_core_tests.py --subset core --junit test-results.xml
+```
+
+**Qt tests on Linux (requires xvfb):**
+```bash
+sudo apt-get install -y xvfb libegl1-mesa libxkbcommon-x11-0 libxcb-icccm4 \
+    libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+    libxcb-xinerama0 libxcb-xfixes0 libgl1-mesa-glx
+xvfb-run --auto-servernum python scripts/run_core_tests.py --subset qt
+```
 
 ---
 
-## 📦 Packaging Pipeline: `build.yml`
+## 5. CI Failure Response Guide
 
-The packaging workflow automates standalone executable generation for non-Windows platforms (acting as probes for macOS and Linux):
+### Step 1: Find the failing job in GitHub Actions
 
-### 1. Ubuntu Runner (Linux)
-- Installs `python3-tk` system dependencies.
-- Runs PyInstaller to bundle the application using a colon-separated `--add-data` separator.
-- Compiles a native Debian package installer (`.deb`) by setting up a standard control folder structures and packaging it using `dpkg-deb --build`.
+1. Go to the repository on GitHub → **Actions** tab.
+2. Click the failing workflow run.
+3. The matrix summary shows which `subset (os)` combination failed.
+4. Click the failing job leg to see the full pytest output inline.
+5. Download the **test-results-\<os\>-\<subset\>.xml** artifact from the run summary for structured failure data.
 
-### 2. macOS Runner (macOS)
-- Runs PyInstaller to build a `.app` bundle.
-- Generates a standard compressed Apple Disk Image (`.dmg`) using the native `hdiutil` utility.
+### Step 2: Reproduce locally
 
-> [!WARNING]
-> While `build.yml` creates macOS `.dmg` and Linux `.deb` installers, these builds are **unsigned** and are not subject to regular automated functional test verification. Windows remains the primary, active validated lane.
+```bash
+# Reproduce a specific subset on your local platform
+python scripts/run_core_tests.py --subset qt -v
+
+# Reproduce a single failing test
+pytest tests/test_qt_shutdown.py::test_shell_shutdown_cleans_workers -v
+
+# Reproduce Linux leg locally (if you have xvfb)
+xvfb-run --auto-servernum python scripts/run_core_tests.py --subset qt
+```
+
+### Step 3: Diagnose marker issues
+
+```bash
+# List all collected tests and their markers without running
+pytest --collect-only -q
+
+# Check which tests match a given subset/marker
+pytest --collect-only -q -m core
+python scripts/run_core_tests.py --subset qt --dry-run
+```
+
+If a marker is unknown (produces `PytestUnknownMarkWarning`), add it to the `markers` section in `pytest.ini` and apply `pytestmark` in the relevant test file.
+
+### Step 4: Fix and update
+
+- **Test logic fix:** Update the test, run locally, confirm it passes.
+- **New marker needed:** Add to `pytest.ini` and set `pytestmark` in the test file. Update `SUBSET_MARKERS` in `run_core_tests.py` if a new subset name is needed.
+- **Platform-specific failure:** Document in `ci_known_issues.md` with reproduction steps and mitigation options.
+- **Flaky test:** Document in `ci_known_issues.md`, add retry logic, or isolate the test.
+
+### Step 5: Push and verify
+
+Push the branch. The CI Test Suite triggers automatically on PR. Confirm the previously failing job is green before merging.

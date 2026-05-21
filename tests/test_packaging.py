@@ -2,6 +2,8 @@ import os
 import re
 import pytest
 
+pytestmark = [pytest.mark.packaging]
+
 # Paths to verify
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACKAGING_DIR = os.path.join(ROOT_DIR, "packaging", "windows")

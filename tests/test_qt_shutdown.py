@@ -2,6 +2,8 @@
 import pytest
 from PySide6 import QtWidgets, QtCore
 from apmultitool_qt.shell import APMainWindow
+
+pytestmark = [pytest.mark.qt]
 from apmultitool_qt.core_bridge import EngineJobWorker
 from core.job import Job, InputSpec, MergeParams, OutputSpec
 from pathlib import Path

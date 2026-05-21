@@ -10,6 +10,8 @@ from PySide6 import QtCore, QtWidgets
 from apmultitool_qt.views.compiler import CompilerView, format_size, get_format_display
 from apmultitool_qt.components import dialogs, file_dialogs
 
+pytestmark = [pytest.mark.qt]
+
 
 def test_format_helpers(tmp_path):
     """Verify size formatting and format type resolution."""

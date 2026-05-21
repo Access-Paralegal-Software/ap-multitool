@@ -10,6 +10,8 @@ from core.engine import DocEngine
 from core.operations.email_to_pdf import handle as email_handle
 import email_processing
 
+pytestmark = [pytest.mark.core, pytest.mark.integration]
+
 
 @pytest.fixture
 def test_email_path() -> Path:

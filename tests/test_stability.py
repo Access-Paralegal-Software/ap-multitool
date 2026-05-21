@@ -12,6 +12,8 @@ from core.engine import DocEngine
 from core.operations.bates_stamp import handle as bates_handle
 from core.operations.merge import handle as merge_handle
 
+pytestmark = [pytest.mark.core, pytest.mark.integration, pytest.mark.slow]
+
 
 @pytest.fixture
 def temp_output_dir():

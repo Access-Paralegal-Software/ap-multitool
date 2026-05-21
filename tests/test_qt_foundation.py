@@ -14,6 +14,8 @@ from apmultitool_qt.styles import GLOBAL_STYLE
 from apmultitool_qt.core_bridge import DiagnosticWorker
 from apmultitool_qt.views import CompilerView, BatesView, FileRoomView, AboutView
 
+pytestmark = [pytest.mark.qt, pytest.mark.smoke]
+
 def test_styles_import():
     """Verify QSS style variables exist and export a valid QSS string."""
     assert GLOBAL_STYLE is not None

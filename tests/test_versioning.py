@@ -4,6 +4,8 @@ from core import __version__, __channel__
 from apmultitool_qt.shell import APMainWindow
 from PySide6 import QtWidgets
 
+pytestmark = [pytest.mark.qt, pytest.mark.smoke]
+
 def test_global_version_constants_exist():
     """Verify that version and channel constants are properly exported from core."""
     assert isinstance(__version__, str)

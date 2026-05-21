@@ -13,6 +13,8 @@ from core.operations.docx_to_pdf import handle as docx_handle
 from core.operations.xlsx_to_pdf import handle as xlsx_handle
 from core.operations.bates_stamp import handle as bates_handle
 
+pytestmark = [pytest.mark.core, pytest.mark.integration]
+
 
 @pytest.fixture
 def temp_output_dir():

@@ -7,6 +7,8 @@ import pytest
 from pathlib import Path
 from PySide6 import QtCore, QtWidgets
 
+pytestmark = [pytest.mark.qt]
+
 from apmultitool_qt.components import (
     SectionCard,
     FormRow,

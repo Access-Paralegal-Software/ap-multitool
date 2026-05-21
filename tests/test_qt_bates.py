@@ -10,6 +10,8 @@ from PySide6 import QtCore, QtWidgets
 from apmultitool_qt.views.bates import BatesView, BatesOptionsDialog
 from apmultitool_qt.components import dialogs, file_dialogs
 
+pytestmark = [pytest.mark.qt]
+
 
 def test_bates_view_init():
     """Verify Bates view constructs with correct default values."""

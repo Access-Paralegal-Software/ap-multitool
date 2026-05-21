@@ -10,6 +10,8 @@ from PySide6 import QtCore, QtWidgets
 from apmultitool_qt.views.fileroom import FileRoomView
 from apmultitool_qt.components import dialogs, file_dialogs
 
+pytestmark = [pytest.mark.qt]
+
 
 def test_fileroom_view_init():
     """Verify FileRoomView constructs with correct default values."""

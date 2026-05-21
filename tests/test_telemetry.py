@@ -6,6 +6,8 @@ import os
 import pytest
 from PySide6 import QtWidgets
 import apmultitool_qt.telemetry
+
+pytestmark = [pytest.mark.qt, pytest.mark.telemetry]
 from apmultitool_qt.telemetry import TelemetryManager
 from apmultitool_qt.views import AboutView
 

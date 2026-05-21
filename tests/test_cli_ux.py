@@ -4,6 +4,8 @@ import subprocess
 from pathlib import Path
 import pytest
 
+pytestmark = [pytest.mark.cli, pytest.mark.integration]
+
 
 def run_cli(args: list[str]) -> subprocess.CompletedProcess:
     """Helper to run the CLI as a subprocess."""

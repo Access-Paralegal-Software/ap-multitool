@@ -10,6 +10,8 @@ import pytest
 from core.job import Job, FolderTreeParams, OutputSpec, JobStatus, OperationCancelled
 from core.engine import DocEngine
 
+pytestmark = [pytest.mark.core, pytest.mark.integration]
+
 
 @pytest.fixture
 def temp_output_dir():
