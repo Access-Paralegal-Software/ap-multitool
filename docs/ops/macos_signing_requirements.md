@@ -9,9 +9,11 @@ created: 2026-05-21
 
 # macOS Signing & Notarization — Secrets Inventory
 
-This document catalogs every credential required to enable Apple codesigning and notarization for APMultitool. None are currently configured. This document exists to guide the operator who provisions them.
+This document catalogs every credential required to enable Apple codesigning and notarization for APMultitool. None are currently configured. This document exists as a reference inventory; the step-by-step provisioning guide is in `docs/ops/macos_secrets_activation_checklist.md`.
 
 For the notarization command sequence and pipeline overview, see `docs/ops/macos_packaging_overview.md`.
+
+**Important:** No private keys, certificates (`.p12`, `.cer`), or passwords are ever stored in this repository. Only references, naming conventions, and usage patterns are documented here.
 
 ---
 

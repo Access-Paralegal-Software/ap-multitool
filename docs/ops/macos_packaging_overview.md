@@ -11,12 +11,26 @@ created: 2026-05-21
 
 ## 1. Current State
 
+### Pipeline Modes
+
+The pipeline operates in one of three modes, determined entirely by which credentials are passed to `build_app.sh` (or present as CI secrets):
+
+| Mode | Trigger | Output | macOS support claimed? |
+|---|---|---|---|
+| **Unsigned Probe** (default) | No credentials provided | Unsigned `.dmg` — not Gatekeeper-approved | No |
+| **Signing Only** | `SIGN_IDENTITY` provided, no notarization params | Signed `.app` + `.dmg` — Gatekeeper-approved with bypass | No |
+| **Activated** | All 5 secrets configured | Signed, notarized, stapled `.dmg` — Gatekeeper-approved, distributable | Only after end-to-end validation |
+
+**Current default:** Unsigned Probe. No credentials are provisioned. macOS is not a supported release platform.
+
+### Script Scaffold
+
 A shell script scaffold exists at `packaging/macos/build_app.sh`. It implements the full four-phase pipeline with graceful degradation — phases are skipped when required credentials are absent:
 
 - **PyInstaller compilation** of the CLI binary (`apmultitool`) and GUI app bundle (`Access_Paralegal_Multitool.app`).
-- **Codesigning** using `codesign --options runtime` (skipped when no signing identity is passed).
+- **Codesigning** using `codesign --options runtime` (skipped when no signing identity is passed). See `SIGNING_HOOK_START / SIGNING_HOOK_END` markers in the script.
 - **DMG creation** via native `hdiutil` with an `/Applications` symlink for drag-and-drop installation.
-- **Notarization and stapling** via `xcrun notarytool submit` + `xcrun stapler staple` (skipped when credentials are absent).
+- **Notarization and stapling** via `xcrun notarytool submit` + `xcrun stapler staple` (skipped when credentials are absent). See `NOTARIZATION_HOOK_START / NOTARIZATION_HOOK_END` markers in the script.
 
 **Known gap:** `build_app.sh` currently targets `gui_apmultitool.py` (legacy CustomTkinter GUI). The active Qt rewrite entry point is `gui_apmultitool_qt.py`. Updating the build script to the Qt entry point is a prerequisite for any production macOS release but is out of scope for this CI probe lane.
 
@@ -195,16 +209,63 @@ This bypass is only for developer testing. Distribute only notarized + stapled b
 
 ---
 
-## 8. Status
+## 8. Operator Quick-Start: Reading CI Logs
+
+### How to tell which mode is active
+
+Every probe workflow run begins with a **Secrets Dry-Run Check** step that logs the pipeline mode without using any secret values:
+
+**Probe mode (secrets missing):**
+```
+⚠️  One or more macOS signing secrets are missing.
+   Pipeline running in UNSIGNED PROBE MODE — build and DMG only.
+   To activate signing/notarization, follow:
+   docs/ops/macos_secrets_activation_checklist.md
+```
+
+**Activated mode (all secrets present):**
+```
+✅ All macOS signing secrets present — pipeline will run in ACTIVATED mode.
+   Signing and notarization steps will execute after the build.
+```
+
+The build script itself also logs mode at startup:
+```
+[mode] UNSIGNED PROBE — no credentials provided; producing unsigned DMG.
+[mode] ACTIVATED — signing and notarization enabled.
+```
+
+### What to do if activation is intended but secrets are missing
+
+1. Go to GitHub → Settings → Secrets and variables → Actions.
+2. Check which of the 5 required secrets are present. The dry-run check step logs `present: true/false` for each.
+3. Follow `docs/ops/macos_secrets_activation_checklist.md` to provision any that are missing.
+4. Re-run the workflow (Actions → macOS Packaging Probe → Run workflow).
+
+### What to do if a signing or notarization step fails
+
+1. Expand the failing step in the GitHub Actions log.
+2. Common causes:
+   - **Keychain import error:** The `.p12` password (`APPLE_DEV_ID_CERT_PASSWORD`) does not match the one used when exporting. Re-export and update both secrets.
+   - **notarytool authentication error:** The app-specific password is wrong or expired. Regenerate at appleid.apple.com and update `APPLE_APP_SPECIFIC_PASSWORD`.
+   - **Notarization rejection:** Check the submission log URL printed by `notarytool`. Common causes: unsigned inner libraries, missing Hardened Runtime, quarantined attributes on bundled files.
+3. Download the build log artifact for full details.
+
+---
+
+## 9. Status
 
 | Item | Status |
 |---|---|
-| `build_app.sh` scaffold | ✅ Exists at `packaging/macos/build_app.sh` |
-| Unsigned build in CI | ✅ Implemented (probe workflow) |
+| `build_app.sh` scaffold | ✅ Exists; hook markers added |
+| Signing/notarization hooks | ✅ `SIGNING_HOOK_START/END`, `NOTARIZATION_HOOK_START/END` present |
+| Partial-credential detection | ✅ Fails loudly rather than silently degrading |
+| Secrets dry-run check in CI | ✅ Implemented (Phase 1 of probe workflow) |
+| Unsigned build in CI | ✅ Active (probe mode) |
 | Developer ID certificate | ❌ Not provisioned |
-| Keychain import in CI | ⏳ Placeholder guarded step in probe workflow |
-| Codesigning in CI | ⏳ Placeholder guarded step in probe workflow |
-| Notarization in CI | ⏳ Placeholder guarded step in probe workflow |
-| Stapling in CI | ⏳ Placeholder guarded step in probe workflow |
+| Keychain import in CI | ⏳ Guarded step — activates when `APPLE_DEV_ID_CERT` is present |
+| Codesigning in CI | ⏳ Guarded step — activates when `APPLE_DEV_ID_CERT` + `APPLE_TEAM_ID` present |
+| Notarization in CI | ⏳ Guarded step — activates when all 4 notarization secrets present |
+| Stapling in CI | ⏳ Guarded step — activates with notarization |
 | Qt entrypoint in build_app.sh | ⚠️ Pending — currently targets legacy `gui_apmultitool.py` |
 | macOS support declared | ❌ Not claimed — Windows alpha is the active release track |
