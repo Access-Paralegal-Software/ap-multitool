@@ -19,6 +19,11 @@ import tempfile
 from enum import Enum
 from pathlib import Path
 
+from core.logging_config import get_logger, safe_filename
+
+
+logger = get_logger("core.conversion.backend")
+
 
 class ConversionBackend(str, Enum):
     WIN32COM    = "win32com"     # Windows + Microsoft Office via COM automation
@@ -37,7 +42,9 @@ def libreoffice_fallback_enabled() -> bool:
         set APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK=0   (or false / no / off)
     """
     val = os.environ.get("APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK", "1")
-    return val.lower() not in ("0", "false", "no", "off")
+    enabled = val.lower() not in ("0", "false", "no", "off")
+    logger.debug("libreoffice_fallback_flag enabled=%s", enabled)
+    return enabled
 
 
 def detect_backend(override: str | None = None) -> ConversionBackend:
@@ -62,7 +69,9 @@ def detect_backend(override: str | None = None) -> ConversionBackend:
     # 1. Caller-supplied override
     if override:
         try:
-            return ConversionBackend(override.lower())
+            backend = ConversionBackend(override.lower())
+            logger.debug("conversion_backend_selected source=override backend=%s", backend.value)
+            return backend
         except ValueError:
             pass
 
@@ -70,24 +79,34 @@ def detect_backend(override: str | None = None) -> ConversionBackend:
     env_val = os.environ.get("APM_CONVERSION_BACKEND")
     if env_val:
         try:
-            return ConversionBackend(env_val.lower())
+            backend = ConversionBackend(env_val.lower())
+            logger.debug("conversion_backend_selected source=env backend=%s", backend.value)
+            return backend
         except ValueError:
             pass
 
     # 3. Windows — prefer COM automation
     if os.name == "nt":
+        logger.debug("conversion_backend_selected source=platform backend=%s", ConversionBackend.WIN32COM.value)
         return ConversionBackend.WIN32COM
 
     # 4. Non-Windows — use LibreOffice if available and enabled
     if libreoffice_fallback_enabled() and shutil.which("soffice") is not None:
+        logger.debug(
+            "conversion_backend_selected source=platform backend=%s",
+            ConversionBackend.LIBREOFFICE.value,
+        )
         return ConversionBackend.LIBREOFFICE
 
+    logger.debug("conversion_backend_selected source=platform backend=%s", ConversionBackend.NONE.value)
     return ConversionBackend.NONE
 
 
 def soffice_available() -> bool:
     """Return True if the soffice binary is discoverable on PATH."""
-    return shutil.which("soffice") is not None
+    available = shutil.which("soffice") is not None
+    logger.debug("soffice_probe available=%s", available)
+    return available
 
 
 def run_soffice_convert(src_path: Path, out_path: Path, timeout: int = 60) -> None:
@@ -108,6 +127,12 @@ def run_soffice_convert(src_path: Path, out_path: Path, timeout: int = 60) -> No
                       file is not produced after a reported success.
         subprocess.TimeoutExpired: If soffice does not finish within *timeout* seconds.
     """
+    logger.info(
+        "soffice_conversion_started input_filename=%s output_filename=%s timeout_seconds=%s",
+        safe_filename(src_path),
+        safe_filename(out_path),
+        timeout,
+    )
     with tempfile.TemporaryDirectory() as _tmp:
         tmp_dir = Path(_tmp)
 
@@ -125,11 +150,20 @@ def run_soffice_convert(src_path: Path, out_path: Path, timeout: int = 60) -> No
                 check=True,
             )
         except FileNotFoundError:
+            logger.error(
+                "soffice_conversion_failed input_filename=%s reason=soffice_missing",
+                safe_filename(src_path),
+            )
             raise FileNotFoundError(
                 "soffice not found on PATH. "
                 "Install LibreOffice to use the fallback conversion backend."
             )
         except subprocess.CalledProcessError as exc:
+            logger.error(
+                "soffice_conversion_failed input_filename=%s reason=nonzero_exit exit_code=%s",
+                safe_filename(src_path),
+                exc.returncode,
+            )
             stderr = exc.stderr.decode(errors="replace") if exc.stderr else ""
             raise RuntimeError(
                 f"soffice exited with code {exc.returncode}. {stderr}".strip()
@@ -137,9 +171,18 @@ def run_soffice_convert(src_path: Path, out_path: Path, timeout: int = 60) -> No
 
         converted = tmp_dir / (src_path.stem + ".pdf")
         if not converted.exists():
+            logger.error(
+                "soffice_conversion_failed input_filename=%s reason=missing_output",
+                safe_filename(src_path),
+            )
             raise RuntimeError(
                 f"soffice reported success but output file was not found: {converted}. "
                 "Verify the source file is a valid document."
             )
 
         shutil.move(str(converted), str(out_path))
+        logger.info(
+            "soffice_conversion_completed input_filename=%s output_filename=%s",
+            safe_filename(src_path),
+            safe_filename(out_path),
+        )

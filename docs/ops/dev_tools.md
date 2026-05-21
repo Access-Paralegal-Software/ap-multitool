@@ -82,6 +82,18 @@ python scripts/audit_logging.py --json
 
 The Markdown output is intended for developer review. The JSON output is intended for future automation or support bundle tooling.
 
+## Support Bundle Helper
+
+Purpose: collect the shared local log file and telemetry JSON into an offline support bundle ZIP with path scrubbing applied to the bundle contents.
+
+Entry point:
+
+```powershell
+python -c "from core.support import create_support_bundle; print(create_support_bundle())"
+```
+
+The helper stays local-only and is intended to work with the privacy rules documented in `docs/ops/logging_discipline.md`.
+
 ## scripts/validate_telemetry_schema.py
 
 Purpose: validate the local telemetry JSON structure before a developer or tester shares the file for diagnosis.
@@ -105,21 +117,42 @@ The script returns exit code `0` when the schema passes and `1` when validation 
 
 CLI hookup decision: no `cli.py` subcommand was added in this batch. The current CLI imports core PDF dependencies before argument dispatch, so a telemetry-only command would still require the full runtime dependency set. Keeping the validator as a standalone script is safer for tester and support machines.
 
+## Development Logging
+
+Central logging now lives in `core/logging_config.py`.
+
+Environment variables:
+
+```powershell
+$env:APMULTITOOL_LOG_LEVEL = "DEBUG"
+$env:APMULTITOOL_LOG_FILE = "C:\temp\apmultitool.log"
+```
+
+CLI overrides:
+
+```powershell
+python cli.py --log-level DEBUG merge -i input.pdf -o out
+python cli.py --verbose merge -i input.pdf -o out
+python cli.py --silent merge -i input.pdf -o out
+```
+
+Effect on troubleshooting and support bundles:
+
+- `APMULTITOOL_LOG_LEVEL=DEBUG` increases detail for the pilot logging slice.
+- `APMULTITOOL_LOG_FILE` redirects the shared local log file to an isolated location.
+- `create_support_bundle()` collects the current shared local log file and telemetry JSON when present.
+
 ## Logging Review
 
 Scope reviewed: `core/`, `apmultitool_qt/`, `cli.py`, and `email_processing.py`.
 
-Current findings:
+Current status:
 
-- `cli.py` owns the only standard logger setup and uses the `APMultitool` logger for CLI progress, warnings, and failures.
-- The core engine and operation modules currently avoid direct logging, which preserves the engine/UI separation and keeps background execution reporting callback-driven.
-- The Qt layer currently surfaces most user-visible status through widgets and telemetry rather than Python log files.
-- `email_processing.py` still uses `print()` for standalone legacy CLI warnings and progress.
-- `apmultitool_qt/security.py` has two guarded `print()` calls for vault load/save failures.
+- Central logging configuration now exists for the pilot slice in `core/logging_config.py`.
+- The conversion path and support-bundle helper now use named `apmultitool.*` loggers.
+- The broader Qt layer and `email_processing.py` still contain legacy direct output or older logger patterns.
 
-Decision for this tooling lane: no runtime logging cleanup was applied. The obvious inconsistencies are low-risk legacy/standalone diagnostics, and changing them could alter visible behavior or hide tester-facing messages. A future logging pass should introduce named loggers consistently as `APMultitool.<layer>` and keep core operations Qt-unaware.
-
-Follow-up tooling now exists in `scripts/audit_logging.py`; use `docs/ops/logging_audit_overview.md` to interpret the report before making any cleanup changes.
+Use `scripts/audit_logging.py` together with `docs/ops/logging_audit_overview.md` and `docs/ops/logging_discipline.md` before broadening the migration beyond the pilot slice.
 
 ---
 

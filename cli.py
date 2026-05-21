@@ -7,32 +7,22 @@ Allows headless execution of core operations (email-to-pdf, merge, docx-to-pdf, 
 import argparse
 import sys
 import json
-import logging
 from pathlib import Path
 
+from core.logging_config import configure_cli_logging
 from core.engine import DocEngine
 from core.job import (
     Job, InputSpec, EmailToPdfParams, MergeParams, OutputSpec, JobStatus,
     DocxToPdfParams, XlsxToPdfParams, BatesParams
 )
 
-# Setup standard logger to stderr so stdout is reserved for stdout JSON payload redirecting.
-logger = logging.getLogger("APMultitool")
-logger.setLevel(logging.INFO)
-log_handler = logging.StreamHandler(sys.stderr)
-log_handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
-logger.addHandler(log_handler)
+logger = None
 
 
 def configure_logging(args):
     """Adjust logging verbosity and format based on global CLI parameters."""
-    if getattr(args, "silent", False) or getattr(args, "quiet", False):
-        logger.setLevel(logging.ERROR)
-    elif getattr(args, "verbose", False):
-        logger.setLevel(logging.DEBUG)
-        log_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)d) %(message)s"))
-    else:
-        logger.setLevel(logging.INFO)
+    global logger
+    logger = configure_cli_logging(args)
 
 
 def get_progress_cb(args):
@@ -368,6 +358,33 @@ def handle_bates(args):
     handle_job_result(res_job, args)
 
 
+def handle_support_bundle(args):
+    """Compile diagnostic support bundle ZIP archive."""
+    try:
+        from core.support import create_support_bundle
+        
+        output_dir = Path(args.output_dir) if args.output_dir else None
+        
+        logger.info("Generating offline support bundle...")
+        zip_path = create_support_bundle(target_dir=output_dir)
+        
+        print(json.dumps({
+            "status": "success",
+            "support_bundle_path": str(zip_path.resolve())
+        }, indent=2))
+        
+        logger.info(f"Support bundle generated successfully at: {zip_path}")
+        logger.info("Please manually copy and share this file with support as requested.")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Failed to generate support bundle: {e}")
+        print(json.dumps({
+            "status": "error",
+            "error": str(e)
+        }, indent=2))
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="APMultitool Command-Line Interface (Core v1.2.0)",
@@ -404,6 +421,11 @@ Examples of usage:
         "--json",
         action="store_true",
         help="Print structured execution status and outcomes in JSON to stdout on exit"
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Override the shared local log level for this CLI invocation"
     )
     parser.add_argument(
         "--version",
@@ -584,6 +606,17 @@ Examples of usage:
         help="Perform parameters check and print Bates layout summary without generating output file"
     )
 
+    # Subparser: support-bundle
+    support_parser = subparsers.add_parser(
+        "support-bundle",
+        help="Generate a local-only offline support bundle ZIP archive for troubleshooting"
+    )
+    support_parser.add_argument(
+        "-o", "--output-dir",
+        default=None,
+        help="Optional directory to save the support bundle (default: Desktop or current directory)"
+    )
+
     args = parser.parse_args()
     configure_logging(args)
 
@@ -597,6 +630,8 @@ Examples of usage:
         handle_xlsx_to_pdf(args)
     elif args.operation == "bates":
         handle_bates(args)
+    elif args.operation == "support-bundle":
+        handle_support_bundle(args)
 
 
 if __name__ == "__main__":

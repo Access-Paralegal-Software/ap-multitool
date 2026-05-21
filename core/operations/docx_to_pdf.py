@@ -18,6 +18,7 @@ from typing import Callable
 
 import pikepdf
 from core.job import Job, JobResult, JobStatus, OperationCancelled, DocxToPdfParams
+from core.logging_config import get_logger, safe_filename
 from core.operations._conversion_backend import (
     ConversionBackend,
     detect_backend,
@@ -25,6 +26,9 @@ from core.operations._conversion_backend import (
     run_soffice_convert,
     soffice_available,
 )
+
+
+logger = get_logger("core.conversion.docx")
 
 
 # ---------------------------------------------------------------------------
@@ -112,18 +116,34 @@ def convert_docx_to_pdf(
         backend = detect_backend()
 
     warnings: list[str] = []
+    logger.info(
+        "docx_conversion_started backend=%s input_filename=%s output_filename=%s",
+        backend.value,
+        safe_filename(src_path),
+        safe_filename(out_path),
+    )
 
     if backend == ConversionBackend.WIN32COM:
         try:
             _convert_via_win32com_word(src_path, out_path)
         except Exception as win32_exc:
             if libreoffice_fallback_enabled() and soffice_available():
+                logger.warning(
+                    "docx_conversion_primary_failed backend=win32com input_filename=%s reason=%s fallback=libreoffice",
+                    safe_filename(src_path),
+                    type(win32_exc).__name__,
+                )
                 warnings.append(
                     f"Win32com Word export failed: {win32_exc}. "
                     "Using LibreOffice fallback."
                 )
                 run_soffice_convert(src_path, out_path)
             else:
+                logger.error(
+                    "docx_conversion_failed backend=win32com input_filename=%s reason=%s fallback=unavailable",
+                    safe_filename(src_path),
+                    type(win32_exc).__name__,
+                )
                 raise RuntimeError(
                     f"Word conversion failed (win32com): {win32_exc}. "
                     "LibreOffice fallback is disabled or unavailable "
@@ -134,12 +154,23 @@ def convert_docx_to_pdf(
         run_soffice_convert(src_path, out_path)
 
     else:  # ConversionBackend.NONE
+        logger.error(
+            "docx_conversion_failed backend=none input_filename=%s reason=no_backend",
+            safe_filename(src_path),
+        )
         raise RuntimeError(
             "No conversion backend available for Word documents. "
             "On Windows: install Microsoft Office. "
             "On macOS/Linux: install LibreOffice and ensure 'soffice' is on PATH."
         )
 
+    logger.info(
+        "docx_conversion_completed backend=%s input_filename=%s output_filename=%s warnings=%s",
+        backend.value,
+        safe_filename(src_path),
+        safe_filename(out_path),
+        len(warnings),
+    )
     return warnings
 
 
