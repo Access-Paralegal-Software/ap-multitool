@@ -127,7 +127,7 @@ def get_template(state, court, spec, key, data):
 
         <!-- DOWNLOAD OPTIONS BAR -->
         <div class="dls">
-            <a href="https://github.com/woodyardae/ap-multitool/releases/download/v1.0.0-beta1/APMultitool_Setup_v1.0.0-beta1.exe" class="dl-card" style="border: 2px solid var(--accent); background: rgba(40, 143, 79, 0.01);">
+            <a href="https://download.accessparalegalservices.com/ap-multitool/windows/APMultitool-windows-beta.exe" class="dl-card" style="border: 2px solid var(--accent); background: rgba(40, 143, 79, 0.01);">
                 <span class="ico">🪟</span>
                 <h4>Windows Setup</h4>
                 <span style="color:#6B7280; font-size:0.85rem;">v1.0.0-beta1 (.exe) <span style="display:inline-block; background:#F3F4F6; border:1px solid #E5E7EB; border-radius:4px; padding:1px 4px; font-size:0.65rem; color:#4B5563; font-weight:bold;">BETA</span></span>
