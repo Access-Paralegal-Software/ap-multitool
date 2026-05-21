@@ -93,7 +93,7 @@ jobs:
             reportlab \
             pikepdf \
             pillow \
-            customtkinter \
+            PySide6 \
             pymupdf \
             extract-msg \
             cryptography

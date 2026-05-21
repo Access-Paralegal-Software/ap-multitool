@@ -106,7 +106,7 @@ pyinstaller --noconfirm --clean \
     --hidden-import="pypdf" \
     --hidden-import="reportlab" \
     --hidden-import="pikepdf" \
-    gui_apmultitool.py
+    gui_apmultitool_qt.py
 
 GUI_APP="dist/Access_Paralegal_Multitool.app"
 CLI_EXE="dist/apmultitool"

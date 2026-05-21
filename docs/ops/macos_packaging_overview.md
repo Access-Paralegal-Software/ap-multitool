@@ -32,7 +32,7 @@ A shell script scaffold exists at `packaging/macos/build_app.sh`. It implements 
 - **DMG creation** via native `hdiutil` with an `/Applications` symlink for drag-and-drop installation.
 - **Notarization and stapling** via `xcrun notarytool submit` + `xcrun stapler staple` (skipped when credentials are absent). See `NOTARIZATION_HOOK_START / NOTARIZATION_HOOK_END` markers in the script.
 
-**Known gap:** `build_app.sh` currently targets `gui_apmultitool.py` (legacy CustomTkinter GUI). The active Qt rewrite entry point is `gui_apmultitool_qt.py`. Updating the build script to the Qt entry point is a prerequisite for any production macOS release but is out of scope for this CI probe lane.
+**Entry point:** `build_app.sh` targets `gui_apmultitool_qt.py` (PySide6 Qt edition). The legacy CustomTkinter entry point (`gui_apmultitool.py`) is no longer referenced in the macOS pipeline. This correction was applied in lane ho_0046.
 
 **CI status prior to this lane:** The legacy `build.yml` included a `macos-latest` matrix job but had no signing or notarization hooks and referenced an outdated entry point (`gui_merger.py`). No dedicated macOS signing workflow existed.
 
@@ -50,6 +50,26 @@ bash packaging/macos/build_app.sh [AppVersion] [ReleaseChannel] [SignIdentity] [
 | `TeamId` | _(empty)_ | 10-character Apple Team ID |
 | `AppleID` | _(empty)_ | Apple Developer account email |
 | `ApplePasswordVarName` | _(empty)_ | Name of env var holding the app-specific password |
+
+---
+
+## 1a. Verified on Host
+
+**Status as of 2026-05-21 (lane ho_0046): No bare-metal macOS run has been performed yet.**
+
+The development environment is Windows 11. This lane performed a static review of the pipeline and corrected two blocking script issues (see below). A bare-metal dry-run is deferred until a macOS host is available.
+
+Host profile template and first-run observation checklist: see `docs/ops/macos_host_profile_apmultitool.md`.
+
+### Static review corrections applied (ho_0046)
+
+| File | Issue Corrected |
+|---|---|
+| `packaging/macos/build_app.sh` | Entry point changed from `gui_apmultitool.py` (legacy CustomTkinter) to `gui_apmultitool_qt.py` (active PySide6 Qt) |
+| `.github/workflows/macos_packaging_probe.yml` | pip install updated: `customtkinter` → `PySide6` |
+| `docs/ops/qt_macos_packaging_readiness.md` | Stale claim "No build scripts exist in `packaging/macos/`" removed |
+
+These corrections ensure the pipeline targets the active codebase. A local unsigned DMG build should be run to validate end-to-end behavior once a macOS host is available.
 
 ---
 
@@ -267,5 +287,5 @@ The build script itself also logs mode at startup:
 | Codesigning in CI | ⏳ Guarded step — activates when `APPLE_DEV_ID_CERT` + `APPLE_TEAM_ID` present |
 | Notarization in CI | ⏳ Guarded step — activates when all 4 notarization secrets present |
 | Stapling in CI | ⏳ Guarded step — activates with notarization |
-| Qt entrypoint in build_app.sh | ⚠️ Pending — currently targets legacy `gui_apmultitool.py` |
+| Qt entrypoint in build_app.sh | ✅ Fixed — targets `gui_apmultitool_qt.py` (ho_0046) |
 | macOS support declared | ❌ Not claimed — Windows alpha is the active release track |
