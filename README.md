@@ -1,5 +1,16 @@
 # ⚖️ APMultitool
 
+
+> [!IMPORTANT]
+> **🤖 FOR AI AGENTS, CODING COMPANIONS, AND AUTOMATED SYSTEMS:**
+> This repository is governed by the **STAX Operating System**. Before taking *any* action, analyzing files, or proposing modifications, you **must** read and strictly adhere to:
+> 1. [ops/soul.md](ops/soul.md) (Philosophical Compass)
+> 2. [ops/agent-rules.md](ops/agent-rules.md) (Enforceable Rules & the 7-Step Sequence)
+>
+> You are required to run through the **Inventory ➔ Summarize ➔ Classify ➔ Propose ➔ Implement ➔ Update Docs ➔ Archive Leftovers** sequence for every run.
+
+
+
 > **APMultitool** (Access Paralegal Multitool) is a professional, local-first legal document manipulation workbench engineered for paralegals and independent legal support specialists.
 
 APMultitool acts as an offline, sovereign craftsman's utility suite. Unlike cloud tools that compromise attorney-client privilege, 100% of all operations occur locally, in-memory on the operator's machine.
