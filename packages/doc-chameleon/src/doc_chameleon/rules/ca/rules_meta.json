@@ -1,0 +1,25 @@
+{
+  "jurisdiction": "ca",
+  "display_name": "California",
+  "authority_type": "monolithic_statewide",
+  "rules": [
+    {
+      "id": "CRC-2.108",
+      "title": "Line Spacing and Consecutively Numbered Lines",
+      "source": "California Rules of Court, Rule 2.108",
+      "authority": "hard",
+      "effective_date": null,
+      "last_verified": null,
+      "implemented": false
+    },
+    {
+      "id": "CRC-2.111",
+      "title": "First-Page Format",
+      "source": "California Rules of Court, Rule 2.111",
+      "authority": "hard",
+      "effective_date": null,
+      "last_verified": null,
+      "implemented": false
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "jurisdiction": "tx",
+  "display_name": "Texas",
+  "authority_type": "statewide_baseline_with_overlay_slot",
+  "overlay_architecture": "reserved",
+  "rules": [
+    {
+      "id": "TRCP-baseline",
+      "title": "Texas Rules of Civil Procedure — Statewide Baseline",
+      "source": "Texas Rules of Civil Procedure",
+      "authority": "hard",
+      "effective_date": null,
+      "last_verified": null,
+      "implemented": false,
+      "note": "Local venue overlays (e.g. Harris County, Travis County) are architecturally reserved in the overlays/ directory but not implemented at MVP."
+    }
+  ]
+}

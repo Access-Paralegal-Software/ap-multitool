@@ -48,7 +48,36 @@ This repository operates under STAX governance. All primary documentation is sto
 ### STAX Administration
 | File | Description |
 |------|-------------|
-| [Handoffs & PM Reports](docs/handoffs/) | STAX batch reports and handoff logs |
+| [PM Report — Batch 01](docs/handoffs/pm-report-batch-01-doc-chameleon.md) | Discovery batch — docs and architecture only |
+| [PM Report — Batch 02](docs/handoffs/pm-report-batch-02-doc-chameleon.md) | Core engine scaffolding — CLI, models, ingest/export, tests |
+
+---
+
+## Current Status
+
+**Batch 02 complete.** Core engine scaffolding is in place. No jurisdiction formatting rules are implemented yet.
+
+```
+src/doc_chameleon/
+├── cli.py                      ← convert, validate, list-jurisdictions
+├── engine/
+│   ├── models.py               ← DocumentRecord, ParagraphRecord, SectionRecord
+│   ├── ingest.py               ← load() → (docx.Document, DocumentRecord)
+│   └── export.py               ← save()
+└── rules/
+    ├── ca/                     ← transformer.py stub, validator.py stub, rules_meta.json
+    └── tx/                     ← transformer.py stub, validator.py stub, rules_meta.json, overlays/
+tests/
+└── test_roundtrip.py           ← 5 passing round-trip fidelity tests
+```
+
+### CLI Usage (scaffolding — no rules applied yet)
+
+```
+python -m doc_chameleon.cli list-jurisdictions
+python -m doc_chameleon.cli convert --input brief.docx --jurisdiction ca --output brief-ca.docx
+python -m doc_chameleon.cli validate --input brief.docx --jurisdiction tx
+```
 
 ---
 
