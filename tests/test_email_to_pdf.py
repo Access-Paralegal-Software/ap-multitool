@@ -8,7 +8,7 @@ import pikepdf
 from core.job import Job, InputSpec, EmailToPdfParams, OutputSpec, JobStatus, OperationCancelled
 from core.engine import DocEngine
 from core.operations.email_to_pdf import handle as email_handle
-import email_processing
+from core import email_processing
 
 pytestmark = [pytest.mark.core, pytest.mark.integration]
 

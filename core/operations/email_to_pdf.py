@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Callable
 
 import pikepdf
-import email_processing
+from core import email_processing
 
 from core.job import Job, JobResult, JobStatus, OperationCancelled, EmailToPdfParams
 

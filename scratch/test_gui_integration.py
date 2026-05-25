@@ -12,7 +12,7 @@ import pikepdf
 sys.path.append(str(Path(__file__).parent.parent))
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
-import email_processing
+from core import email_processing
 
 def main():
     print("=== APMultitool GUI Email Harvester Integration Test ===")

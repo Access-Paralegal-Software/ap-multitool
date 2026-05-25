@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw
 
 # Add current workspace to path
 sys.path.append(str(Path(__file__).parent.parent))
-import email_processing
+from core import email_processing
 
 def create_mock_assets(tmp_dir: Path):
     # 1. Create a dummy image

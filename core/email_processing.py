@@ -1,77 +1,116 @@
-# email_processing.py
-"""Access Email Attachment Harvester Utility
-Convert standard .eml and Outlook .msg files (with inline and regular attachments) to PDFs.
-All processing is offline and uses local dependencies (ReportLab, Pillow, pypdf, python-docx, html2text, extract-msg).
-Supports high-contrast PACER-compliant grayscale mode.
+"""core/email_processing.py — Email parsing and PDF rendering utilities.
+
+Converts .eml and Outlook .msg files — including inline images and attachments —
+to PDF using ReportLab. All processing is offline.
+
+Public surface:
+  UnifiedEmail            — parsed representation of an email file
+  email_to_pdf()          — render email body + metadata to a PDF
+  get_email_attachments() — yield (filename, data, content_type) tuples
+  attachment_to_pdf()     — convert a single attachment to PDF
+  placeholder_to_pdf()    — render an un-renderable attachment as a labelled placeholder
+  process_email()         — convenience: parse → render → merge into one output PDF
 """
 
-import os
-import re
-import email
-import email.policy
-from pathlib import Path
-from io import BytesIO
-import tempfile
-import sys
+from __future__ import annotations
 
-# ReportLab imports
+import logging
+import re
+from io import BytesIO
+from pathlib import Path
+
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable, Image as RLImage
-
-# Pillow
+from reportlab.platypus import (
+    HRFlowable,
+    Image as RLImage,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+)
 from PIL import Image
-
-# PDF handling
 import pypdf
-
-# DOCX handling
 import docx as _docx
-
-# HTML to text
 import html2text as h2t
+
+_log = logging.getLogger(__name__)
 
 PAGE_W, PAGE_H = letter
 MARGIN = inch
 ACCESS_GREEN = colors.HexColor("#67BE5E")
 
 # ---------------------------------------------------------------------------
-# Styles
+# ReportLab styles
 # ---------------------------------------------------------------------------
 _styles = getSampleStyleSheet()
 
-def _style(name, **kwargs):
+
+def _style(name: str, **kwargs) -> ParagraphStyle:
     return ParagraphStyle(name, parent=_styles["Normal"], **kwargs)
 
-SUBJ_STYLE = _style("Subject", fontName="Helvetica-Bold", fontSize=14, leading=20, spaceAfter=10)
-HDR_STYLE = _style("Header", fontName="Helvetica-Bold", fontSize=9, leading=13, spaceAfter=2)
-VAL_STYLE = _style("Value", fontName="Helvetica", fontSize=9, leading=13, spaceAfter=2, wordWrap="CJK")
-BODY_STYLE = _style("Body", fontName="Helvetica", fontSize=10, leading=14, spaceAfter=4, wordWrap="CJK")
-LABEL_STYLE = _style("Label", fontName="Helvetica-Bold", fontSize=11, spaceAfter=8)
-NOTE_STYLE = _style("Note", fontName="Helvetica-Oblique", fontSize=10, leading=14, textColor=colors.grey)
 
-def _new_doc(path: Path):
+SUBJ_STYLE = _style("Subject", fontName="Helvetica-Bold", fontSize=14, leading=20, spaceAfter=10)
+HDR_STYLE  = _style("Header",  fontName="Helvetica-Bold", fontSize=9,  leading=13, spaceAfter=2)
+VAL_STYLE  = _style("Value",   fontName="Helvetica",      fontSize=9,  leading=13, spaceAfter=2, wordWrap="CJK")
+BODY_STYLE = _style("Body",    fontName="Helvetica",      fontSize=10, leading=14, spaceAfter=4, wordWrap="CJK")
+LABEL_STYLE = _style("Label",  fontName="Helvetica-Bold", fontSize=11, spaceAfter=8)
+NOTE_STYLE  = _style("Note",   fontName="Helvetica-Oblique", fontSize=10, leading=14, textColor=colors.grey)
+
+
+def _new_doc(path: Path) -> SimpleDocTemplate:
     return SimpleDocTemplate(
-        str(path),
-        pagesize=letter,
-        leftMargin=MARGIN,
-        rightMargin=MARGIN,
-        topMargin=MARGIN,
-        bottomMargin=MARGIN,
+        str(path), pagesize=letter,
+        leftMargin=MARGIN, rightMargin=MARGIN,
+        topMargin=MARGIN, bottomMargin=MARGIN,
     )
 
+
 # ---------------------------------------------------------------------------
-# XML escape & HTML conversion
+# Type classification maps
 # ---------------------------------------------------------------------------
+
+# Maps MIME type → file extension (used when a filename has no extension).
+_CT_TO_EXT: dict[str, str] = {
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/bmp": ".bmp",
+    "image/tiff": ".tiff",
+    "image/webp": ".webp",
+    "application/pdf": ".pdf",
+    "text/plain": ".txt",
+    "text/html": ".html",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+}
+
+# Maps file extension → kind string used by attachment_to_pdf dispatch.
+_EXT_KIND: dict[str, str] = {
+    ".jpg": "image",  ".jpeg": "image", ".png": "image", ".gif": "image",
+    ".bmp": "image",  ".tiff": "image", ".tif": "image", ".webp": "image",
+    ".txt": "text",   ".csv": "text",   ".log": "text",  ".md": "text",
+    ".json": "text",  ".xml": "text",   ".py": "text",   ".js": "text",
+    ".ts": "text",    ".css": "text",   ".yaml": "text", ".yml": "text",
+    ".ini": "text",   ".cfg": "text",
+    ".html": "html",  ".htm": "html",
+    ".pdf": "pdf",
+    ".docx": "docx",  ".doc": "docx",
+    ".xlsx": "xlsx",  ".xls": "xlsx",
+}
+
+# ---------------------------------------------------------------------------
+# Text helpers
+# ---------------------------------------------------------------------------
+
 def xml_escape(text: str) -> str:
     if not text:
         return ""
-    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    text = text.replace('"', "&quot;").replace("'", "&#39;")
-    # Remove control chars except tab/newline
+    text = (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace('"', "&quot;").replace("'", "&#39;"))
     return "".join(c if (ord(c) >= 32 or c in "\t\n") else " " for c in text)
+
 
 def html_to_text(html: str) -> str:
     handler = h2t.HTML2Text()
@@ -80,98 +119,95 @@ def html_to_text(html: str) -> str:
     handler.body_width = 0
     return handler.handle(html)
 
+
 # ---------------------------------------------------------------------------
-# Unified Email Wrapper (Handles both .eml and .msg formats natively)
+# UnifiedEmail — normalised wrapper for .eml and .msg
 # ---------------------------------------------------------------------------
+
 class UnifiedEmail:
-    def __init__(self, file_path: Path):
+    """Parse an .eml or .msg file into a common structure."""
+
+    def __init__(self, file_path: Path) -> None:
         self.file_path = Path(file_path)
-        self.ext = self.file_path.suffix.lower()
         self.subject = "(No Subject)"
         self.sender = "Unknown Sender"
         self.to = "Unknown Recipient"
         self.cc = ""
         self.bcc = ""
         self.date = "Unknown Date"
-        self.html_body = None
-        self.text_body = None
-        self.cid_map = {}
-        self.attachments = []  # List of tuples (filename, data, content_type)
-        
-        if self.ext == ".msg":
+        self.html_body: str | None = None
+        self.text_body: str | None = None
+        self.cid_map: dict[str, bytes] = {}
+        self.attachments: list[tuple[str, bytes, str]] = []
+
+        if self.file_path.suffix.lower() == ".msg":
             self._parse_msg()
         else:
             self._parse_eml()
 
-    def _parse_msg(self):
+    def _parse_msg(self) -> None:
         import extract_msg
         msg = extract_msg.Message(str(self.file_path))
         self.subject = msg.subject or "(No Subject)"
-        self.sender = msg.sender or "Unknown Sender"
-        self.to = msg.to or "Unknown Recipient"
-        self.cc = msg.cc or ""
-        self.bcc = msg.bcc or ""
-        self.date = msg.date or "Unknown Date"
-        
+        self.sender  = msg.sender or "Unknown Sender"
+        self.to      = msg.to or "Unknown Recipient"
+        self.cc      = msg.cc or ""
+        self.bcc     = msg.bcc or ""
+        self.date    = msg.date or "Unknown Date"
+
         if msg.htmlBody:
             self.html_body = msg.htmlBody.decode("utf-8", errors="ignore")
         elif msg.body:
             self.text_body = msg.body
-            
-        # Parse attachments & inline images (CIDs)
-        if msg.attachments:
-            for idx, att in enumerate(msg.attachments):
-                cid = att.cid
-                if not cid and hasattr(att, "contentId"):
-                    cid = att.contentId
-                
-                filename = att.longFilename or att.shortFilename or f"attachment_{idx}.bin"
-                data = att.data
-                content_type = att.mimetype or "application/octet-stream"
-                
-                if cid:
-                    cid_str = str(cid).strip("<> ")
-                    self.cid_map[cid_str] = data
-                    self.cid_map[f"<{cid_str}>"] = data
-                else:
-                    self.attachments.append((filename, data, content_type))
+
+        for idx, att in enumerate(msg.attachments or []):
+            cid = att.cid or getattr(att, "contentId", None)
+            filename = att.longFilename or att.shortFilename or f"attachment_{idx}.bin"
+            data = att.data
+            ct = att.mimetype or "application/octet-stream"
+            if cid:
+                cid_str = str(cid).strip("<> ")
+                self.cid_map[cid_str] = data
+                self.cid_map[f"<{cid_str}>"] = data
+            else:
+                self.attachments.append((filename, data, ct))
         msg.close()
 
-    def _parse_eml(self):
+    def _parse_eml(self) -> None:
+        import email
+        import email.policy
         from email.parser import BytesParser
-        
+
         with open(self.file_path, "rb") as f:
             msg = BytesParser(policy=email.policy.compat32).parse(f)
-            
+
         self.subject = self._decode_header(msg.get("Subject", "(No Subject)"))
-        self.sender = self._decode_header(msg.get("From", "Unknown Sender"))
-        self.to = self._decode_header(msg.get("To", "Unknown Recipient"))
-        self.cc = self._decode_header(msg.get("CC", ""))
-        self.bcc = self._decode_header(msg.get("BCC", ""))
-        self.date = self._decode_header(msg.get("Date", "Unknown Date"))
-        
+        self.sender  = self._decode_header(msg.get("From", "Unknown Sender"))
+        self.to      = self._decode_header(msg.get("To", "Unknown Recipient"))
+        self.cc      = self._decode_header(msg.get("CC", ""))
+        self.bcc     = self._decode_header(msg.get("BCC", ""))
+        self.date    = self._decode_header(msg.get("Date", "Unknown Date"))
+
         for part in msg.walk():
             ct = part.get_content_type()
             cd = str(part.get("Content-Disposition", ""))
-            
-            # Extract content ID if available
             cid = part.get("Content-ID", "").strip()
+
             if cid:
                 cid_str = cid.strip("<> ")
                 payload = part.get_payload(decode=True)
                 if payload:
                     self.cid_map[cid_str] = payload
                     self.cid_map[f"<{cid_str}>"] = payload
-            
+
             if part.get_content_maintype() == "multipart":
                 continue
-            
+
             charset = part.get_content_charset() or "utf-8"
             payload = part.get_payload(decode=True)
             if payload is None:
                 continue
-                
-            # If not an attachment, read as body text
+
             if "attachment" not in cd and not part.get_filename():
                 decoded = payload.decode(charset, errors="replace")
                 if ct == "text/html" and self.html_body is None:
@@ -189,29 +225,33 @@ class UnifiedEmail:
         from email.header import decode_header
         try:
             parts = decode_header(raw)
-            result = []
-            for chunk, enc in parts:
-                if isinstance(chunk, bytes):
-                    result.append(chunk.decode(enc or "utf-8", errors="replace"))
-                else:
-                    result.append(chunk)
-            return "".join(result)
+            return "".join(
+                chunk.decode(enc or "utf-8", errors="replace") if isinstance(chunk, bytes) else chunk
+                for chunk, enc in parts
+            )
         except Exception:
             return str(raw)
 
+
 # ---------------------------------------------------------------------------
-# CID handling for inline images & body generation
+# Body rendering
 # ---------------------------------------------------------------------------
+
+# Sentinel format: CIDIMAGE{n}CIDIMAGE — chosen to be unlikely in real body text
+# and to survive html2text conversion intact.
 _IMG_PLACEHOLDER = "CIDIMAGE{n}CIDIMAGE"
+_PLACEHOLDER_RE = re.compile(r"(CIDIMAGE\d+CIDIMAGE)")
+
 
 def _body_flowables(email_obj: UnifiedEmail, grayscale: bool = False) -> list:
-    cid_map = email_obj.cid_map
+    """Convert email body text to a list of ReportLab flowables."""
     html_body = email_obj.html_body
     text_body = email_obj.text_body
-    
-    inline_images = {}
+    cid_map = email_obj.cid_map
+    inline_images: dict[str, bytes] = {}
+
     if html_body and cid_map:
-        def _replace_cid_img(m):
+        def _replace_cid(m: re.Match) -> str:
             src = (re.search(r'src=["\']([^"\']*)["\']', m.group(0), re.IGNORECASE) or
                    re.search(r'src=([^\s>]+)', m.group(0), re.IGNORECASE))
             if not src:
@@ -227,16 +267,16 @@ def _body_flowables(email_obj: UnifiedEmail, grayscale: bool = False) -> list:
             placeholder = _IMG_PLACEHOLDER.format(n=n)
             inline_images[placeholder] = data
             return f"\n{placeholder}\n"
-        html_body = re.sub(r'<img[^>]*>', _replace_cid_img, html_body, flags=re.IGNORECASE)
-        
+
+        html_body = re.sub(r"<img[^>]*>", _replace_cid, html_body, flags=re.IGNORECASE)
+
     body_text = html_to_text(html_body) if html_body else (text_body or "(No body)")
-    flowables = []
     max_img_w = PAGE_W - 2 * MARGIN
     max_img_h = PAGE_H * 0.45
-    placeholder_re = re.compile(r'(CIDIMAGE\d+CIDIMAGE)')
-    
-    def _emit_image(ph):
-        data = inline_images.get(ph)
+    flowables: list = []
+
+    def _append_image(placeholder: str) -> None:
+        data = inline_images.get(placeholder)
         if not data:
             return
         try:
@@ -254,53 +294,47 @@ def _body_flowables(email_obj: UnifiedEmail, grayscale: bool = False) -> list:
             flowables.append(Spacer(1, 0.08 * inch))
         except Exception:
             pass
-            
+
     for line in body_text.splitlines():
         stripped = line.strip()
         if not stripped:
             flowables.append(Spacer(1, 0.04 * inch))
             continue
-        segments = placeholder_re.split(stripped)
+        segments = _PLACEHOLDER_RE.split(stripped)
         if len(segments) == 1:
             flowables.append(Paragraph(xml_escape(stripped), BODY_STYLE))
         else:
             for seg in segments:
-                if placeholder_re.fullmatch(seg):
-                    _emit_image(seg)
+                if _PLACEHOLDER_RE.fullmatch(seg):
+                    _append_image(seg)
                 elif seg.strip():
                     flowables.append(Paragraph(xml_escape(seg.strip()), BODY_STYLE))
+
     return flowables
 
-def email_to_pdf(email_obj: UnifiedEmail, out_path: Path, grayscale: bool = False):
+
+# ---------------------------------------------------------------------------
+# Public rendering functions
+# ---------------------------------------------------------------------------
+
+def email_to_pdf(email_obj: UnifiedEmail, out_path: Path, grayscale: bool = False) -> None:
+    """Render the email header + body to *out_path* as a PDF."""
     doc = _new_doc(out_path)
-    story = []
-    
-    # Premium Subject Line with Access Green branding
-    story.append(Paragraph(xml_escape(email_obj.subject), SUBJ_STYLE))
-    story.append(HRFlowable(width="100%", thickness=2, color=ACCESS_GREEN, spaceAfter=8))
-    
-    # Metadata Grid
-    headers = [
-        ("From", email_obj.sender),
-        ("To", email_obj.to),
-        ("CC", email_obj.cc),
-        ("BCC", email_obj.bcc),
-        ("Date", email_obj.date),
+    story: list = [
+        Paragraph(xml_escape(email_obj.subject), SUBJ_STYLE),
+        HRFlowable(width="100%", thickness=2, color=ACCESS_GREEN, spaceAfter=8),
     ]
-    for hdr, val in headers:
+    for label, val in [("From", email_obj.sender), ("To", email_obj.to),
+                        ("CC", email_obj.cc), ("BCC", email_obj.bcc), ("Date", email_obj.date)]:
         if val:
-            story.append(Paragraph(f"<b>{hdr}:</b>  {xml_escape(val)}", VAL_STYLE))
-            
+            story.append(Paragraph(f"<b>{label}:</b>  {xml_escape(val)}", VAL_STYLE))
+
     story.append(Spacer(1, 0.15 * inch))
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#CCCCCC"), spaceAfter=10))
-    
-    # Body Flowables
     story.extend(_body_flowables(email_obj, grayscale=grayscale))
     doc.build(story)
 
-# ---------------------------------------------------------------------------
-# Attachment conversion helpers
-# ---------------------------------------------------------------------------
+
 def image_to_pdf(data: bytes, filename: str, out_path: Path, grayscale: bool = False) -> bool:
     try:
         img = Image.open(BytesIO(data))
@@ -316,47 +350,45 @@ def image_to_pdf(data: bytes, filename: str, out_path: Path, grayscale: bool = F
         img.save(buf, format="JPEG", quality=85)
         buf.seek(0)
         doc = _new_doc(out_path)
-        story = [
+        doc.build([
             Paragraph(xml_escape(filename), LABEL_STYLE),
             Spacer(1, 0.1 * inch),
             RLImage(buf, width=iw * scale, height=ih * scale),
-        ]
-        doc.build(story)
+        ])
         return True
-    except Exception as e:
-        print(f"    [warn] image '{filename}': {e}")
+    except Exception as exc:
+        _log.warning("image attachment %r: %s", filename, exc)
         return False
+
 
 def text_to_pdf(data: bytes, filename: str, out_path: Path) -> bool:
     try:
         text = data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)
         doc = _new_doc(out_path)
-        story = [Paragraph(xml_escape(filename), LABEL_STYLE)]
+        story: list = [Paragraph(xml_escape(filename), LABEL_STYLE)]
         for line in text.splitlines():
-            if line.strip():
-                story.append(Paragraph(xml_escape(line), BODY_STYLE))
-            else:
-                story.append(Spacer(1, 0.04 * inch))
+            story.append(Paragraph(xml_escape(line), BODY_STYLE) if line.strip() else Spacer(1, 0.04 * inch))
         doc.build(story)
         return True
-    except Exception as e:
-        print(f"    [warn] text '{filename}': {e}")
+    except Exception as exc:
+        _log.warning("text attachment %r: %s", filename, exc)
         return False
+
 
 def html_att_to_pdf(data: bytes, filename: str, out_path: Path) -> bool:
     try:
-        html = data.decode("utf-8", errors="replace")
-        plain = html_to_text(html)
+        plain = html_to_text(data.decode("utf-8", errors="replace"))
         return text_to_pdf(plain.encode(), filename, out_path)
-    except Exception as e:
-        print(f"    [warn] html '{filename}': {e}")
+    except Exception as exc:
+        _log.warning("html attachment %r: %s", filename, exc)
         return False
+
 
 def docx_to_pdf(data: bytes, filename: str, out_path: Path) -> bool:
     try:
         doc_in = _docx.Document(BytesIO(data))
         doc_out = _new_doc(out_path)
-        story = [
+        story: list = [
             Paragraph(xml_escape(filename), LABEL_STYLE),
             HRFlowable(width="100%", thickness=0.5, color=colors.grey, spaceAfter=6),
         ]
@@ -375,167 +407,105 @@ def docx_to_pdf(data: bytes, filename: str, out_path: Path) -> bool:
             story.append(Paragraph(xml_escape(txt), st))
         doc_out.build(story)
         return True
-    except Exception as e:
-        print(f"    [warn] docx '{filename}': {e}")
+    except Exception as exc:
+        _log.warning("docx attachment %r: %s", filename, exc)
         return False
+
 
 def placeholder_to_pdf(filename: str, out_path: Path) -> bool:
     try:
-        ext = Path(filename).suffix.lstrip('.').upper() or "UNKNOWN"
+        ext = Path(filename).suffix.lstrip(".").upper() or "UNKNOWN"
         doc = _new_doc(out_path)
-        story = [
+        doc.build([
             Paragraph(xml_escape(f"Attachment: {filename}"), SUBJ_STYLE),
             Spacer(1, 0.2 * inch),
             Paragraph(xml_escape(f"[{ext} file – cannot render inline]"), NOTE_STYLE),
-        ]
-        doc.build(story)
+        ])
         return True
     except Exception:
         return False
 
-# Mapping helpers
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp"}
-TEXT_EXTS = {".txt", ".csv", ".log", ".md", ".json", ".xml", ".py", ".js", ".ts", ".css", ".yaml", ".yml", ".ini", ".cfg"}
-HTML_EXTS = {".html", ".htm"}
-CT_EXT_MAP = {
-    "image/jpeg": ".jpg",
-    "image/jpg": ".jpg",
-    "image/png": ".png",
-    "image/gif": ".gif",
-    "image/bmp": ".bmp",
-    "image/tiff": ".tiff",
-    "image/webp": ".webp",
-    "application/pdf": ".pdf",
-    "text/plain": ".txt",
-    "text/html": ".html",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
-}
 
-def attachment_to_pdf(data: bytes, filename: str, out_path: Path, ct: str = "", grayscale: bool = False) -> bool:
+def attachment_to_pdf(data: bytes, filename: str, out_path: Path,
+                      ct: str = "", grayscale: bool = False) -> bool:
+    """Convert a single attachment to PDF. Returns True on success."""
     ext = Path(filename).suffix.lower()
     if not ext and ct:
-        ext = CT_EXT_MAP.get(ct.split(";")[0].strip().lower(), "")
-    if ct.startswith("image/"):
+        ext = _CT_TO_EXT.get(ct.split(";")[0].strip().lower(), "")
+
+    # MIME image/* check covers subtypes not in _EXT_KIND
+    if ct.startswith("image/") or _EXT_KIND.get(ext) == "image":
         return image_to_pdf(data, filename, out_path, grayscale)
-    if ext in IMAGE_EXTS:
-        return image_to_pdf(data, filename, out_path, grayscale)
-    if ext in TEXT_EXTS:
+
+    kind = _EXT_KIND.get(ext)
+    if kind == "text":
         return text_to_pdf(data, filename, out_path)
-    if ext in HTML_EXTS:
+    if kind == "html":
         return html_att_to_pdf(data, filename, out_path)
-    if ext == ".pdf" or ct == "application/pdf":
+    if kind == "pdf":
         out_path.write_bytes(data)
         return True
-    if ext == ".docx":
+    if kind == "docx":
         return docx_to_pdf(data, filename, out_path)
     return placeholder_to_pdf(filename, out_path)
 
+
 def get_email_attachments(email_obj: UnifiedEmail, keep_inline: bool = True):
-    # Yield standard attachments first
-    for name, data, ct in email_obj.attachments:
-        yield name, data, ct
-    # Yield inline images if not keep_inline
+    """Yield (filename, data, content_type) for each attachment."""
+    yield from email_obj.attachments
     if not keep_inline:
         for cid, data in email_obj.cid_map.items():
             if cid.startswith("<") and cid.endswith(">"):
                 continue
-            ext = ".png"
-            if data.startswith(b"\xff\xd8"): ext = ".jpg"
-            elif data.startswith(b"\x89PNG"): ext = ".png"
-            elif data.startswith(b"GIF8"): ext = ".gif"
-            elif data.startswith(b"BM"): ext = ".bmp"
+            if data.startswith(b"\xff\xd8"):
+                ext = ".jpg"
+            elif data.startswith(b"\x89PNG"):
+                ext = ".png"
+            elif data.startswith(b"GIF8"):
+                ext = ".gif"
+            elif data.startswith(b"BM"):
+                ext = ".bmp"
+            else:
+                ext = ".png"
             yield f"inline_{cid}{ext}", data, f"image/{ext.lstrip('.')}"
 
-# ---------------------------------------------------------------------------
-# Public entry point for a single email file
-# ---------------------------------------------------------------------------
-def process_email(email_path: Path, out_dir: Path, keep_inline: bool = True, grayscale: bool = False) -> Path:
-    """Convert a single .eml/.msg file into a PDF and return the PDF path.
-    If `keep_inline` is False, any CID‑referenced images are stripped from the body
-    and appended after the email body as separate pages.
-    """
+
+def process_email(email_path: Path, out_dir: Path,
+                  keep_inline: bool = True, grayscale: bool = False) -> Path:
+    """Parse *email_path* and write a single merged PDF to *out_dir*. Returns the PDF path."""
+    import shutil
     email_path = Path(email_path)
     out_dir = Path(out_dir)
-    
-    # 1. Parse unified email
+
     email_obj = UnifiedEmail(email_path)
-    
-    # 2. Output PDF for the email body
+
     body_pdf = out_dir / f"{email_path.stem}_body.pdf"
     email_to_pdf(email_obj, body_pdf, grayscale=grayscale)
     parts = [body_pdf]
-    
-    # 3. Attachments (including inline images if keep_inline=False)
+
     for idx, (fname, data, ct) in enumerate(get_email_attachments(email_obj, keep_inline=keep_inline)):
         att_pdf = out_dir / f"{email_path.stem}_att_{idx:03d}.pdf"
-        success = attachment_to_pdf(data, fname, att_pdf, ct, grayscale=grayscale)
-        if success and att_pdf.exists():
+        if attachment_to_pdf(data, fname, att_pdf, ct, grayscale=grayscale) and att_pdf.exists():
             parts.append(att_pdf)
-            
-    # 4. Merge parts into a single PDF
+
     final_pdf = out_dir / f"{email_path.stem}.pdf"
     if len(parts) == 1:
-        import shutil
         shutil.copy2(parts[0], final_pdf)
     else:
         writer = pypdf.PdfWriter()
         for p in parts:
             try:
-                reader = pypdf.PdfReader(str(p))
-                for page in reader.pages:
+                for page in pypdf.PdfReader(str(p)).pages:
                     writer.add_page(page)
-            except Exception as e:
-                print(f"    [warn] merge {p.name}: {e}")
-        with open(final_pdf, "wb") as out_f:
-            writer.write(out_f)
-            
-    # Clean up intermediate PDFs
+            except Exception as exc:
+                _log.warning("merge %s: %s", p.name, exc)
+        with open(final_pdf, "wb") as f:
+            writer.write(f)
+
     for p in parts:
         try:
             p.unlink()
         except Exception:
             pass
-            
+
     return final_pdf
-
-# ---------------------------------------------------------------------------
-# CLI entry point
-# ---------------------------------------------------------------------------
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python email_processing.py <input_file_or_folder> [output_folder] [--grayscale]")
-        sys.exit(1)
-        
-    path = Path(sys.argv[1])
-    out_dir = Path(sys.argv[2]) if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else Path("./pdf_output")
-    grayscale = "--grayscale" in sys.argv
-    
-    out_dir.mkdir(parents=True, exist_ok=True)
-    
-    if path.is_file():
-        if path.suffix.lower() in (".eml", ".msg"):
-            print(f"Processing single file: {path.name}...")
-            out = process_email(path, out_dir, grayscale=grayscale)
-            print(f" -> Generated: {out.name}")
-        else:
-            print("Error: Target file must be .eml or .msg format.")
-    elif path.is_dir():
-        files = sorted(list(path.glob("*.eml")) + list(path.glob("*.msg")))
-        if not files:
-            print(f"No .eml or .msg files found in: {path}")
-            sys.exit(0)
-        print(f"Found {len(files)} email file(s) -> {out_dir}\n")
-        ok = fail = 0
-        for f in files:
-            print(f"  [{f.name}]")
-            try:
-                out = process_email(f, out_dir, grayscale=grayscale)
-                print(f"    -> {out.name}\n")
-                ok += 1
-            except Exception as e:
-                print(f"    FAILED: {e}\n")
-                fail += 1
-        print(f"Finished: {ok} succeeded, {fail} failed.")
-
-if __name__ == "__main__":
-    main()
