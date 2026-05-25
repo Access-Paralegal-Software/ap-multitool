@@ -7,6 +7,7 @@ collision-avoidance shrinking when existing page content overlaps the stamp zone
 
 from __future__ import annotations
 
+import os
 import shutil
 import tempfile
 from io import BytesIO
@@ -74,7 +75,8 @@ def handle(job: Job, progress: Callable[[str, float], None]) -> JobResult:
         raise FileNotFoundError(f"Source file not found: {src_path}")
 
     warnings: list[str] = []
-    _, tmp_pdf_str = tempfile.mkstemp(suffix=".pdf")
+    fd, tmp_pdf_str = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)  # release the descriptor so pikepdf can atomically replace the file
     tmp_pdf = Path(tmp_pdf_str)
 
     try:

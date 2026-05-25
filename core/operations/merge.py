@@ -8,6 +8,7 @@ where available so that job logging and error handling remain consistent.
 
 from __future__ import annotations
 
+import os
 import tempfile
 from datetime import date
 from io import BytesIO
@@ -95,7 +96,8 @@ def _default_name(first_input: Path) -> str:
 
 def _convert_to_pdf(spec, params: MergeParams, warnings: list[str]) -> Path:
     """Convert a non-PDF input to a temporary PDF. Returns the temp file path."""
-    _, tmp_str = tempfile.mkstemp(suffix=".pdf")
+    fd, tmp_str = tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)  # release descriptor so downstream writers can replace the file
     tmp = Path(tmp_str)
 
     if spec.kind == "image":

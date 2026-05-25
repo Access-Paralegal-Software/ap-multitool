@@ -87,12 +87,16 @@ def _print_dry_run(summary: dict, args) -> None:
         for key, value in summary.items():
             if key == "dry_run":
                 continue
+            label = key.replace("_", " ").title()
             if isinstance(value, list):
-                print(f"{key} ({len(value)}):")
+                print(f"{label} ({len(value)}):")
                 for item in value:
                     print(f"  - {item}")
+            elif key == "operation":
+                # "bates_stamp" → "Bates Stamp", "merge" → "Merge"
+                print(f"{label}: {value.replace('_', ' ').title()}")
             else:
-                print(f"{key}: {value}")
+                print(f"{label}: {value}")
         print("=======================")
     sys.exit(ExitCode.COMPLETE)
 
