@@ -1,18 +1,31 @@
 # Maintainer: Alan Woodyard <woodyardae@users.noreply.github.com>
-pkgname=access-paralegal-pdf-merger-bin
-pkgver=1.2.0
+pkgname=apmultitool-bin
+pkgver=1.0.0.beta1
 pkgrel=1
-pkgdesc="The premier secure offline legal PDF and Email compiler by Access Paralegal Services."
+pkgdesc="Secure offline legal document workbench for paralegals — APMultitool by Access Paralegal Services."
 arch=('x86_64')
-url="https://github.com/woodyardae/apmultitool"
+url="https://software.accessparalegalservices.com/"
 license=('custom:Proprietary')
-depends=('tk' 'qpdf')
-provides=('access-paralegal-pdf-merger')
-conflicts=('access-paralegal-pdf-merger')
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/woodyardae/apmultitool/releases/download/v${pkgver}/Access_Paralegal_Linux_x64.tar.gz")
+depends=('libreoffice-fresh' 'qt6-base' 'qt6-svg')
+optdepends=('libreoffice-fresh: required for DOCX/XLSX to PDF conversion')
+provides=('apmultitool')
+conflicts=('apmultitool')
+source=("${pkgname}-${pkgver}.tar.gz::https://download.accessparalegalservices.com/ap-multitool/linux/APMultitool-linux-beta.tar.gz")
 sha256sums=('SKIP') # Updated automatically during release ingestion
 
 package() {
-    # Install the compiled binary into system path
-    install -Dm755 "${srcdir}/Access_Paralegal_PDF_Merger" "${pkgdir}/usr/bin/access-paralegal-pdf-merger"
+    # CLI binary
+    install -Dm755 "${srcdir}/apmultitool" "${pkgdir}/usr/bin/apmultitool"
+
+    # GUI app bundle (onedir) → /opt/apmultitool
+    if [ -d "${srcdir}/Access_Paralegal_Multitool" ]; then
+        install -dm755 "${pkgdir}/opt/apmultitool"
+        cp -r "${srcdir}/Access_Paralegal_Multitool/." "${pkgdir}/opt/apmultitool/"
+
+        # Launcher wrapper so `apmultitool-gui` is on PATH
+        install -Dm755 /dev/stdin "${pkgdir}/usr/bin/apmultitool-gui" <<'LAUNCHER'
+#!/bin/sh
+exec /opt/apmultitool/Access_Paralegal_Multitool "$@"
+LAUNCHER
+    fi
 }

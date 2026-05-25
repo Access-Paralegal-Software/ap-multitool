@@ -1,0 +1,148 @@
+name: "🐧 Build Linux Tarball"
+
+# Builds a Linux x64 tarball (GUI onedir + CLI binary) on every push to master
+# and on version tags.  R2 upload activates when R2_ACCESS_KEY_ID is set.
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build tarball (Linux x64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system libraries (Qt6 / PySide6 runtime)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgl1 \
+            libglib2.0-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xkb1 \
+            libxkbcommon-x11-0 \
+            libdbus-1-3 \
+            libegl1
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pyinstaller pyside6 pypdf reportlab pikepdf
+
+      - name: Parse version from tag (or default)
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/v}"
+            APP_VERSION="${TAG%%-*}"
+            CHANNEL_SUFFIX="-${TAG#*-}"
+            [ "$CHANNEL_SUFFIX" = "-$TAG" ] && CHANNEL_SUFFIX=""
+          else
+            APP_VERSION="1.0.0"
+            CHANNEL_SUFFIX="-beta1"
+          fi
+          echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL_SUFFIX" >> "$GITHUB_OUTPUT"
+          FULL="v${APP_VERSION}${CHANNEL_SUFFIX}"
+          echo "full_version=$FULL" >> "$GITHUB_OUTPUT"
+          echo "tarball=APMultitool-linux-x64-${FULL}.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Build CLI binary
+        run: |
+          pyinstaller --noconfirm --clean \
+            --name="apmultitool" \
+            --onefile \
+            --console \
+            --hidden-import="pypdf" \
+            --hidden-import="reportlab" \
+            --hidden-import="pikepdf" \
+            cli.py
+
+      - name: Build GUI app (onedir)
+        run: |
+          pyinstaller --noconfirm --clean \
+            --name="Access_Paralegal_Multitool" \
+            --onedir \
+            --windowed \
+            --add-data="logo_small.png:." \
+            --add-data="water_texture.png:." \
+            --hidden-import="pypdf" \
+            --hidden-import="reportlab" \
+            --hidden-import="pikepdf" \
+            gui_apmultitool_qt.py
+
+      - name: Package tarball
+        run: |
+          TARBALL="${{ steps.version.outputs.tarball }}"
+          STAGE="dist/linux_stage"
+          mkdir -p "$STAGE"
+          cp dist/apmultitool "$STAGE/"
+          cp -r "dist/Access_Paralegal_Multitool" "$STAGE/"
+          tar -czf "dist/$TARBALL" -C "$STAGE" .
+          echo "tarball_path=dist/$TARBALL" >> "$GITHUB_ENV"
+          sha256sum "dist/$TARBALL" | awk '{print $1}' > "dist/$TARBALL.sha256"
+          echo "SHA-256: $(cat dist/$TARBALL.sha256)"
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.tarball }}
+          path: |
+            dist/${{ steps.version.outputs.tarball }}
+            dist/${{ steps.version.outputs.tarball }}.sha256
+          retention-days: 30
+
+      - name: Upload to Cloudflare R2
+        if: ${{ secrets.R2_ACCESS_KEY_ID != '' }}
+        env:
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          TARBALL:              ${{ steps.version.outputs.tarball }}
+        run: |
+          pip install boto3
+          python3 - <<'PYEOF'
+          import boto3, os
+          s3 = boto3.client(
+              "s3",
+              endpoint_url=os.environ["R2_ENDPOINT_URL"],
+              aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+              aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+          )
+          tarball = f"dist/{os.environ['TARBALL']}"
+          s3.upload_file(
+              tarball,
+              "aps-downloads",
+              "ap-multitool/linux/APMultitool-linux-beta.tar.gz",
+              ExtraArgs={"ContentType": "application/gzip"},
+          )
+          print(f"✅ Uploaded {tarball} → ap-multitool/linux/APMultitool-linux-beta.tar.gz")
+          PYEOF
+
+      - name: Attach tarball to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.ref_name }}" \
+            "dist/${{ steps.version.outputs.tarball }}" \
+            "dist/${{ steps.version.outputs.tarball }}.sha256" \
+            --clobber
