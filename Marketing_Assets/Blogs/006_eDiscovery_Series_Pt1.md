@@ -1,19 +1,10 @@
----
-category: software
-meta_description: "Part 1 of our eDiscovery series. We break down the EDRM framework for Texas solo attorneys, starting with information governance and data identification."
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-06-15"
-status: archived
-tags:
-  - ediscovery
-  - edrm
-  - solo attorney
-  - texas law
+﻿---
 title: "eDiscovery for Solo & Small Firms (Pt. 1): Information Governance to Identification"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-06-15
+meta_description: "Part 1 of our eDiscovery series. We break down the EDRM framework for Texas solo attorneys, starting with information governance and data identification."
+tags: ["eDiscovery", "EDRM", "Texas Law", "Solo Attorney"]
+category: eDiscovery Series
+idea_id: AW00010792
 ---
 
 # eDiscovery for Solo & Small Firms (Pt. 1): Information Governance to Identification

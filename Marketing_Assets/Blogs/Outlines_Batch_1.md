@@ -1,13 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
-title: Outlines_Batch_1
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010809
 ---
 
 # Blog Outlines: Posts 6-15

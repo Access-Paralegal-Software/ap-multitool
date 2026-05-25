@@ -1,19 +1,10 @@
----
-category: software
-meta_description: Part 2 of our eDiscovery series. We dive into the technical details of defensible data collection and efficient document review for Texas attorneys.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-06-22"
-status: archived
-tags:
-  - collection
-  - ediscovery
-  - legal tech
-  - texas law
+﻿---
 title: "eDiscovery for Solo & Small Firms (Pt. 2): Collection, Processing, and Review"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-06-22
+meta_description: "Part 2 of our eDiscovery series. We dive into the technical details of defensible data collection and efficient document review for Texas attorneys."
+tags: ["eDiscovery", "Collection", "Legal Tech", "Texas Law"]
+category: eDiscovery Series
+idea_id: AW00010793
 ---
 
 # eDiscovery for Solo & Small Firms (Pt. 2): Collection, Processing, and Review

@@ -1,13 +1,5 @@
----
-category: "physical-business"
-plane_id: 
-profit_likelihood: medium
-project: None
-status: archived
-tags: []
-title: Batch_Mega_Round_5_Social
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010782
 ---
 
 # Facebook Posts 19-23

@@ -1,19 +1,10 @@
----
-category: software
-meta_description: Project management doesn't have to be a chore. Here is how a legal project management (LPM) mindset can transform your Texas law firm's efficiency.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-07-20"
-status: archived
-tags:
-  - law firm management
-  - lpm
-  - productivity
-  - workflow
-title: Legal Project Management for Lawyers Who Hate Project Management
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: "Legal Project Management for Lawyers Who Hate Project Management"
+publish_date: 2026-07-20
+meta_description: "Project management doesn't have to be a chore. Here is how a legal project management (LPM) mindset can transform your Texas law firm's efficiency."
+tags: ["LPM", "Law Firm Management", "Productivity", "Workflow"]
+category: Law Firm Management
+idea_id: AW00010797
 ---
 
 # Legal Project Management for Lawyers Who Hate Project Management

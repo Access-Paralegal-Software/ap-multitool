@@ -1,19 +1,10 @@
----
-category: software
-meta_description: "Think you're saving money by hiring in-house? We break down the true costs of a full-time paralegal versus the lean efficiency of freelance support."
-plane_id: 
-profit_likelihood: high
-project: Access Paralegal
-publish_date: "2026-05-18"
-status: archived
-tags:
-  - business operations
-  - law firm management
-  - legal tech
-  - outsourcing
-title: "The Hidden Costs of Hiring a Full-Time Paralegal"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: The Hidden Costs of Hiring a Full-Time Paralegal
+publish_date: 2026-05-18
+meta_description: Think you're saving money by hiring in-house? We break down the true costs of a full-time paralegal versus the lean efficiency of freelance support.
+tags: ["Law Firm Management", "Outsourcing", "Legal Tech", "Business Operations"]
+category: Law Firm Management
+idea_id: AW00010788
 ---
 
 # The Hidden Costs of Hiring a Full-Time Paralegal

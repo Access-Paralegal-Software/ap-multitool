@@ -1,13 +1,5 @@
----
-category: "physical-business"
-plane_id: 
-profit_likelihood: medium
-project: None
-status: archived
-tags: []
-title: Batch_Mega_Round_5
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010781
 ---
 
 # Blog 34: Automated TOC/TOA: The Final 1% of a Winning Brief

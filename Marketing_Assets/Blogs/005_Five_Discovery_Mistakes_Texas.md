@@ -1,19 +1,10 @@
----
-category: software
-meta_description: "From missing deadlines to improper privilege logs, discovery errors are expensive. Here are the five most common mistakes Texas attorneys make."
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-06-08"
-status: archived
-tags:
-  - discovery
-  - litigation
-  - risk management
-  - texas procedure
+﻿---
 title: Five Discovery Mistakes That Cost Texas Attorneys Real Money
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-06-08
+meta_description: From missing deadlines to improper privilege logs, discovery errors are expensive. Here are the five most common mistakes Texas attorneys make.
+tags: ["Discovery", "Texas Procedure", "Litigation", "Risk Management"]
+category: Practice Tips
+idea_id: AW00010791
 ---
 
 # Five Discovery Mistakes That Cost Texas Attorneys Real Money

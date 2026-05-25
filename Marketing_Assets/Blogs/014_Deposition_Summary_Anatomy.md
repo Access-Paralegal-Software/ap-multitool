@@ -1,19 +1,10 @@
----
-category: software
+﻿---
+title: "The Anatomy of a Great Deposition Summary"
+publish_date: 2026-08-10
 meta_description: "A 400-page transcript is useless if you can't find the key admissions. Here is how to write a deposition summary that actually helps you win."
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-08-10"
-status: archived
-tags:
-  - depo summary
-  - depositions
-  - litigation support
-  - texas law
-title: The Anatomy of a Great Deposition Summary
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+tags: ["Depositions", "Litigation Support", "Depo Summary", "Texas Law"]
+category: Practice Tips
+idea_id: AW00010800
 ---
 
 # The Anatomy of a Great Deposition Summary

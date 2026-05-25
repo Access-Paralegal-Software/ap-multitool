@@ -1,19 +1,10 @@
----
-category: software
-meta_description: Navigating the Texas SOSDirect system can be a chore. Here is the Access Paralegal field guide to efficient entity formations and filings.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-08-24"
-status: ready
-tags:
-  - business formation
-  - corporate law
-  - texas sos
-  - transactional law
-title: A Texas Attorney's Field Guide to Secretary of State Filings
-type: "project-plan"
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: "A Texas Attorney's Field Guide to Secretary of State Filings"
+publish_date: 2026-08-24
+meta_description: "Navigating the Texas SOSDirect system can be a chore. Here is the Access Paralegal field guide to efficient entity formations and filings."
+tags: ["Transactional Law", "Business Formation", "Texas SOS", "Corporate Law"]
+category: Transactional Support
+idea_id: AW00010802
 ---
 
 # A Texas Attorney's Field Guide to Secretary of State Filings

@@ -1,19 +1,10 @@
----
-category: "run-log"
+﻿---
+title: "How AI Is (and Isn't) Changing Paralegal Work"
+publish_date: 2026-09-14
 meta_description: "AI is the biggest trend in legal tech, but it's not a magic wand. Here is how we use AI to enhance—not replace—expert paralegal support."
-plane_id: 
-profit_likelihood: low
-project: Access Paralegal
-publish_date: "2026-09-14"
-status: archived
-tags:
-  - ai
-  - future of law
-  - legal tech
-  - productivity
-title: How AI Is (and Isn't) Changing Paralegal Work
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+tags: ["AI", "Legal Tech", "Future of Law", "Productivity"]
+category: Legal Technology
+idea_id: AW00010805
 ---
 
 # How AI Is (and Isn't) Changing Paralegal Work

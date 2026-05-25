@@ -1,13 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
-title: Email_Set_001
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010815
 ---
 
 # Email 1: Welcome to the New Era of Your Firm

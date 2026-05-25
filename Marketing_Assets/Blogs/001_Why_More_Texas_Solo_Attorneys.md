@@ -1,19 +1,10 @@
----
-category: "physical-business"
-meta_description: "Discover why solo attorneys in Texas are pivoting to freelance paralegals to scale their practice without the overhead of full-time staff."
-plane_id: 
-profit_likelihood: medium
-project: None
-publish_date: "2026-05-11"
-status: archived
-tags:
-  - freelance paralegal
-  - scalability
-  - solo attorney
-  - texas law
+﻿---
 title: Why More Texas Solo Attorneys Are Turning to Freelance Paralegals
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-05-11
+meta_description: Discover why solo attorneys in Texas are pivoting to freelance paralegals to scale their practice without the overhead of full-time staff.
+tags: ["Freelance Paralegal", "Texas Law", "Solo Attorney", "Scalability"]
+category: Business of Law
+idea_id: AW00010787
 ---
 
 # Why More Texas Solo Attorneys Are Turning to Freelance Paralegals

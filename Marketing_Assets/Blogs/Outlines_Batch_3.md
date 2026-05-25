@@ -1,14 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: inbox
-tags:
-  - idea
-title: Outlines_Batch_3
-type: idea
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010811
 ---
 
 # Blog Outlines: Posts 46-70

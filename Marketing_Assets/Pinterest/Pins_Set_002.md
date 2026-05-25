@@ -1,14 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: inbox
-tags:
-  - idea
-title: Pins_Set_002
-type: idea
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010819
 ---
 
 # Pinterest Set 002: Technical Legal Excellence

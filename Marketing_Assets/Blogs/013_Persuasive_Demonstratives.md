@@ -1,19 +1,10 @@
----
-category: software
-meta_description: Juries don't just want to hear the evidence; they want to see it. Here is how to create demonstrative exhibits that win cases.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-08-03"
-status: archived
-tags:
-  - demonstratives
-  - jury persuasion
-  - litigation
-  - trial prep
-title: Demonstrative Exhibits That Actually Persuade Juries
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: "Demonstrative Exhibits That Actually Persuade Juries"
+publish_date: 2026-08-03
+meta_description: "Juries don't just want to hear the evidence; they want to see it. Here is how to create demonstrative exhibits that win cases."
+tags: ["Trial Prep", "Demonstratives", "Jury Persuasion", "Litigation"]
+category: Trial Strategy
+idea_id: AW00010799
 ---
 
 # Demonstrative Exhibits That Actually Persuade Juries

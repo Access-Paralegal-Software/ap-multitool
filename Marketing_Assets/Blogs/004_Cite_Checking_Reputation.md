@@ -1,19 +1,10 @@
----
-category: software
-meta_description: "A single bad citation can undermine a 50-page motion. Here is the Access Paralegal protocol for bulletproof cite-checking and Bluebooking."
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-06-01"
-status: archived
-tags:
-  - bluebook
-  - legal writing
-  - litigation support
-  - quality control
-title: "Cite-Checking Like Your Reputation Depends on It"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: Cite-Checking Like Your Reputation Depends on It
+publish_date: 2026-06-01
+meta_description: A single bad citation can undermine a 50-page motion. Here is the Access Paralegal protocol for bulletproof cite-checking and Bluebooking.
+tags: ["Legal Writing", "Bluebook", "Litigation Support", "Quality Control"]
+category: Litigation Strategy
+idea_id: AW00010790
 ---
 
 # Cite-Checking Like Your Reputation Depends on It

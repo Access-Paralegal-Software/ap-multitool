@@ -1,13 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
-title: WP002_Offline_Security
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010823
 ---
 
 # WHITE PAPER: Securing the Firm

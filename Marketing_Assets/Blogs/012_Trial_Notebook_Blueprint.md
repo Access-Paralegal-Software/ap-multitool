@@ -1,19 +1,10 @@
----
-category: software
-meta_description: A messy trial notebook is a liability. Here is how to build a trial notebook that stays organized and useful during the heat of a Texas trial.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-07-27"
-status: archived
-tags:
-  - litigation support
-  - texas law
-  - trial notebook
-  - trial prep
-title: Building a Trial Notebook That Actually Works in the Courtroom
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: "Building a Trial Notebook That Actually Works in the Courtroom"
+publish_date: 2026-07-27
+meta_description: "A messy trial notebook is a liability. Here is how to build a trial notebook that stays organized and useful during the heat of a Texas trial."
+tags: ["Trial Prep", "Trial Notebook", "Litigation Support", "Texas Law"]
+category: Trial Strategy
+idea_id: AW00010798
 ---
 
 # Building a Trial Notebook That Actually Works in the Courtroom

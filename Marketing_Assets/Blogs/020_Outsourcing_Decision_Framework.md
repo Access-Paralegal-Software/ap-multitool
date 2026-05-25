@@ -1,19 +1,10 @@
----
-category: "physical-business"
-meta_description: "Not sure if it's time to hire or outsource? We provide a simple decision framework to help Texas solos decide when to leverage freelance support."
-plane_id: 
-profit_likelihood: medium
-project: None
-publish_date: "2026-09-21"
-status: archived
-tags:
-  - business growth
-  - law firm management
-  - outsourcing
-  - strategy
+﻿---
 title: "When to Outsource: A Decision Framework for Solo Attorneys"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-09-21
+meta_description: "Not sure if it's time to hire or outsource? We provide a simple decision framework to help Texas solos decide when to leverage freelance support."
+tags: ["Business Growth", "Outsourcing", "Law Firm Management", "Strategy"]
+category: Business of Law
+idea_id: AW00010806
 ---
 
 # When to Outsource: A Decision Framework for Solo Attorneys

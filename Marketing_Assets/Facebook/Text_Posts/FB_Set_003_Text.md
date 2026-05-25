@@ -1,13 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
-title: FB_Set_003_Text
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010814
 ---
 
 # Facebook Post 11: Rejection-Proof Your E-Filing

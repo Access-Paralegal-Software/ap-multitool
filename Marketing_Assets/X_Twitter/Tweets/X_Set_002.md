@@ -1,13 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
-title: X_Set_002
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010826
 ---
 
 # X (Twitter) Set 002: 50 More Legal Tech & Texas Law Hooks

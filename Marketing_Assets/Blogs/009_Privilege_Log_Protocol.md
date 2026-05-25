@@ -1,19 +1,10 @@
----
-category: software
-meta_description: A weak privilege log is an invitation for a Motion to Compel. Here is the Access Paralegal guide to drafting a log that satisfies Texas TRCP 193.3.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-07-06"
-status: archived
-tags:
-  - discovery
-  - litigation support
-  - privilege log
-  - texas procedure
-title: How to Prepare a Privilege Log That Holds Up
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: "How to Prepare a Privilege Log That Holds Up"
+publish_date: 2026-07-06
+meta_description: "A weak privilege log is an invitation for a Motion to Compel. Here is the Access Paralegal guide to drafting a log that satisfies Texas TRCP 193.3."
+tags: ["Privilege Log", "Texas Procedure", "Discovery", "Litigation Support"]
+category: Practice Tips
+idea_id: AW00010795
 ---
 
 # How to Prepare a Privilege Log That Holds Up

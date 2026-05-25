@@ -1,19 +1,10 @@
----
-category: software
-meta_description: "The final part of our eDiscovery series. We cover the final steps of the EDRM: creating a defensible production and preparing for trial."
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-06-29"
-status: archived
-tags:
-  - ediscovery
-  - production
-  - texas law
-  - trial prep
+﻿---
 title: "eDiscovery for Solo & Small Firms (Pt. 3): Production, Presentation, and Defensibility"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-06-29
+meta_description: "The final part of our eDiscovery series. We cover the final steps of the EDRM: creating a defensible production and preparing for trial."
+tags: ["eDiscovery", "Production", "Trial Prep", "Texas Law"]
+category: eDiscovery Series
+idea_id: AW00010794
 ---
 
 # eDiscovery for Solo & Small Firms (Pt. 3): Production, Presentation, and Defensibility

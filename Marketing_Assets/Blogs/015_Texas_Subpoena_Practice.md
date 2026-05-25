@@ -1,19 +1,10 @@
----
-category: software
-meta_description: Texas subpoena rules (TRCP 176 and 205) are technical and strict. Here are the most common mistakes solo attorneys make and how to avoid them.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-08-17"
-status: archived
-tags:
-  - discovery
-  - litigation support
-  - subpoenas
-  - texas procedure
+﻿---
 title: "Texas Subpoena Practice: What Solo Attorneys Often Get Wrong"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-08-17
+meta_description: "Texas subpoena rules (TRCP 176 and 205) are technical and strict. Here are the most common mistakes solo attorneys make and how to avoid them."
+tags: ["Subpoenas", "Texas Procedure", "Discovery", "Litigation Support"]
+category: Practice Tips
+idea_id: AW00010801
 ---
 
 # Texas Subpoena Practice: What Solo Attorneys Often Get Wrong

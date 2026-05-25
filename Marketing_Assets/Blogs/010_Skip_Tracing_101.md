@@ -1,19 +1,10 @@
----
-category: software
-meta_description: You can't sue them if you can't find them. Here is how expert skip tracing helps Texas attorneys locate difficult defendants and witnesses.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-07-13"
-status: archived
-tags:
-  - investigation
-  - service of process
-  - skip tracing
-  - texas law
-title: Skip Tracing 101 for Texas Litigators
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+title: "Skip Tracing 101 for Texas Litigators"
+publish_date: 2026-07-13
+meta_description: "You can't sue them if you can't find them. Here is how expert skip tracing helps Texas attorneys locate difficult defendants and witnesses."
+tags: ["Skip Tracing", "Service of Process", "Investigation", "Texas Law"]
+category: Practice Tips
+idea_id: AW00010796
 ---
 
 # Skip Tracing 101 for Texas Litigators

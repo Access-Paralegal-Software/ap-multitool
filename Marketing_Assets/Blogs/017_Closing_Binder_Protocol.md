@@ -1,19 +1,10 @@
----
-category: software
-meta_description: The closing binder is the 'final product' of a transactional deal. Here is how to build a digital binder that wows your clients and stays perfectly organized.
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-08-31"
-status: archived
-tags:
-  - business law
-  - closing binder
-  - legal tech
-  - transactional law
+﻿---
 title: "Closing Binder Prep, Step by Step"
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+publish_date: 2026-08-31
+meta_description: "The closing binder is the 'final product' of a transactional deal. Here is how to build a digital binder that wows your clients and stays perfectly organized."
+tags: ["Transactional Law", "Closing Binder", "Legal Tech", "Business Law"]
+category: Transactional Support
+idea_id: AW00010803
 ---
 
 # Closing Binder Prep, Step by Step

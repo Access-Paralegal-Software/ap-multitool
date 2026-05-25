@@ -1,19 +1,10 @@
----
-category: software
+﻿---
+title: "Your Firm's Docketing System Might Be Quietly Hurting You"
+publish_date: 2026-09-07
 meta_description: "A missed deadline is the #1 cause of legal malpractice claims. Here is how to audit your firm's docketing system and prevent 'silent' disasters."
-plane_id: 
-profit_likelihood: high
-project: None
-publish_date: "2026-09-07"
-status: archived
-tags:
-  - docketing
-  - law firm management
-  - risk management
-  - texas law
-title: Your Firm's Docketing System Might Be Quietly Hurting You
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+tags: ["Law Firm Management", "Docketing", "Risk Management", "Texas Law"]
+category: Law Firm Management
+idea_id: AW00010804
 ---
 
 # Your Firm's Docketing System Might Be Quietly Hurting You

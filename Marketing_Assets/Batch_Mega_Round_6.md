@@ -1,13 +1,5 @@
----
-category: software
-plane_id: 
-profit_likelihood: high
-project: None
-status: archived
-tags: []
-title: Batch_Mega_Round_6
-type: reference
-updated_at: "2026-05-17T09:08:47Z"
+﻿---
+idea_id: AW00010783
 ---
 
 # Blog 39: Custom Bates Prefixes: Multi-Party Litigation Made Easy
