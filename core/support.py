@@ -12,15 +12,16 @@ Handles local offline support bundle collection:
 
 from __future__ import annotations
 
-import os
-import shutil
+import getpass
 import json
+import logging
+import os
 import platform
+import re
+import shutil
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-import getpass
-import re
 
 import config
 import core
@@ -35,13 +36,7 @@ def get_log_dir() -> Path:
     return get_log_file_path().parent
 
 def setup_app_logging() -> logging.Logger:
-    """
-    Configure standard rotating file logger for APMultitool.
-    Saves logs to apmultitool.log inside get_log_dir().
-    Returns the logger instance.
-    """
-    import logging
-
+    """Configure standard rotating file logger. Returns the ui.main logger instance."""
     configure_logging()
     return get_logger("ui.main")
 
