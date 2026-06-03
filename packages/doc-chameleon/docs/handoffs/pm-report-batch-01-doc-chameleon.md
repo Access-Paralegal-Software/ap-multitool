@@ -66,17 +66,18 @@ Full detail in [Risk Register](../ops/doc-chameleon-risk-register.md).
 
 ## Recommended Next Batch
 
-**Batch 02: Core Engine Scaffolding**
+**Batch 02: California Numbering Spike**
 
 Suggested scope:
-- Initialize the Python project structure (`pyproject.toml` or equivalent)
-- Set up the CLI skeleton with `convert`, `validate`, and `list-jurisdictions` commands
-- Define the internal document representation (intermediate model between ingest and transform)
-- Build a minimal ingest step: load a `.docx`, extract paragraph list, round-trip export without corruption
-- Establish the jurisdiction pack directory structure (`rules/ca/`, `rules/tx/`)
-- Write a minimal unit test confirming round-trip fidelity (input == output when no transformation is applied)
+- Initialize only the Python project structure needed to exercise `.docx` ingest, export, and California numbering experiments.
+- Generate controlled synthetic `.docx` fixtures for plain motion text, declaration-style numbered paragraphs, notice-style short filings, and unsupported hostile layout cases.
+- Prototype California pleading-paper line numbering with direct OpenXML support where `python-docx` is insufficient.
+- Compare candidate numbering strategies: positioned text boxes or frames, header-based margin structure, left-column table layout, and paragraph-level numbering.
+- Define how other source document formats normalize into a controlled California body flow before numbering is applied.
+- Add validation warnings for incompatible margins, fonts, line spacing, section breaks, tables, images, embedded objects, and manual layout overrides.
+- Produce a short implementation report documenting the selected numbering strategy, rejected strategies, alignment assumptions, and known failure modes.
 
-This batch does **not** need to implement CA or TX formatting logic. It establishes the skeleton the formatting logic will plug into.
+This batch should not broaden into the desktop shell, Texas formatting, or additional rule packs. The core scaffold exists to prove California numbering, not as a generic framework exercise.
 
 ---
 

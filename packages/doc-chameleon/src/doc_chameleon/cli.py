@@ -6,16 +6,19 @@ import click
 
 from doc_chameleon.engine.export import save
 from doc_chameleon.engine.ingest import load
+from doc_chameleon.rules.ca.transformer import transform as transform_ca
+from doc_chameleon.rules.ca.validator import validate as validate_ca
+from doc_chameleon.rules.ca.validator import validate_source_assumptions as validate_ca_source_assumptions
 
 JURISDICTIONS: dict[str, str] = {
     "ca": "California (CRC 2.108 line numbering, CRC 2.111 first-page format)",
-    "tx": "Texas (TRCP statewide baseline — local venue overlays not yet implemented)",
+    "tx": "Texas (TRCP statewide baseline - local venue overlays not yet implemented)",
 }
 
 
 @click.group()
 def main() -> None:
-    """doc-chameleon — offline-first legal document formatting engine."""
+    """doc-chameleon - offline-first legal document formatting engine."""
 
 
 @main.command()
@@ -25,13 +28,26 @@ def main() -> None:
 def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
     """Convert a .docx to jurisdiction-compliant formatting."""
     doc, record = load(input_path)
-    # Transformation stub — jurisdiction rules not applied until Phase 2 MVP
+    warnings: list[str] = []
+
+    if jurisdiction == "ca":
+        warnings.extend(validate_ca_source_assumptions(doc, record))
+        doc = transform_ca(doc)
+        warnings.extend(validate_ca(doc, record))
+        warnings = list(dict.fromkeys(warnings))
+    else:
+        click.echo("NOTE: Texas transformer not yet implemented. Passing document through unchanged.")
+
     save(doc, output_path)
     click.echo(f"Loaded:      {input_path.name} ({len(record.paragraphs)} paragraphs, {len(record.sections)} sections)")
     click.echo(f"Jurisdiction: {jurisdiction}")
     click.echo(f"Output:      {output_path}")
-    click.echo()
-    click.echo("NOTE: No formatting rules applied. Jurisdiction transformer not yet implemented.")
+
+    if warnings:
+        click.echo()
+        click.echo("Warnings:")
+        for warning in warnings:
+            click.echo(f"  - {warning}")
 
 
 @main.command()
@@ -39,13 +55,23 @@ def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
 @click.option("--jurisdiction", required=True, type=click.Choice(list(JURISDICTIONS)), help="Jurisdiction to validate against")
 def validate(input_path: Path, jurisdiction: str) -> None:
     """Validate a .docx against jurisdiction formatting rules."""
-    _doc, record = load(input_path)
+    doc, record = load(input_path)
     click.echo(f"Loaded:      {input_path.name}")
     click.echo(f"Paragraphs:  {len(record.paragraphs)}")
     click.echo(f"Sections:    {len(record.sections)}")
     click.echo(f"Jurisdiction: {jurisdiction}")
     click.echo()
-    click.echo("NOTE: No validation rules implemented. Jurisdiction validator not yet implemented.")
+
+    if jurisdiction == "ca":
+        warnings = validate_ca(doc, record)
+        if warnings:
+            click.echo("Warnings:")
+            for warning in warnings:
+                click.echo(f"  - {warning}")
+        else:
+            click.echo("No California numbering warnings detected.")
+    else:
+        click.echo("NOTE: Texas validator not yet implemented.")
 
 
 @main.command("list-jurisdictions")

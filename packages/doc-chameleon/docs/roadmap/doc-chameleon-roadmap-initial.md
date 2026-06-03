@@ -34,6 +34,8 @@ created: 2026-05-20
 
 **Goal:** A functional Python CLI capable of ingesting a `.docx` and producing a jurisdiction-formatted `.docx` output with a validation report.
 
+**First implementation batch:** [Batch 02 - California Numbering Spike](batch-02-ca-numbering-spike.md). The initial MVP work should focus on proving editable California pleading-paper line numbering before broadening into full jurisdiction conversion.
+
 **Scope:**
 - California Rule 2.108 line-number injection
 - California Rule 2.111 first-page format
@@ -50,6 +52,13 @@ created: 2026-05-20
 - Local Texas venue overlays
 - PDF export (may be added as convenience feature late in phase)
 - Any cloud connectivity
+
+**Implementation sequencing:**
+1. Prove California line numbering on controlled `.docx` fixtures.
+2. Build the shared normalization pipeline that converts supported document shapes into the controlled California body flow.
+3. Add California first-page layout rules.
+4. Add Texas statewide baseline formatting.
+5. Expand validation and reporting.
 
 ---
 
