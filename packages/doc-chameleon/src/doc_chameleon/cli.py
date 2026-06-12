@@ -8,7 +8,9 @@ from doc_chameleon.engine.export import save
 from doc_chameleon.engine.ingest import load
 from doc_chameleon.engine.report import write_report
 from doc_chameleon.rules.ca.transformer import transform as transform_ca
+from doc_chameleon.rules.ca.transformer_2111 import transform_2111 as transform_ca_2111
 from doc_chameleon.rules.ca.validator import validate as validate_ca
+from doc_chameleon.rules.ca.validator import validate_2111 as validate_ca_2111
 from doc_chameleon.rules.ca.validator import validate_source_assumptions as validate_ca_source_assumptions
 
 JURISDICTIONS: dict[str, str] = {
@@ -34,7 +36,9 @@ def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
     if jurisdiction == "ca":
         warnings.extend(validate_ca_source_assumptions(doc, record))
         doc = transform_ca(doc)
+        doc = transform_ca_2111(doc)
         warnings.extend(validate_ca(doc, record))
+        warnings.extend(validate_ca_2111(doc, record))
         warnings = list(dict.fromkeys(warnings))
     else:
         click.echo("NOTE: Texas transformer not yet implemented. Passing document through unchanged.")
@@ -67,13 +71,14 @@ def validate(input_path: Path, jurisdiction: str) -> None:
     click.echo()
 
     if jurisdiction == "ca":
-        warnings = validate_ca(doc, record)
+        warnings = validate_ca(doc, record) + validate_ca_2111(doc, record)
+        warnings = list(dict.fromkeys(warnings))
         if warnings:
-            click.echo("Warnings:")
+            click.echo(f"Warnings ({len(warnings)}):")
             for warning in warnings:
                 click.echo(f"  - {warning}")
         else:
-            click.echo("No California numbering warnings detected.")
+            click.echo("No California formatting warnings detected.")
     else:
         click.echo("NOTE: Texas validator not yet implemented.")
 

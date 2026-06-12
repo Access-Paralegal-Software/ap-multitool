@@ -78,6 +78,24 @@ def make_notice(path: Path) -> None:
     doc.save(str(path))
 
 
+def make_cover_page(path: Path) -> None:
+    """Pleading cover page with court title and case caption — clean layout."""
+    doc = docx.Document()
+    doc.add_paragraph("IN THE SUPERIOR COURT OF THE STATE OF CALIFORNIA")
+    doc.add_paragraph("FOR THE COUNTY OF LOS ANGELES")
+    doc.add_paragraph("")
+    doc.add_paragraph("JANE SMITH,")
+    doc.add_paragraph("    Plaintiff,")
+    doc.add_paragraph("")
+    doc.add_paragraph("    v.")
+    doc.add_paragraph("")
+    doc.add_paragraph("JOHN DOE,")
+    doc.add_paragraph("    Defendant.")
+    doc.add_paragraph("")
+    doc.add_paragraph("MOTION FOR SUMMARY JUDGMENT")
+    doc.save(str(path))
+
+
 def make_hostile(path: Path) -> None:
     """Hostile layout: explicit paragraph spacing and an embedded table."""
     doc = docx.Document()

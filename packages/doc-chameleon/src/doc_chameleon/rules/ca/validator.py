@@ -6,6 +6,8 @@ from docx.shared import Inches, Pt
 
 from doc_chameleon.engine.models import DocumentRecord
 
+_CA_2111_MARKER = "doc-chameleon-ca-2111"
+
 EXPECTED_PAGE_WIDTH = Inches(8.5)
 EXPECTED_PAGE_HEIGHT = Inches(11)
 EXPECTED_LEFT_MARGIN = Inches(1.25)
@@ -30,7 +32,32 @@ def validate(doc: docx.Document, record: DocumentRecord) -> list[str]:
     if not _has_ca_line_number_header(doc):
         warnings.append("California line-number header not found. Run the CA transformer before relying on CRC 2.108 numbering.")
 
+    if _has_ca_line_number_header(doc) and not _has_ca_attorney_block_header(doc):
+        warnings.append(
+            "CRC 2.108 line numbers present but CRC 2.111 first-page layout is missing. "
+            "Apply the CA 2.111 transformer for a complete California pleading."
+        )
+
     return warnings
+
+
+def validate_2111(doc: docx.Document, record: DocumentRecord) -> list[str]:
+    """Validate document against CRC 2.111 first-page structural requirements."""
+    warnings: list[str] = []
+
+    if not _has_ca_attorney_block_header(doc):
+        warnings.append(
+            "CRC 2.111 first-page attorney/clerk header not found. "
+            "Run the CA 2.111 transformer before relying on the first-page layout."
+        )
+
+    if not _has_ca_line_number_header(doc):
+        warnings.append(
+            "CRC 2.108 line-number header not found. "
+            "Apply the CA 2.108 transformer before or alongside the 2.111 transform for a complete California pleading."
+        )
+
+    return list(dict.fromkeys(warnings))
 
 
 def validate_source_assumptions(doc: docx.Document, record: DocumentRecord) -> list[str]:
@@ -86,6 +113,13 @@ def _has_drawings_or_embeds(doc: docx.Document) -> bool:
 
 def _has_ca_line_number_header(doc: docx.Document) -> bool:
     return any("doc-chameleon-ca-line-numbers" in section.header._element.xml for section in doc.sections)
+
+
+def _has_ca_attorney_block_header(doc: docx.Document) -> bool:
+    section = doc.sections[0]
+    if not section.different_first_page_header_footer:
+        return False
+    return _CA_2111_MARKER in section.first_page_header._element.xml
 
 
 def paragraph_index(record: DocumentRecord, text: str) -> int | str:
