@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "doc-chameleon"
-version = "0.7.0"
+version = "0.8.0"
 description = "Offline-first legal document formatting engine for paralegals"
 requires-python = ">=3.12"
 dependencies = [

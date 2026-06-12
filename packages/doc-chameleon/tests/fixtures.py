@@ -96,6 +96,24 @@ def make_cover_page(path: Path) -> None:
     doc.save(str(path))
 
 
+def make_long_motion(path: Path) -> None:
+    """Multi-page motion — enough paragraphs to span at least two pages at CA spacing."""
+    doc = docx.Document()
+    doc.add_paragraph("MOTION FOR SUMMARY JUDGMENT")
+    doc.add_paragraph("INTRODUCTION")
+    for i in range(1, 36):
+        doc.add_paragraph(
+            f"Paragraph {i} of the motion sets forth additional facts and argument "
+            f"in support of Plaintiff's position. The material facts are undisputed "
+            f"and Plaintiff is entitled to judgment as a matter of law."
+        )
+    doc.add_paragraph("CONCLUSION")
+    doc.add_paragraph(
+        "For the foregoing reasons, Plaintiff respectfully requests summary judgment."
+    )
+    doc.save(str(path))
+
+
 def make_tx_motion(path: Path) -> None:
     """Texas motion with district court caption — clean layout."""
     doc = docx.Document()

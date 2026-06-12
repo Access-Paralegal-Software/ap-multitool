@@ -9,7 +9,7 @@ from doc_chameleon.engine.export import save
 from doc_chameleon.engine.ingest import load
 from doc_chameleon.engine.report import write_report
 from doc_chameleon.rules.ca.transformer import transform as transform_ca
-from doc_chameleon.rules.ca.transformer_2111 import transform_2111 as transform_ca_2111
+from doc_chameleon.rules.ca.transformer_2111 import AttorneyInfo, transform_2111 as transform_ca_2111
 from doc_chameleon.rules.ca.validator import validate as validate_ca
 from doc_chameleon.rules.ca.validator import validate_2111 as validate_ca_2111
 from doc_chameleon.rules.ca.validator import validate_source_assumptions as validate_ca_source_assumptions
@@ -50,15 +50,48 @@ def main() -> None:
 @click.option("--input", "input_path", required=True, type=click.Path(exists=True, path_type=Path), help="Source .docx file")
 @click.option("--jurisdiction", required=True, type=click.Choice(list(JURISDICTIONS)), help="Target jurisdiction pack")
 @click.option("--output", "output_path", required=True, type=click.Path(path_type=Path), help="Output .docx file")
-def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
+@click.option("--attorney-name", default=None, help="[CA] Attorney name for first-page header")
+@click.option("--attorney-sbn", default=None, help="[CA] State Bar Number")
+@click.option("--firm", default=None, help="[CA] Firm name")
+@click.option("--address", default=None, help="[CA] Street address")
+@click.option("--city-state-zip", "city_state_zip", default=None, help="[CA] City, State ZIP")
+@click.option("--phone", default=None, help="[CA] Phone number")
+@click.option("--email", default=None, help="[CA] Email address")
+@click.option("--client", default=None, help="[CA] Client party (e.g. 'Plaintiff, ACME Corp')")
+def convert(
+    input_path: Path,
+    jurisdiction: str,
+    output_path: Path,
+    attorney_name: str | None,
+    attorney_sbn: str | None,
+    firm: str | None,
+    address: str | None,
+    city_state_zip: str | None,
+    phone: str | None,
+    email: str | None,
+    client: str | None,
+) -> None:
     """Convert a .docx to jurisdiction-compliant formatting."""
     doc, record = load(input_path)
     warnings: list[str] = []
 
     if jurisdiction == "ca":
+        attorney_kwargs = {
+            k: v for k, v in {
+                "name": attorney_name,
+                "sbn": attorney_sbn,
+                "firm": firm,
+                "address": address,
+                "city_state_zip": city_state_zip,
+                "phone": phone,
+                "email": email,
+                "client": client,
+            }.items() if v is not None
+        }
+        attorney = AttorneyInfo(**attorney_kwargs)
         warnings.extend(validate_ca_source_assumptions(doc, record))
         doc = transform_ca(doc)
-        doc = transform_ca_2111(doc)
+        doc = transform_ca_2111(doc, attorney=attorney)
         warnings.extend(validate_ca(doc, record))
         warnings.extend(validate_ca_2111(doc, record))
     elif jurisdiction == "tx":
