@@ -10,9 +10,10 @@
       "source": "Texas Rules of Civil Procedure",
       "authority": "hard",
       "effective_date": null,
-      "last_verified": null,
-      "implemented": false,
-      "note": "Local venue overlays (e.g. Harris County, Travis County) are architecturally reserved in the overlays/ directory but not implemented at MVP."
+      "last_verified": "2026-06-12",
+      "implemented": true,
+      "scope": "statewide_baseline",
+      "note": "Implements standard page geometry (8.5x11, 1-inch margins), Times New Roman 12pt double-spaced body, and caption structure validation. Local venue overlays (e.g. Harris County, Travis County) are architecturally reserved in the overlays/ directory but not implemented."
     }
   ]
 }

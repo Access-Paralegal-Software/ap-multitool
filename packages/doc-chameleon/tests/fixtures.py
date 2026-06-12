@@ -96,6 +96,63 @@ def make_cover_page(path: Path) -> None:
     doc.save(str(path))
 
 
+def make_tx_motion(path: Path) -> None:
+    """Texas motion with district court caption — clean layout."""
+    doc = docx.Document()
+    doc.add_paragraph("IN THE DISTRICT COURT OF HARRIS COUNTY, TEXAS")
+    doc.add_paragraph("125TH JUDICIAL DISTRICT")
+    doc.add_paragraph("")
+    doc.add_paragraph("JANE SMITH,")
+    doc.add_paragraph("    Plaintiff,")
+    doc.add_paragraph("")
+    doc.add_paragraph("v.")
+    doc.add_paragraph("")
+    doc.add_paragraph("JOHN DOE,")
+    doc.add_paragraph("    Defendant.")
+    doc.add_paragraph("")
+    doc.add_paragraph("CAUSE NO. 2026-12345")
+    doc.add_paragraph("")
+    doc.add_paragraph("PLAINTIFF'S MOTION FOR SUMMARY JUDGMENT")
+    doc.add_paragraph("")
+    doc.add_paragraph(
+        "Plaintiff Jane Smith files this Motion for Summary Judgment pursuant to "
+        "Rule 166a of the Texas Rules of Civil Procedure."
+    )
+    doc.add_paragraph("GROUNDS FOR MOTION")
+    doc.add_paragraph(
+        "There is no genuine issue of material fact and Plaintiff is entitled to "
+        "judgment as a matter of law."
+    )
+    doc.add_paragraph("CONCLUSION")
+    doc.add_paragraph(
+        "Plaintiff respectfully requests that the Court grant this motion and render "
+        "judgment in Plaintiff's favor."
+    )
+    doc.save(str(path))
+
+
+def make_tx_notice(path: Path) -> None:
+    """Texas notice of hearing with district court caption — minimal content."""
+    doc = docx.Document()
+    doc.add_paragraph("IN THE DISTRICT COURT OF TRAVIS COUNTY, TEXAS")
+    doc.add_paragraph("201ST JUDICIAL DISTRICT")
+    doc.add_paragraph("")
+    doc.add_paragraph("JANE SMITH, Plaintiff,")
+    doc.add_paragraph("v.")
+    doc.add_paragraph("JOHN DOE, Defendant.")
+    doc.add_paragraph("")
+    doc.add_paragraph("CAUSE NO. 2026-67890")
+    doc.add_paragraph("")
+    doc.add_paragraph("NOTICE OF HEARING")
+    doc.add_paragraph("")
+    doc.add_paragraph(
+        "PLEASE TAKE NOTICE that the above-captioned matter is set for hearing on "
+        "September 15, 2026 at 9:00 a.m. before the Honorable Judge of the "
+        "201st Judicial District Court."
+    )
+    doc.save(str(path))
+
+
 def make_hostile(path: Path) -> None:
     """Hostile layout: explicit paragraph spacing and an embedded table."""
     doc = docx.Document()

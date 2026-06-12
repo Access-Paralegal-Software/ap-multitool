@@ -12,6 +12,9 @@ from doc_chameleon.rules.ca.transformer_2111 import transform_2111 as transform_
 from doc_chameleon.rules.ca.validator import validate as validate_ca
 from doc_chameleon.rules.ca.validator import validate_2111 as validate_ca_2111
 from doc_chameleon.rules.ca.validator import validate_source_assumptions as validate_ca_source_assumptions
+from doc_chameleon.rules.tx.transformer import transform as transform_tx
+from doc_chameleon.rules.tx.validator import validate as validate_tx
+from doc_chameleon.rules.tx.validator import validate_source_assumptions as validate_tx_source_assumptions
 
 JURISDICTIONS: dict[str, str] = {
     "ca": "California (CRC 2.108 line numbering, CRC 2.111 first-page format)",
@@ -40,8 +43,11 @@ def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
         warnings.extend(validate_ca(doc, record))
         warnings.extend(validate_ca_2111(doc, record))
         warnings = list(dict.fromkeys(warnings))
-    else:
-        click.echo("NOTE: Texas transformer not yet implemented. Passing document through unchanged.")
+    elif jurisdiction == "tx":
+        warnings.extend(validate_tx_source_assumptions(doc, record))
+        doc = transform_tx(doc)
+        warnings.extend(validate_tx(doc, record))
+        warnings = list(dict.fromkeys(warnings))
 
     save(doc, output_path)
     report_path = write_report(output_path, input_path, jurisdiction, warnings)
@@ -79,8 +85,14 @@ def validate(input_path: Path, jurisdiction: str) -> None:
                 click.echo(f"  - {warning}")
         else:
             click.echo("No California formatting warnings detected.")
-    else:
-        click.echo("NOTE: Texas validator not yet implemented.")
+    elif jurisdiction == "tx":
+        warnings = validate_tx(doc, record)
+        if warnings:
+            click.echo(f"Warnings ({len(warnings)}):")
+            for warning in warnings:
+                click.echo(f"  - {warning}")
+        else:
+            click.echo("No Texas formatting warnings detected.")
 
 
 @main.command("list-jurisdictions")
