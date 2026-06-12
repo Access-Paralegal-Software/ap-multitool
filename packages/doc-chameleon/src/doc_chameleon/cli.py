@@ -6,6 +6,7 @@ import click
 
 from doc_chameleon.engine.export import save
 from doc_chameleon.engine.ingest import load
+from doc_chameleon.engine.report import write_report
 from doc_chameleon.rules.ca.transformer import transform as transform_ca
 from doc_chameleon.rules.ca.validator import validate as validate_ca
 from doc_chameleon.rules.ca.validator import validate_source_assumptions as validate_ca_source_assumptions
@@ -39,13 +40,16 @@ def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
         click.echo("NOTE: Texas transformer not yet implemented. Passing document through unchanged.")
 
     save(doc, output_path)
+    report_path = write_report(output_path, input_path, jurisdiction, warnings)
+
     click.echo(f"Loaded:      {input_path.name} ({len(record.paragraphs)} paragraphs, {len(record.sections)} sections)")
     click.echo(f"Jurisdiction: {jurisdiction}")
     click.echo(f"Output:      {output_path}")
+    click.echo(f"Report:      {report_path}")
 
     if warnings:
         click.echo()
-        click.echo("Warnings:")
+        click.echo(f"Warnings ({len(warnings)}):")
         for warning in warnings:
             click.echo(f"  - {warning}")
 
