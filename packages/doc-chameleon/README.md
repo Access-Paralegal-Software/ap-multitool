@@ -18,7 +18,105 @@ project: doc-chameleon
 
 **doc-chameleon** is an offline-first legal document formatting and standards-conversion engine for paralegals and legal staff.
 
-This repository operates under STAX governance. All primary documentation is stored in `/docs`. Keep the root sparse.
+Ingest an ordinary `.docx` working draft. Receive a jurisdiction-compliant, editable `.docx` output plus a conversion report. No cloud, no AI legal advice, no PDF-only output.
+
+---
+
+## Jurisdiction Status
+
+| Code | Jurisdiction | Status | Rules Implemented |
+|------|-------------|--------|-------------------|
+| `ca` | California | Implemented | CRC 2.108 (line numbering), CRC 2.111 (first-page layout) |
+| `tx` | Texas | Implemented | TRCP statewide baseline |
+
+Texas local venue overlays (Harris County, Travis County, etc.) are architecturally reserved but not yet implemented.
+
+---
+
+## CLI Usage
+
+```sh
+# Show version
+doc-chameleon --version
+
+# List available jurisdictions and implementation status
+doc-chameleon list-jurisdictions
+
+# Convert a document to California pleading-paper format
+doc-chameleon convert --input brief.docx --jurisdiction ca --output brief_ca.docx
+
+# Convert a document to Texas statewide baseline format
+doc-chameleon convert --input motion.docx --jurisdiction tx --output motion_tx.docx
+
+# Validate a document against California formatting rules
+doc-chameleon validate --input brief_ca.docx --jurisdiction ca
+
+# Validate a document against Texas formatting rules
+doc-chameleon validate --input motion_tx.docx --jurisdiction tx
+```
+
+`convert` always writes a companion `<output_stem>_report.txt` alongside the output `.docx`. The report lists all warnings and includes the legal posture disclaimer.
+
+### Installation (development)
+
+```sh
+pip install -e ".[dev]"
+pytest tests/
+```
+
+---
+
+## What California Conversion Does
+
+1. Locks page geometry: 8.5 × 11 in, left margin 1.25 in, right/top/bottom 1 in.
+2. Normalizes body style to Times New Roman 12 pt, exactly 24 pt line spacing, zero paragraph spacing.
+3. Installs a header-anchored VML text box with 28 consecutively numbered lines in the left margin (CRC 2.108).
+4. Enables a separate first-page header containing a borderless two-column attorney/clerk table (CRC 2.111). Attorney information is pre-filled with `[Placeholder]` text — the user fills in their details.
+5. Warns on tables, embedded objects, non-standard spacing, and any post-transform geometry drift.
+
+## What Texas Conversion Does
+
+1. Sets page geometry: 8.5 × 11 in, 1 in margins all sides.
+2. Normalizes body style to Times New Roman 12 pt, double-spaced, zero paragraph spacing.
+3. Validates that a court caption is present in the opening paragraphs.
+4. Always notes that output reflects statewide baseline only — local venue rules are not applied.
+
+---
+
+## Project Structure
+
+```
+src/doc_chameleon/
+├── __init__.py                 <- __version__
+├── cli.py                      <- convert, validate, list-jurisdictions, --version
+├── engine/
+│   ├── models.py               <- DocumentRecord, ParagraphRecord, SectionRecord
+│   ├── ingest.py               <- load() -> (docx.Document, DocumentRecord)
+│   ├── export.py               <- save()
+│   └── report.py               <- write_report() -> companion _report.txt
+└── rules/
+    ├── ca/
+    │   ├── transformer.py      <- CRC 2.108 line-number transform
+    │   ├── transformer_2111.py <- CRC 2.111 first-page layout transform
+    │   ├── validator.py        <- CA geometry, structure, cross-layer checks
+    │   └── rules_meta.json
+    └── tx/
+        ├── transformer.py      <- TRCP statewide baseline transform
+        ├── validator.py        <- TX geometry, caption check, statewide disclaimer
+        ├── rules_meta.json
+        └── overlays/           <- reserved for future local venue packs
+
+tests/
+├── fixtures.py                 <- synthetic document factories (motion, declaration, notice, cover_page, hostile, tx_motion, tx_notice)
+├── test_roundtrip.py           <- 5 ingest/export fidelity tests
+├── test_ca_numbering.py        <- 5 CRC 2.108 structural tests
+├── test_ca_fixtures.py         <- 10 CA fixture + report tests
+├── test_ca_2111.py             <- 9 CRC 2.111 first-page tests
+├── test_tx_baseline.py         <- 12 TX baseline tests
+└── test_e2e_smoke.py           <- 12 end-to-end smoke tests (CA + TX, all fixtures)
+```
+
+**53 tests, all passing.**
 
 ---
 
@@ -38,55 +136,22 @@ This repository operates under STAX governance. All primary documentation is sto
 | [Architecture Options](docs/architecture/doc-chameleon-architecture-options.md) | Technical strategy, .docx-first pipeline, trade-offs |
 | [Risk Register](docs/ops/doc-chameleon-risk-register.md) | Known risks and mitigations |
 | [Rules Monitoring Plan](docs/ops/doc-chameleon-rules-monitoring-plan.md) | Workflow for tracking jurisdiction rule updates |
+| [Roadmap](docs/roadmap/doc-chameleon-roadmap-initial.md) | Discovery → MVP → Beta → Expansion |
 
-### Strategy
+### Batch PM Reports
 
-| File | Description |
-|------|-------------|
-| [Roadmap](docs/roadmap/doc-chameleon-roadmap-initial.md) | Discovery -> MVP -> Beta -> Expansion |
-| [Batch 02 - California Numbering Spike](docs/roadmap/batch-02-ca-numbering-spike.md) | Focused implementation plan for editable CA pleading-paper line numbering |
-
-### STAX Administration
-
-| File | Description |
-|------|-------------|
-| [PM Report - Batch 01](docs/handoffs/pm-report-batch-01-doc-chameleon.md) | Discovery batch: docs and architecture only |
-| [PM Report - Batch 02](docs/handoffs/pm-report-batch-02-doc-chameleon.md) | Core engine scaffolding: CLI, models, ingest/export, tests |
-| [PM Report - Batch 03](docs/handoffs/pm-report-batch-03-doc-chameleon.md) | California numbering spike: controlled CRC 2.108 prototype |
-
----
-
-## Current Status
-
-**Batch 03 complete.** Core engine scaffolding is in place, and the first controlled California CRC 2.108 line-numbering prototype is implemented.
-
-```text
-src/doc_chameleon/
-├── cli.py                      <- convert, validate, list-jurisdictions
-├── engine/
-│   ├── models.py               <- DocumentRecord, ParagraphRecord, SectionRecord
-│   ├── ingest.py               <- load() -> (docx.Document, DocumentRecord)
-│   └── export.py               <- save()
-└── rules/
-    ├── ca/                     <- controlled line-number transformer, validator, rules_meta.json
-    └── tx/                     <- transformer.py stub, validator.py stub, rules_meta.json, overlays/
-tests/
-├── test_roundtrip.py           <- 5 passing round-trip fidelity tests
-└── test_ca_numbering.py        <- 5 passing CA numbering spike tests
-```
-
-## CLI Usage
-
-```powershell
-python -m doc_chameleon.cli list-jurisdictions
-python -m doc_chameleon.cli convert --input brief.docx --jurisdiction ca --output brief-ca.docx
-python -m doc_chameleon.cli validate --input brief.docx --jurisdiction tx
-```
-
-The California path applies a controlled pleading-paper prototype: 8.5 x 11 inch page geometry, exact 24 pt body line spacing, zero paragraph spacing, and a header-anchored left-margin numbering structure. Texas remains a pass-through stub.
+| Batch | Description |
+|-------|-------------|
+| [Batch 01](docs/handoffs/pm-report-batch-01-doc-chameleon.md) | Discovery: docs and architecture only |
+| [Batch 02](docs/handoffs/pm-report-batch-02-doc-chameleon.md) | Core engine scaffolding: CLI, models, ingest/export |
+| [Batch 03](docs/handoffs/pm-report-batch-03-doc-chameleon.md) | CRC 2.108 line-numbering spike |
+| [Batch 04](docs/handoffs/pm-report-batch-04-doc-chameleon.md) | Fixtures, conversion report, strategy comparison |
+| [Batch 05](docs/handoffs/pm-report-batch-05-doc-chameleon.md) | CRC 2.111 first-page attorney/clerk layout |
+| [Batch 06](docs/handoffs/pm-report-batch-06-doc-chameleon.md) | Texas statewide baseline transformer |
+| [Batch 07](docs/handoffs/pm-report-batch-07-doc-chameleon.md) | CLI polish, --version, e2e smoke tests, README |
 
 ---
 
 ## Legal Posture
 
-This software assists document formatting and workflow preparation. It does not provide legal advice, does not guarantee acceptance by any court or clerk, and users remain responsible for final review before filing.
+This software assists document formatting and workflow preparation. It does not provide legal advice, does not guarantee acceptance by any court or clerk, and users remain responsible for final review before filing. Jurisdiction packs may lag newly adopted rules pending manual review and release.

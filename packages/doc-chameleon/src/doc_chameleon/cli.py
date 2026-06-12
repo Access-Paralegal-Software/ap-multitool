@@ -4,6 +4,7 @@ from pathlib import Path
 
 import click
 
+from doc_chameleon import __version__
 from doc_chameleon.engine.export import save
 from doc_chameleon.engine.ingest import load
 from doc_chameleon.engine.report import write_report
@@ -16,15 +17,33 @@ from doc_chameleon.rules.tx.transformer import transform as transform_tx
 from doc_chameleon.rules.tx.validator import validate as validate_tx
 from doc_chameleon.rules.tx.validator import validate_source_assumptions as validate_tx_source_assumptions
 
-JURISDICTIONS: dict[str, str] = {
-    "ca": "California (CRC 2.108 line numbering, CRC 2.111 first-page format)",
-    "tx": "Texas (TRCP statewide baseline - local venue overlays not yet implemented)",
+JURISDICTIONS = ("ca", "tx")
+
+_JURISDICTION_INFO = {
+    "ca": {
+        "display": "California",
+        "status": "Implemented",
+        "rules": [
+            "CRC 2.108 — left-margin line numbering (all pages)",
+            "CRC 2.111 — first-page attorney/clerk layout",
+        ],
+        "overlays": "N/A — statewide rules only",
+    },
+    "tx": {
+        "display": "Texas",
+        "status": "Implemented",
+        "rules": [
+            "TRCP statewide baseline — page geometry, double-spaced body, caption check",
+        ],
+        "overlays": "Reserved — Harris County, Travis County (not yet implemented)",
+    },
 }
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name="doc-chameleon")
 def main() -> None:
-    """doc-chameleon - offline-first legal document formatting engine."""
+    """doc-chameleon — offline-first legal document formatting engine."""
 
 
 @main.command()
@@ -42,20 +61,20 @@ def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
         doc = transform_ca_2111(doc)
         warnings.extend(validate_ca(doc, record))
         warnings.extend(validate_ca_2111(doc, record))
-        warnings = list(dict.fromkeys(warnings))
     elif jurisdiction == "tx":
         warnings.extend(validate_tx_source_assumptions(doc, record))
         doc = transform_tx(doc)
         warnings.extend(validate_tx(doc, record))
-        warnings = list(dict.fromkeys(warnings))
+
+    warnings = list(dict.fromkeys(warnings))
 
     save(doc, output_path)
     report_path = write_report(output_path, input_path, jurisdiction, warnings)
 
-    click.echo(f"Loaded:      {input_path.name} ({len(record.paragraphs)} paragraphs, {len(record.sections)} sections)")
-    click.echo(f"Jurisdiction: {jurisdiction}")
-    click.echo(f"Output:      {output_path}")
-    click.echo(f"Report:      {report_path}")
+    click.echo(f"Loaded:       {input_path.name} ({len(record.paragraphs)} paragraphs, {len(record.sections)} sections)")
+    click.echo(f"Jurisdiction: {jurisdiction.upper()}")
+    click.echo(f"Output:       {output_path}")
+    click.echo(f"Report:       {report_path}")
 
     if warnings:
         click.echo()
@@ -70,34 +89,34 @@ def convert(input_path: Path, jurisdiction: str, output_path: Path) -> None:
 def validate(input_path: Path, jurisdiction: str) -> None:
     """Validate a .docx against jurisdiction formatting rules."""
     doc, record = load(input_path)
-    click.echo(f"Loaded:      {input_path.name}")
-    click.echo(f"Paragraphs:  {len(record.paragraphs)}")
-    click.echo(f"Sections:    {len(record.sections)}")
-    click.echo(f"Jurisdiction: {jurisdiction}")
+    click.echo(f"Loaded:       {input_path.name}")
+    click.echo(f"Paragraphs:   {len(record.paragraphs)}")
+    click.echo(f"Sections:     {len(record.sections)}")
+    click.echo(f"Jurisdiction: {jurisdiction.upper()}")
     click.echo()
 
     if jurisdiction == "ca":
-        warnings = validate_ca(doc, record) + validate_ca_2111(doc, record)
-        warnings = list(dict.fromkeys(warnings))
-        if warnings:
-            click.echo(f"Warnings ({len(warnings)}):")
-            for warning in warnings:
-                click.echo(f"  - {warning}")
-        else:
-            click.echo("No California formatting warnings detected.")
-    elif jurisdiction == "tx":
-        warnings = validate_tx(doc, record)
-        if warnings:
-            click.echo(f"Warnings ({len(warnings)}):")
-            for warning in warnings:
-                click.echo(f"  - {warning}")
-        else:
-            click.echo("No Texas formatting warnings detected.")
+        warnings = list(dict.fromkeys(validate_ca(doc, record) + validate_ca_2111(doc, record)))
+    else:
+        warnings = list(dict.fromkeys(validate_tx(doc, record)))
+
+    if warnings:
+        click.echo(f"Warnings ({len(warnings)}):")
+        for warning in warnings:
+            click.echo(f"  - {warning}")
+    else:
+        click.echo("No formatting warnings detected.")
 
 
 @main.command("list-jurisdictions")
 def list_jurisdictions() -> None:
-    """List all available jurisdiction packs."""
+    """List all available jurisdiction packs and their implementation status."""
     click.echo("Available jurisdictions:\n")
-    for code, description in JURISDICTIONS.items():
-        click.echo(f"  {code}  {description}")
+    for code, info in _JURISDICTION_INFO.items():
+        click.echo(f"  {code.upper()}  {info['display']}")
+        click.echo(f"      Status:   {info['status']}")
+        click.echo(f"      Rules:")
+        for rule in info["rules"]:
+            click.echo(f"                {rule}")
+        click.echo(f"      Overlays: {info['overlays']}")
+        click.echo()
