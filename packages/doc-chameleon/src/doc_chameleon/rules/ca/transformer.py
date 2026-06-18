@@ -115,7 +115,7 @@ def _line_number_pict():
             id="doc-chameleon-ca-line-numbers"
             o:spid="_x0000_s1025"
             type="#_x0000_t202"
-            style="position:absolute;margin-left:-54pt;margin-top:16pt;width:36pt;height:672pt;z-index:251659264;mso-position-horizontal-relative:page;mso-position-vertical-relative:page"
+            style="position:absolute;margin-left:48pt;margin-top:72pt;width:36pt;height:672pt;z-index:251659264;mso-position-horizontal-relative:page;mso-position-vertical-relative:page"
             stroked="f"
             filled="f">
             <v:textbox inset="0,0,0,0">
