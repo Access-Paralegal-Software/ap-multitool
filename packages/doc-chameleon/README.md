@@ -6,6 +6,8 @@ status: active
 project: doc-chameleon
 ---
 
+> **STAX Format** ? Lifecycle: `Active ? Improving` ? Security: `Strong` ? [Governance](.orchestration/agent-instructions.md)
+
 # doc-chameleon
 
 > [!IMPORTANT]
@@ -68,18 +70,18 @@ pytest tests/
 
 ## What California Conversion Does
 
-1. Locks page geometry: 8.5 × 11 in, left margin 1.25 in, right/top/bottom 1 in.
+1. Locks page geometry: 8.5 Ã— 11 in, left margin 1.25 in, right/top/bottom 1 in.
 2. Normalizes body style to Times New Roman 12 pt, exactly 24 pt line spacing, zero paragraph spacing.
 3. Installs a header-anchored VML text box with 28 consecutively numbered lines in the left margin (CRC 2.108).
-4. Enables a separate first-page header containing a borderless two-column attorney/clerk table (CRC 2.111). Attorney information is pre-filled with `[Placeholder]` text — the user fills in their details.
+4. Enables a separate first-page header containing a borderless two-column attorney/clerk table (CRC 2.111). Attorney information is pre-filled with `[Placeholder]` text â€” the user fills in their details.
 5. Warns on tables, embedded objects, non-standard spacing, and any post-transform geometry drift.
 
 ## What Texas Conversion Does
 
-1. Sets page geometry: 8.5 × 11 in, 1 in margins all sides.
+1. Sets page geometry: 8.5 Ã— 11 in, 1 in margins all sides.
 2. Normalizes body style to Times New Roman 12 pt, double-spaced, zero paragraph spacing.
 3. Validates that a court caption is present in the opening paragraphs.
-4. Always notes that output reflects statewide baseline only — local venue rules are not applied.
+4. Always notes that output reflects statewide baseline only â€” local venue rules are not applied.
 
 ---
 
@@ -87,33 +89,33 @@ pytest tests/
 
 ```
 src/doc_chameleon/
-├── __init__.py                 <- __version__
-├── cli.py                      <- convert, validate, list-jurisdictions, --version
-├── engine/
-│   ├── models.py               <- DocumentRecord, ParagraphRecord, SectionRecord
-│   ├── ingest.py               <- load() -> (docx.Document, DocumentRecord)
-│   ├── export.py               <- save()
-│   └── report.py               <- write_report() -> companion _report.txt
-└── rules/
-    ├── ca/
-    │   ├── transformer.py      <- CRC 2.108 line-number transform
-    │   ├── transformer_2111.py <- CRC 2.111 first-page layout transform
-    │   ├── validator.py        <- CA geometry, structure, cross-layer checks
-    │   └── rules_meta.json
-    └── tx/
-        ├── transformer.py      <- TRCP statewide baseline transform
-        ├── validator.py        <- TX geometry, caption check, statewide disclaimer
-        ├── rules_meta.json
-        └── overlays/           <- reserved for future local venue packs
+â”œâ”€â”€ __init__.py                 <- __version__
+â”œâ”€â”€ cli.py                      <- convert, validate, list-jurisdictions, --version
+â”œâ”€â”€ engine/
+â”‚   â”œâ”€â”€ models.py               <- DocumentRecord, ParagraphRecord, SectionRecord
+â”‚   â”œâ”€â”€ ingest.py               <- load() -> (docx.Document, DocumentRecord)
+â”‚   â”œâ”€â”€ export.py               <- save()
+â”‚   â””â”€â”€ report.py               <- write_report() -> companion _report.txt
+â””â”€â”€ rules/
+    â”œâ”€â”€ ca/
+    â”‚   â”œâ”€â”€ transformer.py      <- CRC 2.108 line-number transform
+    â”‚   â”œâ”€â”€ transformer_2111.py <- CRC 2.111 first-page layout transform
+    â”‚   â”œâ”€â”€ validator.py        <- CA geometry, structure, cross-layer checks
+    â”‚   â””â”€â”€ rules_meta.json
+    â””â”€â”€ tx/
+        â”œâ”€â”€ transformer.py      <- TRCP statewide baseline transform
+        â”œâ”€â”€ validator.py        <- TX geometry, caption check, statewide disclaimer
+        â”œâ”€â”€ rules_meta.json
+        â””â”€â”€ overlays/           <- reserved for future local venue packs
 
 tests/
-├── fixtures.py                 <- synthetic document factories (motion, declaration, notice, cover_page, hostile, tx_motion, tx_notice)
-├── test_roundtrip.py           <- 5 ingest/export fidelity tests
-├── test_ca_numbering.py        <- 5 CRC 2.108 structural tests
-├── test_ca_fixtures.py         <- 10 CA fixture + report tests
-├── test_ca_2111.py             <- 9 CRC 2.111 first-page tests
-├── test_tx_baseline.py         <- 12 TX baseline tests
-└── test_e2e_smoke.py           <- 12 end-to-end smoke tests (CA + TX, all fixtures)
+â”œâ”€â”€ fixtures.py                 <- synthetic document factories (motion, declaration, notice, cover_page, hostile, tx_motion, tx_notice)
+â”œâ”€â”€ test_roundtrip.py           <- 5 ingest/export fidelity tests
+â”œâ”€â”€ test_ca_numbering.py        <- 5 CRC 2.108 structural tests
+â”œâ”€â”€ test_ca_fixtures.py         <- 10 CA fixture + report tests
+â”œâ”€â”€ test_ca_2111.py             <- 9 CRC 2.111 first-page tests
+â”œâ”€â”€ test_tx_baseline.py         <- 12 TX baseline tests
+â””â”€â”€ test_e2e_smoke.py           <- 12 end-to-end smoke tests (CA + TX, all fixtures)
 ```
 
 **53 tests, all passing.**
@@ -136,7 +138,7 @@ tests/
 | [Architecture Options](docs/architecture/doc-chameleon-architecture-options.md) | Technical strategy, .docx-first pipeline, trade-offs |
 | [Risk Register](docs/ops/doc-chameleon-risk-register.md) | Known risks and mitigations |
 | [Rules Monitoring Plan](docs/ops/doc-chameleon-rules-monitoring-plan.md) | Workflow for tracking jurisdiction rule updates |
-| [Roadmap](docs/roadmap/doc-chameleon-roadmap-initial.md) | Discovery → MVP → Beta → Expansion |
+| [Roadmap](docs/roadmap/doc-chameleon-roadmap-initial.md) | Discovery â†’ MVP â†’ Beta â†’ Expansion |
 
 ### Batch PM Reports
 
