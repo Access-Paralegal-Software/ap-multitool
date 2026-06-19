@@ -1,3 +1,5 @@
+> **STAX Format** ∑ Lifecycle: Active ó Building ∑ Security: $security ∑ [Governance](.orchestration/agent-instructions.md)
+
 # ‚öñÔ∏è APMultitool
 
 
@@ -35,3 +37,4 @@ This repository is organized in accordance with **STAX Fleet Rules**:
 ---
 
 *System State: STAX ALIGNED | Security: 100% OFFLINE LOCAL FORENSIC INTEGRITY*
+
