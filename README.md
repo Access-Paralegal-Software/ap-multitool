@@ -1,18 +1,15 @@
-> **STAX Format** � Lifecycle: Active � Building � Security: $security � [Governance](.orchestration/agent-instructions.md)
->
-> 
+> **STAX Format** ? Lifecycle: `Active ? Building` ? Security: `Strong` ? [Governance](.orchestration/agent-instructions.md)
 
-
-# ⚖️ APMultitool
+# âï¸ APMultitool
 
 
 > [!IMPORTANT]
-> **🤖 FOR AI AGENTS, CODING COMPANIONS, AND AUTOMATED SYSTEMS:**
+> **ð¤ FOR AI AGENTS, CODING COMPANIONS, AND AUTOMATED SYSTEMS:**
 > This repository is governed by the **STAX Operating System**. Before taking *any* action, analyzing files, or proposing modifications, you **must** read and strictly adhere to:
 > 1. [ops/soul.md](ops/soul.md) (Philosophical Compass)
 > 2. [ops/agent-rules.md](ops/agent-rules.md) (Enforceable Rules & the 7-Step Sequence)
 >
-> You are required to run through the **Inventory ➔ Summarize ➔ Classify ➔ Propose ➔ Implement ➔ Update Docs ➔ Archive Leftovers** sequence for every run.
+> You are required to run through the **Inventory â Summarize â Classify â Propose â Implement â Update Docs â Archive Leftovers** sequence for every run.
 
 
 
@@ -22,7 +19,7 @@ APMultitool acts as an offline, sovereign craftsman's utility suite. Unlike clou
 
 ---
 
-## 🏛️ Repository Index & Navigation
+## ðï¸ Repository Index & Navigation
 
 This repository is organized in accordance with **STAX Fleet Rules**:
 
@@ -40,4 +37,3 @@ This repository is organized in accordance with **STAX Fleet Rules**:
 ---
 
 *System State: STAX ALIGNED | Security: 100% OFFLINE LOCAL FORENSIC INTEGRITY*
-

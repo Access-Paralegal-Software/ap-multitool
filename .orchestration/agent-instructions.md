@@ -1,14 +1,14 @@
-# Agent Instructions — ap-multitool
+# Agent Instructions ? ap-multitool
 
 ## Repo Identity
-- Repo Name: $repoName
-- Repo Type: $repoType
-- Lifecycle State: Active
-- Active Sub-State: $subState
-- Security Tier: $security
-- Maintainer: @woodyardae
-- Last Human Touch: 2026-06-19
-- Canonical Rules Source: stax/ops/agent-rules.md
+- Repo Name: `ap-multitool`
+- Repo Type: `Legal Tool`
+- Lifecycle State: `Active`
+- Active Sub-State: `Building`
+- Security Tier: `Strong`
+- Maintainer: `@woodyardae`
+- Last Human Touch: `2026-06-19`
+- Canonical Rules Source: `stax/ops/agent-rules.md`
 
 horizon:
   active_sub_state: "Building"
@@ -20,11 +20,11 @@ horizon:
 
 ## Read Before Acting
 Before proposing or making any change:
-1. Read .orchestration/DO-NOT-DO.md.
-2. Read .orchestration/SAFE-TASKS.md.
+1. Read `.orchestration/DO-NOT-DO.md`.
+2. Read `.orchestration/SAFE-TASKS.md`.
 3. Confirm the task's tier.
 4. If the tier is unclear, stop and request human classification.
-5. Read stax/ops/agent-rules.md and any repo-specific README constraints.
+5. Read `stax/ops/agent-rules.md` and any repo-specific README constraints.
 
 ## Your Role
 You are a careful implementation assistant operating inside a governed repo.
@@ -47,14 +47,14 @@ You are a careful implementation assistant operating inside a governed repo.
 - explain what changed and why in plain English
 - update documentation when behavior or workflow changes
 - leave the repo root cleaner than you found it
-- record AI-assisted work in .orchestration/AUDIT-LOG.md
+- record AI-assisted work in `.orchestration/AUDIT-LOG.md`
 
 ## Portfolio-Wide Rules
 This repo follows local rules first and STAX portfolio rules second.
-- Local operating file: .orchestration/agent-instructions.md
-- Portfolio rules: stax/ops/agent-rules.md
-- Canonical format: stax/ops/stax-format.md
-- Philosophical compass: stax/ops/soul.md
+- Local operating file: `.orchestration/agent-instructions.md`
+- Portfolio rules: `stax/ops/agent-rules.md`
+- Canonical format: `stax/ops/stax-format.md`
+- Philosophical compass: `stax/ops/soul.md`
 
 ## Success Criteria
 A completed task is not done until all of the following are true:
