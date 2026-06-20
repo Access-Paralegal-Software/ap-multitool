@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>EmailAccountDescription</key>
+            <string>Access Paralegal Services</string>
+            <key>EmailAccountName</key>
+            <string>Renee Perez</string>
+            <key>EmailAccountType</key>
+            <string>EmailTypeIMAP</string>
+            <key>EmailAddress</key>
+            <string>renee@accessparalegalservices.com</string>
+            <key>IncomingMailServerAuthentication</key>
+            <string>EmailAuthPassword</string>
+            <key>IncomingMailServerHostName</key>
+            <string>mail.alanwoodyard.com</string>
+            <key>IncomingMailServerPortNumber</key>
+            <integer>993</integer>
+            <key>IncomingMailServerUseSSL</key>
+            <true/>
+            <key>IncomingMailServerUsername</key>
+            <string>renee@accessparalegalservices.com</string>
+            <key>IncomingPassword</key>
+            <string>IA!T2h7UHPvBGFJhVm2M</string>
+            <key>OutgoingMailServerAuthentication</key>
+            <string>EmailAuthPassword</string>
+            <key>OutgoingMailServerHostName</key>
+            <string>mail.alanwoodyard.com</string>
+            <key>OutgoingMailServerPortNumber</key>
+            <integer>587</integer>
+            <key>OutgoingMailServerUseSSL</key>
+            <false/>
+            <key>OutgoingMailServerUsername</key>
+            <string>renee@accessparalegalservices.com</string>
+            <key>OutgoingPassword</key>
+            <string>IA!T2h7UHPvBGFJhVm2M</string>
+            <key>PayloadDescription</key>
+            <string>Access Paralegal Services email</string>
+            <key>PayloadDisplayName</key>
+            <string>renee@accessparalegalservices.com</string>
+            <key>PayloadIdentifier</key>
+            <string>com.staxmail.email.renee-accessparalegalservices-com</string>
+            <key>PayloadType</key>
+            <string>com.apple.mail.managed</string>
+            <key>PayloadUUID</key>
+            <string>A4F2E891-3C7B-4D1A-9F6E-2B8C5D0E7A13</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>SMIMEEnabled</key>
+            <false/>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>Access Paralegal Services - Renee Perez email account</string>
+    <key>PayloadDisplayName</key>
+    <string>APS Mail - Renee Perez</string>
+    <key>PayloadIdentifier</key>
+    <string>com.staxmail.profile.renee-aps</string>
+    <key>PayloadOrganization</key>
+    <string>Access Paralegal Services</string>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>B7D3F104-8E2A-4C6B-A1D9-5F0E8C2B4A67</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>
