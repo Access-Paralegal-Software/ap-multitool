@@ -10,13 +10,16 @@ from core.logging_config import get_logger
 from core.licensing import (
     get_machine_fingerprint,
     verify_license_online,
+    evaluate_access,
     Entitlement
 )
 from core.licensing_store import (
     load_cached_entitlement,
     save_cached_entitlement,
-    clear_cached_entitlement
+    clear_cached_entitlement,
+    load_or_start_trial
 )
+from config import PAYWALL_ENFORCED, TRIAL_DURATION_DAYS
 
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
@@ -26,7 +29,25 @@ class VaultSecurityManager:
     def __init__(self):
         self.active_license_key = None
         self.is_pro_activated = False
+        self.access_granted = False
+        self.access_reason = "trial_expired"
+        self.trial_days_remaining = 0
         self._load_license()
+        self._evaluate_access()
+
+    def _evaluate_access(self):
+        """Combines license state, the local trial clock, and the rollout flag
+        into a single access decision the UI gate can read."""
+        trial = load_or_start_trial()
+        decision = evaluate_access(
+            licensed=self.is_pro_activated,
+            trial=trial,
+            enforced=PAYWALL_ENFORCED,
+            trial_duration_days=TRIAL_DURATION_DAYS,
+        )
+        self.access_granted = decision.allowed
+        self.access_reason = decision.reason
+        self.trial_days_remaining = decision.trial_days_remaining
 
     def _load_license(self):
         """Loads the license key from cache, falling back to stored key for online verify or failing."""
@@ -125,6 +146,7 @@ class VaultSecurityManager:
                         json.dump({"key": self.active_license_key, "stamp": str(datetime.now())}, f)
                 except Exception:
                     pass
+                self._evaluate_access()
                 return True
             else:
                 logger.warning(f"Activation failed: License status is {ent.status}")

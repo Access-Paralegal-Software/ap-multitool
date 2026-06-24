@@ -7,7 +7,7 @@ import platform
 import subprocess
 import urllib.request
 import urllib.error
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 # Constants
 DEFAULT_VERIFY_URL = "https://api.accessparalegal.com/v1/license/verify"
@@ -74,6 +74,88 @@ def calculate_signature(entitlement: Entitlement) -> str:
     """Calculates a secure signature to detect tampering of the cached license state."""
     raw = f"{entitlement.license_key}::{entitlement.status}::{entitlement.expires_at}::{entitlement.machine_fingerprint}::{LOCAL_PEPPER}"
     return hashlib.sha256(raw.encode()).hexdigest()
+
+
+class TrialState:
+    """Local free-trial clock, bound to this machine and started on first run."""
+
+    def __init__(self, started_at: str, machine_fingerprint: str):
+        self.started_at = started_at  # ISO 8601 UTC string
+        self.machine_fingerprint = machine_fingerprint
+
+    def _started_dt(self) -> datetime:
+        return datetime.fromisoformat(self.started_at.replace("Z", "+00:00"))
+
+    def days_remaining(self, duration_days: int, now: datetime | None = None) -> int:
+        """Whole days left in the trial window, clamped to >= 0 (display value)."""
+        now = now or datetime.now(timezone.utc)
+        try:
+            end = self._started_dt() + timedelta(days=duration_days)
+        except Exception:
+            return 0
+        seconds_left = (end - now).total_seconds()
+        if seconds_left <= 0:
+            return 0
+        # Round up so a partial final day still reads as "1 day left".
+        return int(-(-seconds_left // 86400))
+
+    def is_active(self, duration_days: int, now: datetime | None = None) -> bool:
+        """True only if unexpired and bound to this machine."""
+        if self.machine_fingerprint != get_machine_fingerprint():
+            return False
+        now = now or datetime.now(timezone.utc)
+        try:
+            end = self._started_dt() + timedelta(days=duration_days)
+        except Exception:
+            return False
+        return now < end
+
+    def to_dict(self) -> dict:
+        return {
+            "started_at": self.started_at,
+            "machine_fingerprint": self.machine_fingerprint,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TrialState":
+        return cls(
+            started_at=data.get("started_at", ""),
+            machine_fingerprint=data.get("machine_fingerprint", ""),
+        )
+
+
+def calculate_trial_signature(trial: TrialState) -> str:
+    """Tamper-evident signature for the cached trial clock."""
+    raw = f"{trial.started_at}::{trial.machine_fingerprint}::{LOCAL_PEPPER}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+class AccessDecision:
+    """Single source of truth for whether the app may be used right now."""
+
+    def __init__(self, allowed: bool, reason: str, trial_days_remaining: int = 0):
+        self.allowed = allowed
+        # 'disabled' | 'licensed' | 'trial' | 'trial_expired'
+        self.reason = reason
+        self.trial_days_remaining = trial_days_remaining
+
+
+def evaluate_access(
+    *,
+    licensed: bool,
+    trial: TrialState | None,
+    enforced: bool,
+    trial_duration_days: int,
+) -> AccessDecision:
+    """Pure paywall decision: rollout flag, then license, then trial, else blocked."""
+    if not enforced:
+        # Paywall not yet rolled out — ship dark, never block a user.
+        return AccessDecision(True, "disabled")
+    if licensed:
+        return AccessDecision(True, "licensed")
+    if trial and trial.is_active(trial_duration_days):
+        return AccessDecision(True, "trial", trial.days_remaining(trial_duration_days))
+    return AccessDecision(False, "trial_expired")
 
 def verify_license_online(license_key: str, verify_url: str = DEFAULT_VERIFY_URL, timeout_seconds: int = 5) -> Entitlement:
     """
