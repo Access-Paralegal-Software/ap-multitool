@@ -2,13 +2,21 @@ import os
 import json
 import base64
 import hashlib
-import platform
-import subprocess
 from datetime import datetime
 
 from cryptography.fernet import Fernet
 
 from core.logging_config import get_logger
+from core.licensing import (
+    get_machine_fingerprint,
+    verify_license_online,
+    Entitlement
+)
+from core.licensing_store import (
+    load_cached_entitlement,
+    save_cached_entitlement,
+    clear_cached_entitlement
+)
 
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
@@ -21,27 +29,44 @@ class VaultSecurityManager:
         self._load_license()
 
     def _load_license(self):
+        """Loads the license key from cache, falling back to stored key for online verify or failing."""
+        # 1. Try to load local cached entitlement
+        ent = load_cached_entitlement()
+        if ent and ent.is_valid():
+            self.active_license_key = ent.license_key
+            self.is_pro_activated = True
+            logger.info("Local cached license entitlement loaded and validated.")
+            return
+
+        # 2. If cache invalid/absent, check if stored license key exists and try online check
         if os.path.exists(LICENSE_FILE):
             try:
                 with open(LICENSE_FILE, 'r') as f:
                     data = json.load(f)
-                    if "key" in data:
-                        # Add any remote validation or format checks here if necessary
-                        self.active_license_key = data["key"]
+                key = data.get("key")
+                if key:
+                    logger.info("Attempting online verification of stored license key...")
+                    ent = verify_license_online(key)
+                    if ent.is_valid():
+                        save_cached_entitlement(ent)
+                        self.active_license_key = key
                         self.is_pro_activated = True
-            except Exception:
-                pass
+                        logger.info("Online verification successful. License activated.")
+                        return
+                    else:
+                        logger.warning(f"Online verification failed: status={ent.status}. Invalidating cache.")
+                        clear_cached_entitlement()
+            except ConnectionError:
+                logger.warning("Offline: Network is down and no valid cached entitlement exists.")
+            except Exception as e:
+                logger.error(f"License load exception: {e}")
+
+        self.is_pro_activated = False
+        self.active_license_key = None
 
     def get_machine_uuid(self) -> str:
         """Retrieves a unique hardware identifier from the OS for local cryptographic salting."""
-        try:
-            cmd = 'wmic csproduct get uuid'
-            # Extracts the unique motherboard/BIOS UUID on Windows
-            uuid = subprocess.check_output(cmd, shell=True).decode().split('\n')[1].strip()
-            return uuid
-        except Exception:
-            # Fallback to local hostname if WMIC is restricted
-            return platform.node() or "OFFLINE_SAFE_FALLBACK"
+        return get_machine_fingerprint()
 
     def get_crypto_key(self) -> bytes:
         """Generates a deterministic 32-byte Fernet key bound to device hardware and license signature."""
@@ -84,19 +109,30 @@ class VaultSecurityManager:
             return {}
 
     def activate_license(self, key: str) -> bool:
-        """Validates and saves a new license key."""
-        # Standard placeholder for validation logic; returning true if key length > 5
-        if not key or len(key.strip()) < 5:
+        """Validates and saves a new license key via online verification."""
+        if not key or not key.strip():
             return False
             
-        self.is_pro_activated = True
-        self.active_license_key = key.strip()
+        cleaned_key = key.strip()
         try:
-            with open(LICENSE_FILE, 'w') as f:
-                json.dump({"key": self.active_license_key, "stamp": str(datetime.now())}, f)
-        except Exception:
-            pass
-        return True
+            ent = verify_license_online(cleaned_key)
+            if ent.is_valid():
+                save_cached_entitlement(ent)
+                self.active_license_key = cleaned_key
+                self.is_pro_activated = True
+                try:
+                    with open(LICENSE_FILE, 'w') as f:
+                        json.dump({"key": self.active_license_key, "stamp": str(datetime.now())}, f)
+                except Exception:
+                    pass
+                return True
+            else:
+                logger.warning(f"Activation failed: License status is {ent.status}")
+                return False
+        except Exception as e:
+            logger.error(f"License activation online call failed: {e}")
+            return False
 
 # Singleton instance for easy import across Qt components
 vault = VaultSecurityManager()
+

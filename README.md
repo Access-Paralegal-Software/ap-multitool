@@ -36,4 +36,23 @@ This repository is organized in accordance with **STAX Fleet Rules**:
 
 ---
 
+## 🔑 Licensing & Revenue Protection (Paywall v1)
+
+APMultitool enforces a secure, startup-gated licensing framework (v1) to protect professional features:
+
+### Licensing Verification Flow:
+1. **Online Verification**: On license activation, the app securely posts the license key and machine-bound hardware fingerprint to the verify server endpoint (default: `https://api.accessparalegal.com/v1/license/verify`).
+2. **Offline Local Cache**: If activated, the app stores a signed local entitlement representation at `~/.access_paralegal_entitlement.json`. The cache:
+   - Includes cryptographic integrity signatures to prevent manual tampering.
+   - Restricts utility exclusively to the original hardware fingerprint (`wmic csproduct get uuid` or system platform combination).
+   - Expires automatically per server-configured duration bounds.
+3. **Startup Gating**: Invalid, expired, suspended, or tampered cached licenses block the application from loading, prompting an activation dialogue box.
+
+### Configuration Variables:
+Set the following options in your local env or network setup:
+* `DEFAULT_VERIFY_URL`: Override the licensing server verify path (default: `https://api.accessparalegal.com/v1/license/verify`).
+
+---
+
 *System State: STAX ALIGNED | Security: 100% OFFLINE LOCAL FORENSIC INTEGRITY*
+
