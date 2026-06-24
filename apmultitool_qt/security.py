@@ -2,13 +2,24 @@ import os
 import json
 import base64
 import hashlib
-import platform
-import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from cryptography.fernet import Fernet
 
 from core.logging_config import get_logger
+from core.licensing import (
+    get_machine_fingerprint,
+    verify_license_online,
+    evaluate_access,
+    Entitlement
+)
+from core.licensing_store import (
+    load_cached_entitlement,
+    save_cached_entitlement,
+    clear_cached_entitlement,
+    load_or_start_trial
+)
+from config import PAYWALL_ENFORCED, TRIAL_DURATION_DAYS
 
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
@@ -18,30 +29,102 @@ class VaultSecurityManager:
     def __init__(self):
         self.active_license_key = None
         self.is_pro_activated = False
+        self.access_granted = False
+        self.access_reason = "trial_expired"
+        self.trial_days_remaining = 0
         self._load_license()
+        self._evaluate_access()
+
+    def _evaluate_access(self):
+        """Combines license state, the local trial clock, and the rollout flag
+        into a single access decision the UI gate can read."""
+        trial = load_or_start_trial()
+        decision = evaluate_access(
+            licensed=self.is_pro_activated,
+            trial=trial,
+            enforced=PAYWALL_ENFORCED,
+            trial_duration_days=TRIAL_DURATION_DAYS,
+        )
+        self.access_granted = decision.allowed
+        self.access_reason = decision.reason
+        self.trial_days_remaining = decision.trial_days_remaining
 
     def _load_license(self):
+        """Loads the license key from cache, falling back to stored key for online verify or failing."""
+        # 1. Try to load local cached entitlement
+        ent = load_cached_entitlement()
+        if ent and ent.is_valid():
+            self.active_license_key = ent.license_key
+            self.is_pro_activated = True
+            logger.info("Local cached license entitlement loaded and validated.")
+            return
+        elif ent and ent.status == "activated" and ent.machine_fingerprint == self.get_machine_uuid():
+            # Check offline grace days fallback
+            try:
+                grace_days = int(os.getenv("APM_LICENSE_OFFLINE_GRACE_DAYS", "7"))
+            except ValueError:
+                grace_days = 7
+            try:
+                last_v = datetime.fromisoformat(ent.last_verified_at.replace("Z", "+00:00"))
+                now_dt = datetime.now(timezone.utc)
+                if now_dt - last_v <= timedelta(days=grace_days):
+                    self.active_license_key = ent.license_key
+                    self.is_pro_activated = True
+                    logger.info("Offline grace period check passed from cached load. Allowing execution.")
+                    return
+            except Exception as e:
+                logger.error(f"Error checking offline grace period from cache load: {e}")
+
+        # 2. If cache invalid/absent, check if stored license key exists and try online check
         if os.path.exists(LICENSE_FILE):
             try:
                 with open(LICENSE_FILE, 'r') as f:
                     data = json.load(f)
-                    if "key" in data:
-                        # Add any remote validation or format checks here if necessary
-                        self.active_license_key = data["key"]
+                key = data.get("key")
+                if key:
+                    logger.info("Attempting online verification of stored license key...")
+                    ent = verify_license_online(key)
+                    if ent.is_valid():
+                        save_cached_entitlement(ent)
+                        self.active_license_key = key
                         self.is_pro_activated = True
-            except Exception:
-                pass
+                        logger.info("Online verification successful. License activated.")
+                        return
+                    else:
+                        logger.warning(f"Online verification failed: status={ent.status}. Invalidating cache.")
+                        clear_cached_entitlement()
+            except ConnectionError:
+                logger.warning("Offline: Network is down. Checking cached entitlement grace period...")
+                try:
+                    # Let's call load_cached_entitlement which verifies signature and machine fingerprint
+                    ent_cached = load_cached_entitlement()
+                    if ent_cached and ent_cached.status == "activated" and ent_cached.machine_fingerprint == self.get_machine_uuid():
+                        try:
+                            grace_days = int(os.getenv("APM_LICENSE_OFFLINE_GRACE_DAYS", "7"))
+                        except ValueError:
+                            grace_days = 7
+                        try:
+                            last_v = datetime.fromisoformat(ent_cached.last_verified_at.replace("Z", "+00:00"))
+                            now_dt = datetime.now(timezone.utc)
+                            if now_dt - last_v <= timedelta(days=grace_days):
+                                self.active_license_key = ent_cached.license_key
+                                self.is_pro_activated = True
+                                logger.info("Offline grace period check passed. Allowing execution.")
+                                return
+                        except Exception as e:
+                            logger.error(f"Error checking offline grace period: {e}")
+                except Exception as cache_err:
+                    logger.error(f"Failed to load cached entitlement for offline grace: {cache_err}")
+                logger.warning("Offline grace period check failed or no valid cached entitlement.")
+            except Exception as e:
+                logger.error(f"License load exception: {e}")
+
+        self.is_pro_activated = False
+        self.active_license_key = None
 
     def get_machine_uuid(self) -> str:
         """Retrieves a unique hardware identifier from the OS for local cryptographic salting."""
-        try:
-            cmd = 'wmic csproduct get uuid'
-            # Extracts the unique motherboard/BIOS UUID on Windows
-            uuid = subprocess.check_output(cmd, shell=True).decode().split('\n')[1].strip()
-            return uuid
-        except Exception:
-            # Fallback to local hostname if WMIC is restricted
-            return platform.node() or "OFFLINE_SAFE_FALLBACK"
+        return get_machine_fingerprint()
 
     def get_crypto_key(self) -> bytes:
         """Generates a deterministic 32-byte Fernet key bound to device hardware and license signature."""
@@ -84,19 +167,31 @@ class VaultSecurityManager:
             return {}
 
     def activate_license(self, key: str) -> bool:
-        """Validates and saves a new license key."""
-        # Standard placeholder for validation logic; returning true if key length > 5
-        if not key or len(key.strip()) < 5:
+        """Validates and saves a new license key via online verification."""
+        if not key or not key.strip():
             return False
             
-        self.is_pro_activated = True
-        self.active_license_key = key.strip()
+        cleaned_key = key.strip()
         try:
-            with open(LICENSE_FILE, 'w') as f:
-                json.dump({"key": self.active_license_key, "stamp": str(datetime.now())}, f)
-        except Exception:
-            pass
-        return True
+            ent = verify_license_online(cleaned_key)
+            if ent.is_valid():
+                save_cached_entitlement(ent)
+                self.active_license_key = cleaned_key
+                self.is_pro_activated = True
+                try:
+                    with open(LICENSE_FILE, 'w') as f:
+                        json.dump({"key": self.active_license_key, "stamp": str(datetime.now())}, f)
+                except Exception:
+                    pass
+                self._evaluate_access()
+                return True
+            else:
+                logger.warning(f"Activation failed: License status is {ent.status}")
+                return False
+        except Exception as e:
+            logger.error(f"License activation online call failed: {e}")
+            return False
 
 # Singleton instance for easy import across Qt components
 vault = VaultSecurityManager()
+

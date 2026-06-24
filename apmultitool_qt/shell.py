@@ -23,10 +23,13 @@ class APMainWindow(QtWidgets.QMainWindow):
         QtCore.QTimer.singleShot(0, self.check_security)
 
     def check_security(self):
-        if not vault.is_pro_activated:
+        if not vault.access_granted:
             self.show_activation_dialog()
         else:
             self.load_vault_data()
+            if vault.access_reason == "trial":
+                days = vault.trial_days_remaining
+                self.set_status(f"Free trial — {days} day{'s' if days != 1 else ''} remaining")
 
     def show_activation_dialog(self):
         dialog = QtWidgets.QDialog(self)
