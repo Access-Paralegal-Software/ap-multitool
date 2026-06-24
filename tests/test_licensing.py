@@ -119,3 +119,18 @@ def test_online_verify_invalid(mock_urlopen):
     ent = verify_license_online("BAD-KEY")
     assert ent.status == "invalid"
     assert ent.is_valid() is False
+
+def test_offline_grace_days_logic():
+    # If the user has a valid cached entitlement from a recent online check,
+    # and connection error is raised when verifying online, we check fallback
+    fingerprint = get_machine_fingerprint()
+    past_expiry = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat() # expired online check
+    
+    # 1. Verification of Entitlement properties directly
+    # Valid online verification date (e.g. checked 2 hours ago)
+    valid_verification_date = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+    ent = Entitlement("VALID-KEY", "activated", past_expiry, fingerprint, last_verified_at=valid_verification_date)
+    # direct is_valid will check expires_at first, returning False if expired.
+    # The grace fallback check is executed at the Manager level.
+    assert ent.is_valid() is False
+

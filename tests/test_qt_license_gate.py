@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from apmultitool_qt.security import VaultSecurityManager, LICENSE_FILE
 from core.licensing import Entitlement, get_machine_fingerprint
-from core.licensing_store import save_cached_entitlement, clear_cached_entitlement
+from core.licensing_store import save_cached_entitlement, clear_cached_entitlement, load_cached_entitlement
 
 @pytest.fixture(autouse=True)
 def clean_license_files():
@@ -85,3 +85,37 @@ def test_manager_activation_failure(mock_verify):
     assert success is False
     assert manager.is_pro_activated is False
     assert manager.active_license_key is None
+
+@patch("apmultitool_qt.security.verify_license_online")
+@patch("apmultitool_qt.security.get_machine_fingerprint")
+@patch("core.licensing_store.get_machine_fingerprint")
+@patch("core.licensing.get_machine_fingerprint")
+def test_manager_offline_grace_fallback(mock_lic_fingerprint, mock_store_fingerprint, mock_sec_fingerprint, mock_verify):
+    # Mock fingerprint to ensure absolute consistency without wmic execution issues
+    fingerprint = "TEST-STATIC-FINGERPRINT"
+    mock_store_fingerprint.return_value = fingerprint
+    mock_sec_fingerprint.return_value = fingerprint
+    mock_lic_fingerprint.return_value = fingerprint
+
+    # Setup stored license key
+    with open(LICENSE_FILE, "w") as f:
+        json.dump({"key": "OFFLINE-KEY", "stamp": str(datetime.now())}, f)
+        
+    # Setup previously cached entitlement (active, expired online check, last_verified 2 hours ago)
+    past_expiry = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    recent_verify = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+    
+    # Explicitly calculate and save the entitlement using correct signature functions
+    cached_ent = Entitlement("OFFLINE-KEY", "activated", past_expiry, fingerprint, last_verified_at=recent_verify)
+    save_cached_entitlement(cached_ent)
+    
+    # Mock online verify failing with ConnectionError
+    mock_verify.side_effect = ConnectionError("Could not resolve API host")
+    
+    # VaultSecurityManager runs _load_license during __init__. Let's force load it.
+    manager = VaultSecurityManager()
+    
+    # Let's inspect what happens inside _load_license directly
+    manager._load_license()
+    assert manager.is_pro_activated is True
+    assert manager.active_license_key == "OFFLINE-KEY"

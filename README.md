@@ -41,16 +41,38 @@ This repository is organized in accordance with **STAX Fleet Rules**:
 APMultitool enforces a secure, startup-gated licensing framework (v1) to protect professional features:
 
 ### Licensing Verification Flow:
-1. **Online Verification**: On license activation, the app securely posts the license key and machine-bound hardware fingerprint to the verify server endpoint (default: `https://api.accessparalegal.com/v1/license/verify`).
+1. **Online Verification**: On license activation, the app securely posts the license key and machine-bound hardware fingerprint to the verify server endpoint.
 2. **Offline Local Cache**: If activated, the app stores a signed local entitlement representation at `~/.access_paralegal_entitlement.json`. The cache:
-   - Includes cryptographic integrity signatures to prevent manual tampering.
+   - Includes cryptographic integrity signatures (`last_verified_at` included in HMAC seed) to prevent manual tampering.
    - Restricts utility exclusively to the original hardware fingerprint (`wmic csproduct get uuid` or system platform combination).
    - Expires automatically per server-configured duration bounds.
 3. **Startup Gating**: Invalid, expired, suspended, or tampered cached licenses block the application from loading, prompting an activation dialogue box.
 
+### Webhook Flow (Purchase to Reuse):
+```
+[Purchase Checkout] ──(HTTP POST Event)──> [Webhook Handler (Port 8080)]
+                                               │
+                                       (Verify Signature)
+                                               │
+                                     [Keygen Provider API]
+                                               │
+                                        (Issue License)
+                                               │
+                                     [Customer Activation]
+                                               │
+                                      (Offline Local Reuse)
+```
+- **Webhook Events Supported**: `checkout.paid`, `payment.success`, `license.created`
+- **Signature Security**: Request payloads verified via HMAC-SHA256 signature verification matching `APM_WEBHOOK_SHARED_SECRET`.
+
 ### Configuration Variables:
-Set the following options in your local env or network setup:
-* `DEFAULT_VERIFY_URL`: Override the licensing server verify path (default: `https://api.accessparalegal.com/v1/license/verify`).
+Set the following options in your local environment or system settings:
+*   `APM_LICENSE_VERIFY_URL`: Endpoint to verify license keys online.
+*   `APM_LICENSE_PUBLIC_KEY`: Public key used for verifying signed license tokens.
+*   `APM_LICENSE_OFFLINE_GRACE_DAYS`: Number of days a verified license can run offline without re-validating online (default: `7`).
+*   `APM_KEYGEN_ACCOUNT_ID`: Keygen.sh developer account identifier.
+*   `APM_KEYGEN_PRODUCT_TOKEN`: Keygen.sh product token used to authorize webhook license issuance.
+*   `APM_WEBHOOK_SHARED_SECRET`: SHA256 shared secret key used to verify inbound webhook signatures.
 
 ---
 

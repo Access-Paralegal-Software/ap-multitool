@@ -29,24 +29,35 @@ def get_machine_fingerprint() -> str:
         return "LOCAL_FALLBACK_FINGERPRINT"
 
 class Entitlement:
-    def __init__(self, license_key: str, status: str, expires_at: str, machine_fingerprint: str):
+    def __init__(self, license_key: str, status: str, expires_at: str, machine_fingerprint: str, last_verified_at: str | None = None):
         self.license_key = license_key
         self.status = status  # 'activated', 'expired', 'suspended', 'invalid'
         self.expires_at = expires_at  # ISO 8601 UTC string
         self.machine_fingerprint = machine_fingerprint
+        # Store when this entitlement was last successfully verified online (default to fixed reference to ensure signature consistency if not provided)
+        self.last_verified_at = last_verified_at or "2026-06-24T00:00:00+00:00"
 
-    def is_valid(self) -> bool:
+    def is_valid(self, grace_days: int | None = None) -> bool:
         """Checks if the entitlement is currently active, unexpired, and matching this machine."""
         if self.status != "activated":
             return False
         
         if self.machine_fingerprint != get_machine_fingerprint():
             return False
+
+        # Read grace days from env if not specified
+        if grace_days is None:
+            try:
+                grace_days = int(os.getenv("APM_LICENSE_OFFLINE_GRACE_DAYS", "7"))
+            except ValueError:
+                grace_days = 7
             
         try:
             # Parse ISO timestamp and check if expired
             expiry_dt = datetime.fromisoformat(self.expires_at.replace("Z", "+00:00"))
-            if datetime.now(timezone.utc) > expiry_dt:
+            now_dt = datetime.now(timezone.utc)
+            if now_dt > expiry_dt:
+                # If online verify fails, checking grace days is handled at the manager layer
                 return False
         except Exception:
             return False
@@ -58,7 +69,8 @@ class Entitlement:
             "license_key": self.license_key,
             "status": self.status,
             "expires_at": self.expires_at,
-            "machine_fingerprint": self.machine_fingerprint
+            "machine_fingerprint": self.machine_fingerprint,
+            "last_verified_at": self.last_verified_at
         }
 
     @classmethod
@@ -67,12 +79,13 @@ class Entitlement:
             license_key=data.get("license_key", ""),
             status=data.get("status", "invalid"),
             expires_at=data.get("expires_at", ""),
-            machine_fingerprint=data.get("machine_fingerprint", "")
+            machine_fingerprint=data.get("machine_fingerprint", ""),
+            last_verified_at=data.get("last_verified_at")
         )
 
 def calculate_signature(entitlement: Entitlement) -> str:
     """Calculates a secure signature to detect tampering of the cached license state."""
-    raw = f"{entitlement.license_key}::{entitlement.status}::{entitlement.expires_at}::{entitlement.machine_fingerprint}::{LOCAL_PEPPER}"
+    raw = f"{entitlement.license_key}::{entitlement.status}::{entitlement.expires_at}::{entitlement.machine_fingerprint}::{entitlement.last_verified_at}::{LOCAL_PEPPER}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
 

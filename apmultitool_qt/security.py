@@ -2,7 +2,7 @@ import os
 import json
 import base64
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from cryptography.fernet import Fernet
 
@@ -58,6 +58,22 @@ class VaultSecurityManager:
             self.is_pro_activated = True
             logger.info("Local cached license entitlement loaded and validated.")
             return
+        elif ent and ent.status == "activated" and ent.machine_fingerprint == self.get_machine_uuid():
+            # Check offline grace days fallback
+            try:
+                grace_days = int(os.getenv("APM_LICENSE_OFFLINE_GRACE_DAYS", "7"))
+            except ValueError:
+                grace_days = 7
+            try:
+                last_v = datetime.fromisoformat(ent.last_verified_at.replace("Z", "+00:00"))
+                now_dt = datetime.now(timezone.utc)
+                if now_dt - last_v <= timedelta(days=grace_days):
+                    self.active_license_key = ent.license_key
+                    self.is_pro_activated = True
+                    logger.info("Offline grace period check passed from cached load. Allowing execution.")
+                    return
+            except Exception as e:
+                logger.error(f"Error checking offline grace period from cache load: {e}")
 
         # 2. If cache invalid/absent, check if stored license key exists and try online check
         if os.path.exists(LICENSE_FILE):
@@ -78,7 +94,28 @@ class VaultSecurityManager:
                         logger.warning(f"Online verification failed: status={ent.status}. Invalidating cache.")
                         clear_cached_entitlement()
             except ConnectionError:
-                logger.warning("Offline: Network is down and no valid cached entitlement exists.")
+                logger.warning("Offline: Network is down. Checking cached entitlement grace period...")
+                try:
+                    # Let's call load_cached_entitlement which verifies signature and machine fingerprint
+                    ent_cached = load_cached_entitlement()
+                    if ent_cached and ent_cached.status == "activated" and ent_cached.machine_fingerprint == self.get_machine_uuid():
+                        try:
+                            grace_days = int(os.getenv("APM_LICENSE_OFFLINE_GRACE_DAYS", "7"))
+                        except ValueError:
+                            grace_days = 7
+                        try:
+                            last_v = datetime.fromisoformat(ent_cached.last_verified_at.replace("Z", "+00:00"))
+                            now_dt = datetime.now(timezone.utc)
+                            if now_dt - last_v <= timedelta(days=grace_days):
+                                self.active_license_key = ent_cached.license_key
+                                self.is_pro_activated = True
+                                logger.info("Offline grace period check passed. Allowing execution.")
+                                return
+                        except Exception as e:
+                            logger.error(f"Error checking offline grace period: {e}")
+                except Exception as cache_err:
+                    logger.error(f"Failed to load cached entitlement for offline grace: {cache_err}")
+                logger.warning("Offline grace period check failed or no valid cached entitlement.")
             except Exception as e:
                 logger.error(f"License load exception: {e}")
 
