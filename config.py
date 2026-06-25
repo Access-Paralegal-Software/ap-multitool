@@ -23,3 +23,17 @@ CONVERSION_BACKEND_OVERRIDE: str | None = os.environ.get("APM_CONVERSION_BACKEND
 LIBREOFFICE_FALLBACK_ENABLED: bool = os.environ.get(
     "APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK", "1"
 ).lower() not in ("0", "false", "no", "off")
+
+# ---------------------------------------------------------------------------
+# Licensing / paywall rollout
+# ---------------------------------------------------------------------------
+
+# Feature flag gating the trial+license paywall. Default: OFF, so the gate ships
+# dark and unlicensed users are never blocked until rollout is flipped on.
+# Set APM_PAYWALL_ENFORCED=1 to enforce the paywall.
+PAYWALL_ENFORCED: bool = os.environ.get(
+    "APM_PAYWALL_ENFORCED", "0"
+).lower() in ("1", "true", "yes", "on")
+
+# Length of the free trial in days. Override with APM_TRIAL_DAYS.
+TRIAL_DURATION_DAYS: int = int(os.environ.get("APM_TRIAL_DAYS", "14"))
