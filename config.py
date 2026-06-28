@@ -28,11 +28,10 @@ LIBREOFFICE_FALLBACK_ENABLED: bool = os.environ.get(
 # Licensing / paywall rollout
 # ---------------------------------------------------------------------------
 
-# Feature flag gating the trial+license paywall. Default: OFF, so the gate ships
-# dark and unlicensed users are never blocked until rollout is flipped on.
-# Set APM_PAYWALL_ENFORCED=1 to enforce the paywall.
+# Feature flag gating the trial+license paywall. Default: ON for production go-live.
+# Set APM_PAYWALL_ENFORCED=0 to disable enforcement for dev/test runs.
 PAYWALL_ENFORCED: bool = os.environ.get(
-    "APM_PAYWALL_ENFORCED", "0"
+    "APM_PAYWALL_ENFORCED", "1"
 ).lower() in ("1", "true", "yes", "on")
 
 # Length of the free trial in days. Override with APM_TRIAL_DAYS.
