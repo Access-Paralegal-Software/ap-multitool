@@ -2,12 +2,23 @@ import hmac
 import hashlib
 import json
 import os
+import time
 from unittest.mock import patch, MagicMock
 import urllib.request
 import urllib.error
 
 import pytest
-from core.webhook import verify_webhook_signature, issue_keygen_license, WebhookRequestHandler
+from core.webhook import (
+    verify_webhook_signature,
+    issue_keygen_license,
+    WebhookRequestHandler,
+    clear_processed_events_cache
+)
+
+@pytest.fixture(autouse=True)
+def reset_event_idempotency_cache():
+    clear_processed_events_cache()
+    yield
 
 def test_verify_webhook_signature_success():
     secret = "test_shared_secret"
@@ -17,8 +28,11 @@ def test_verify_webhook_signature_success():
     sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     assert verify_webhook_signature(payload, sig, secret) is True
     
-    # 2. Keygen-style header matching (v1=signature)
-    sig_header = f"t=123,v1={sig}"
+    # 2. Keygen-style header matching (t=timestamp,v1=signature)
+    now_ts = str(time.time())
+    msg = f"t={now_ts},".encode("utf-8") + payload
+    sig_keygen = hmac.new(secret.encode("utf-8"), msg, hashlib.sha256).hexdigest()
+    sig_header = f"t={now_ts},v1={sig_keygen}"
     assert verify_webhook_signature(payload, sig_header, secret) is True
 
 def test_verify_webhook_signature_failure():
@@ -32,6 +46,23 @@ def test_verify_webhook_signature_failure():
     # Missing / empty
     assert verify_webhook_signature(payload, "", secret) is False
     assert verify_webhook_signature(payload, sig, "") is False
+
+def test_verify_webhook_signature_stale_timestamp():
+    secret = "test_shared_secret"
+    payload = b'{"event": "checkout.paid"}'
+    # timestamp from 1 hour ago
+    stale_ts = str(time.time() - 3600)
+    msg = f"t={stale_ts},".encode("utf-8") + payload
+    sig_keygen = hmac.new(secret.encode("utf-8"), msg, hashlib.sha256).hexdigest()
+    sig_header = f"t={stale_ts},v1={sig_keygen}"
+    
+    assert verify_webhook_signature(payload, sig_header, secret) is False
+
+def test_verify_webhook_signature_malformed_timestamp():
+    secret = "test_shared_secret"
+    payload = b'{"event": "checkout.paid"}'
+    sig_header = "t=not-a-float,v1=somesig"
+    assert verify_webhook_signature(payload, sig_header, secret) is False
 
 @patch("urllib.request.urlopen")
 def test_issue_keygen_license_success(mock_urlopen):
@@ -49,24 +80,23 @@ def test_issue_keygen_license_success(mock_urlopen):
     assert res["data"]["attributes"]["key"] == "KEYGEN-NEW-LIC-123"
 
 @patch("urllib.request.urlopen")
-def test_issue_keygen_license_error(mock_urlopen):
-    # Simulate API error
+@patch("time.sleep", return_value=None)
+def test_issue_keygen_license_error_redacts_secret(mock_sleep, mock_urlopen):
+    # Simulate API error containing the secret token to assert redaction
     mock_err = urllib.error.HTTPError(
         "https://api.keygen.sh/v1/accounts/acc_123/licenses",
         400,
         "Bad Request",
         {},
-        MagicMock(read=lambda: b'{"errors":[{"detail":"Invalid policy"}]}')
+        MagicMock(read=lambda: b'{"errors":[{"detail":"Invalid token_abc token policy"}]}')
     )
     mock_urlopen.side_effect = mock_err
     
     with pytest.raises(RuntimeError) as exc_info:
         issue_keygen_license("user@example.com", "acc_123", "token_abc")
-    assert "Keygen API error" in str(exc_info.value)
-
-class MockServer:
-    def __init__(self):
-        pass
+    # Secret must be redacted and authorization token not exposed in the error message
+    assert "token_abc" not in str(exc_info.value)
+    assert "tok..." in str(exc_info.value)
 
 class DummyRequestHandler(WebhookRequestHandler):
     def __init__(self, rfile_bytes, headers_dict):
@@ -87,7 +117,7 @@ class DummyRequestHandler(WebhookRequestHandler):
 
 @patch("core.webhook.issue_keygen_license")
 def test_handler_valid_signature_paid_event(mock_issue):
-    payload = b'{"event": "checkout.paid", "data": {"attributes": {"email": "paid@example.com"}}}'
+    payload = b'{"id": "evt_1", "event": "checkout.paid", "data": {"attributes": {"email": "paid@example.com"}}}'
     secret = "my_secret"
     sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     
@@ -101,20 +131,29 @@ def test_handler_valid_signature_paid_event(mock_issue):
         mock_issue.assert_called_once_with("paid@example.com", "", "")
 
 @patch("core.webhook.issue_keygen_license")
-def test_handler_invalid_signature(mock_issue):
-    payload = b'{"event": "checkout.paid", "data": {"attributes": {"email": "paid@example.com"}}}'
-    headers = {"Content-Length": str(len(payload)), "X-Signature": "bad_sig"}
+def test_handler_replay_protection_duplicate_event(mock_issue):
+    payload = b'{"id": "evt_1", "event": "checkout.paid", "data": {"attributes": {"email": "paid@example.com"}}}'
+    secret = "my_secret"
+    sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    headers = {"Content-Length": str(len(payload)), "X-Signature": sig}
     
-    with patch("core.webhook.WEBHOOK_SHARED_SECRET", "my_secret"):
-        handler = DummyRequestHandler(payload, headers)
-        handler.do_POST()
+    with patch("core.webhook.WEBHOOK_SHARED_SECRET", secret):
+        # First request succeeds
+        handler1 = DummyRequestHandler(payload, headers)
+        handler1.do_POST()
+        assert handler1.response_status == 200
         
-        assert handler.response_status == 401
-        mock_issue.assert_not_called()
+        # Second duplicate request fails with HTTP 409 Conflict
+        handler2 = DummyRequestHandler(payload, headers)
+        handler2.do_POST()
+        assert handler2.response_status == 409
+        
+        # DOWNSTREAM LICENSE WAS ONLY ISSUED ONCE
+        mock_issue.assert_called_once()
 
 @patch("core.webhook.issue_keygen_license")
-def test_handler_unrelated_event(mock_issue):
-    payload = b'{"event": "user.created", "data": {"attributes": {"email": "user@example.com"}}}'
+def test_handler_malformed_json_fails(mock_issue):
+    payload = b'{"event": "checkout.paid", "data": {'  # malformed JSON
     secret = "my_secret"
     sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     headers = {"Content-Length": str(len(payload)), "X-Signature": sig}
@@ -122,7 +161,32 @@ def test_handler_unrelated_event(mock_issue):
     with patch("core.webhook.WEBHOOK_SHARED_SECRET", secret):
         handler = DummyRequestHandler(payload, headers)
         handler.do_POST()
-        
+        assert handler.response_status == 400
+        mock_issue.assert_not_called()
+
+@patch("core.webhook.issue_keygen_license")
+def test_handler_malformed_schema_fails(mock_issue):
+    # JSON array instead of object
+    payload = b'[{"event": "checkout.paid"}]'
+    secret = "my_secret"
+    sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    headers = {"Content-Length": str(len(payload)), "X-Signature": sig}
+    
+    with patch("core.webhook.WEBHOOK_SHARED_SECRET", secret):
+        handler = DummyRequestHandler(payload, headers)
+        handler.do_POST()
+        assert handler.response_status == 422
+        mock_issue.assert_not_called()
+
+@patch("core.webhook.issue_keygen_license")
+def test_handler_unsupported_event_ignored(mock_issue):
+    payload = b'{"event": "user.deleted", "data": {"attributes": {"email": "user@example.com"}}}'
+    secret = "my_secret"
+    sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    headers = {"Content-Length": str(len(payload)), "X-Signature": sig}
+    
+    with patch("core.webhook.WEBHOOK_SHARED_SECRET", secret):
+        handler = DummyRequestHandler(payload, headers)
+        handler.do_POST()
         assert handler.response_status == 200
-        # Check that we did not invoke keygen
         mock_issue.assert_not_called()
