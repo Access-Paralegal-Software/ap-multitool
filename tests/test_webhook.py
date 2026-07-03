@@ -190,3 +190,31 @@ def test_handler_unsupported_event_ignored(mock_issue):
         handler.do_POST()
         assert handler.response_status == 200
         mock_issue.assert_not_called()
+
+@patch("core.webhook.issue_keygen_license")
+def test_handler_activation_failure_logs_alert(mock_issue):
+    from pathlib import Path
+    mock_issue.side_effect = RuntimeError("Keygen API connection timed out")
+    
+    payload = b'{"id": "evt_fail_1", "event": "checkout.paid", "data": {"attributes": {"email": "fail@example.com"}}}'
+    secret = "my_secret"
+    sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    headers = {"Content-Length": str(len(payload)), "X-Signature": sig}
+    
+    log_file = Path("data/activation_failures.log")
+    if log_file.exists():
+        log_file.unlink()
+        
+    with patch("core.webhook.WEBHOOK_SHARED_SECRET", secret):
+        handler = DummyRequestHandler(payload, headers)
+        handler.do_POST()
+        
+        assert handler.response_status == 500
+        assert log_file.exists()
+        
+        content = log_file.read_text(encoding="utf-8")
+        assert "fail@example.com" in content
+        assert "Keygen API connection timed out" in content
+        
+    if log_file.exists():
+        log_file.unlink()
