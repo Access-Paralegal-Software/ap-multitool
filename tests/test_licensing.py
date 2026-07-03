@@ -134,3 +134,24 @@ def test_offline_grace_days_logic():
     # The grace fallback check is executed at the Manager level.
     assert ent.is_valid() is False
 
+
+def test_seat_reuse_fails_different_machine():
+    machine_a = "MACHINE-A-UUID"
+    machine_b = "MACHINE-B-UUID"
+    
+    future_expiry = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    ent_a = Entitlement("SHARED-KEY", "activated", future_expiry, machine_a)
+    
+    with patch("core.licensing.get_machine_fingerprint", return_value=machine_b):
+        assert ent_a.is_valid() is False
+
+
+@patch("urllib.request.urlopen")
+def test_offline_reactivation_requires_network(mock_urlopen):
+    # If network is down, calling verify_license_online must raise ConnectionError,
+    # proving that offline reactivation of a raw key is not implemented/supported.
+    mock_urlopen.side_effect = Exception("Network down")
+    
+    with pytest.raises(ConnectionError):
+        verify_license_online("SOME-KEY")
+

@@ -127,3 +127,11 @@ def test_trial_signature_changes_with_payload():
     t1 = TrialState(_now().isoformat(), fp)
     t2 = TrialState((_now() - timedelta(days=5)).isoformat(), fp)
     assert calculate_trial_signature(t1) != calculate_trial_signature(t2)
+
+
+def test_trial_clock_rollback_resistance():
+    started = _now().isoformat()
+    trial = TrialState(started, get_machine_fingerprint())
+    # System clock is set to 1 hour before trial started
+    rollback_time = _now() - timedelta(hours=1)
+    assert trial.is_active(14, now=rollback_time) is False
