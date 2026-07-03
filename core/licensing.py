@@ -8,6 +8,9 @@ import subprocess
 import urllib.request
 import urllib.error
 from datetime import datetime, timedelta, timezone
+from core.logging_config import get_logger
+
+logger = get_logger("core.licensing")
 
 # Constants
 DEFAULT_VERIFY_URL = "https://api.accessparalegal.com/v1/license/verify"
@@ -113,12 +116,16 @@ class TrialState:
         return int(-(-seconds_left // 86400))
 
     def is_active(self, duration_days: int, now: datetime | None = None) -> bool:
-        """True only if unexpired and bound to this machine."""
+        """True only if unexpired, not rolled back, and bound to this machine."""
         if self.machine_fingerprint != get_machine_fingerprint():
             return False
         now = now or datetime.now(timezone.utc)
         try:
-            end = self._started_dt() + timedelta(days=duration_days)
+            started = self._started_dt()
+            if now < started:
+                logger.error("System clock rollback detected! Trial invalidated.")
+                return False
+            end = started + timedelta(days=duration_days)
         except Exception:
             return False
         return now < end
