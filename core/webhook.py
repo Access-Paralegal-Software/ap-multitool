@@ -6,6 +6,8 @@ import sys
 import time
 import urllib.request
 import urllib.error
+from pathlib import Path
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from core.logging_config import get_logger
 
@@ -166,6 +168,30 @@ def issue_keygen_license(email: str, account_id: str, product_token: str, produc
             time.sleep(retry_delay)
             retry_delay *= 2
 
+def log_activation_failure(email: str, error: str):
+    """Logs license activation failures to a file that maintainers can monitor."""
+    try:
+        log_path = Path("data/activation_failures.log")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        
+        # Scrub secrets
+        safe_err = error
+        if KEYGEN_PRODUCT_TOKEN:
+            safe_err = safe_err.replace(KEYGEN_PRODUCT_TOKEN, "[REDACTED]")
+        if WEBHOOK_SHARED_SECRET:
+            safe_err = safe_err.replace(WEBHOOK_SHARED_SECRET, "[REDACTED]")
+            
+        log_entry = {
+            "timestamp": timestamp,
+            "email": email,
+            "error": safe_err
+        }
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception as exc:
+        logger.error(f"Failed to write to activation failure alert log: {exc}")
+
 class WebhookRequestHandler(BaseHTTPRequestHandler):
     """Lite HTTP Request Handler for receiving checkout webhooks."""
     
@@ -269,6 +295,9 @@ class WebhookRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"status": "issued"}).encode('utf-8'))
         except Exception as e:
+            # Log activation failure for alerting
+            log_activation_failure(email, str(e))
+            
             # Scrub authorization header/secret leaks from response payloads
             safe_e = str(e).replace(KEYGEN_PRODUCT_TOKEN, "[REDACTED]")
             self.send_response(500)
