@@ -17,6 +17,7 @@ from core.job import (
     Job, InputSpec, OutputSpec, JobStatus,
     EmailToPdfParams, MergeParams, DocxToPdfParams, XlsxToPdfParams, BatesParams,
 )
+from core.operations import BatesReconciler, BatesExporter
 from core.logging_config import configure_cli_logging
 
 logger = None
@@ -294,6 +295,55 @@ def handle_bates(args):
     _run(job, args)
 
 
+@trap_execution
+def handle_reconcile(args):
+    target = Path(args.input)
+    master = Path(args.master)
+    out_dir = _ensure_output_dir(args)
+    
+    if not target.exists() or not target.is_dir():
+        logger.error(f"Target directory not found: {target}")
+        sys.exit(ExitCode.INVALID)
+    if not master.exists() or not master.is_dir():
+        logger.error(f"Master litigation directory not found: {master}")
+        sys.exit(ExitCode.INVALID)
+        
+    logger.info("Initializing Bates Reconciler...")
+    reconciler = BatesReconciler(
+        target_dir=str(target),
+        master_dir=str(master),
+        ocr_cache_path=args.ocr_cache
+    )
+    
+    def on_progress(msg, val):
+        logger.info(f"Progress: {int(val * 100)}% - {msg}")
+        
+    results = reconciler.run_reconciliation(progress_callback=on_progress)
+    logger.info(f"Reconciliation scan finished. Analyzed {len(results)} total pages.")
+    
+    # Process random audit verification sample
+    if args.audit_sample:
+        logger.info("Generating randomized verification sample for quality audit...")
+        sample = reconciler.get_random_audit_sample(
+            results,
+            confidence=args.confidence,
+            margin=args.margin
+        )
+        logger.info(f"--- RANDOM AUDIT CHECKLIST ({len(sample)} pages out of {len(results)}) ---")
+        for idx, item in enumerate(sample, start=1):
+            logger.info(f"  [{idx}] File: {item['file_subpath']} ({item['page_label']}) -> Matches: {item['bates_number']} (Confidence: {item['confidence']*100:.1f}%)")
+        logger.info("---------------------------------------------------------------------")
+        
+    logger.info("Compiling production outputs and database load files...")
+    exporter = BatesExporter(
+        target_dir=str(target),
+        output_root_dir=str(out_dir),
+        reconciliation_results=results
+    )
+    exporter.run_export(progress_callback=on_progress)
+    logger.info("Export completed successfully. Relativity DAT and Opticon OPT load files generated.")
+
+
 def handle_support_bundle(args):
     try:
         from core.support import create_support_bundle
@@ -391,6 +441,16 @@ Examples:
     p.add_argument("-o", "--output-dir", default=None,
                    help="Directory for the bundle ZIP (default: Desktop or .)")
 
+    # reconcile
+    p = sub.add_parser("reconcile", help="Reconcile and audit messy file sets against Bates-stamped master productions")
+    p.add_argument("-i", "--input", required=True, help="Target directory containing messy document files")
+    p.add_argument("-m", "--master", required=True, help="Master litigation production directory containing stamped PDFs")
+    p.add_argument("-o", "--output-dir", default="reconciled_production", help="Output directory for compiled production (default: reconciled_production)")
+    p.add_argument("--ocr-cache", help="Path to OCR cache JSON database file")
+    p.add_argument("--audit-sample", action="store_true", help="Generate and print a randomized audit review checklist")
+    p.add_argument("--confidence", type=float, default=0.95, help="Audit sample Z-score confidence level (default: 0.95)")
+    p.add_argument("--margin", type=float, default=0.05, help="Audit sample margin of error (default: 0.05)")
+
     args = parser.parse_args()
     configure_logging(args)
 
@@ -400,6 +460,7 @@ Examples:
         "docx-to-pdf": handle_docx_to_pdf,
         "xlsx-to-pdf": handle_xlsx_to_pdf,
         "bates": handle_bates,
+        "reconcile": handle_reconcile,
         "support-bundle": handle_support_bundle,
     }
     dispatch[args.operation](args)

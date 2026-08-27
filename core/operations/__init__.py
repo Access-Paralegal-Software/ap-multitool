@@ -17,6 +17,8 @@ from core.operations.docx_to_pdf import handle as _docx_to_pdf
 from core.operations.xlsx_to_pdf import handle as _xlsx_to_pdf
 from core.operations.bates_stamp import handle as _bates_stamp
 from core.operations.folder_tree import handle as _folder_tree
+from core.operations.bates_reconcile import BatesReconciler
+from core.operations.bates_exporter import BatesExporter
 
 OPERATION_REGISTRY: dict = {
     "merge":   _merge,

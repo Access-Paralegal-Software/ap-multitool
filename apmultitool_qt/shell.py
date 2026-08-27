@@ -4,7 +4,7 @@
 
 from PySide6 import QtWidgets, QtCore, QtGui
 from apmultitool_qt.styles import GLOBAL_STYLE
-from apmultitool_qt.views import CompilerView, BatesView, FileRoomView, AboutView
+from apmultitool_qt.views import CompilerView, BatesView, FileRoomView, AboutView, ReconcileView
 from apmultitool_qt.security import vault
 from core import __version__, __channel__
 
@@ -114,6 +114,12 @@ class APMainWindow(QtWidgets.QMainWindow):
         self.btn_group.addButton(self.btn_bates, 1)
         sidebar_layout.addWidget(self.btn_bates)
 
+        self.btn_reconcile = QtWidgets.QPushButton("🔍  Bates Reconciler")
+        self.btn_reconcile.setObjectName("SidebarButton")
+        self.btn_reconcile.setCheckable(True)
+        self.btn_group.addButton(self.btn_reconcile, 4)
+        sidebar_layout.addWidget(self.btn_reconcile)
+
         self.btn_fileroom = QtWidgets.QPushButton("🏛️  File Room & Trees")
         self.btn_fileroom.setObjectName("SidebarButton")
         self.btn_fileroom.setCheckable(True)
@@ -166,6 +172,7 @@ class APMainWindow(QtWidgets.QMainWindow):
         
         self.view_compiler = CompilerView()
         self.view_bates = BatesView()
+        self.view_reconcile = ReconcileView()
         self.view_fileroom = FileRoomView()
         self.view_about = AboutView()
 
@@ -173,6 +180,7 @@ class APMainWindow(QtWidgets.QMainWindow):
         self.stacked_widget.addWidget(self.view_bates)
         self.stacked_widget.addWidget(self.view_fileroom)
         self.stacked_widget.addWidget(self.view_about)
+        self.stacked_widget.addWidget(self.view_reconcile)
 
         right_layout.addWidget(self.stacked_widget)
         layout.addWidget(right_container)
@@ -220,6 +228,7 @@ class APMainWindow(QtWidgets.QMainWindow):
 
         safe_stop(self.view_compiler)
         safe_stop(self.view_bates)
+        safe_stop(self.view_reconcile)
         safe_stop(self.view_fileroom)
         
         event.accept()
@@ -279,4 +288,7 @@ class APMainWindow(QtWidgets.QMainWindow):
         elif view_id == 3:
             self.lbl_title.setText("Help & About")
             self.lbl_sub.setText("Application information, telemetry stats, and diagnostic tools.")
+        elif view_id == 4:
+            self.lbl_title.setText("Bates Reconciler Audit")
+            self.lbl_sub.setText("Resolve unmatched missing pages manually by searching in Adobe Acrobat.")
 
