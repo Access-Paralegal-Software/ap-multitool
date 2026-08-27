@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ap-core"
+version = "1.0.0"
+description = "Core legal document processing engine for AP Multitool"
+requires-python = ">=3.12"
+dependencies = [
+    "pypdf>=4.0.0",
+    "reportlab>=4.0.0",
+    "pikepdf>=8.0.0",
+    "python-docx>=1.1.0",
+    "openpyxl>=3.1.0",
+    "cryptography>=42.0.0",
+    "requests>=2.31.0",
+    "html2text>=2024.2.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.12.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ap_core", "src/core"]

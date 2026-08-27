@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ap-multitool-cli"
+version = "1.0.0"
+description = "Command-line interface for AP Multitool Legal Suite"
+requires-python = ">=3.12"
+dependencies = [
+    "ap-core",
+    "doc-chameleon",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+ap = "ap_cli.main:main"
+
+[tool.uv.sources]
+ap-core = { workspace = true }
+doc-chameleon = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ap_cli"]

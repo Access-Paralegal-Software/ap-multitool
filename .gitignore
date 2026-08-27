@@ -12,6 +12,10 @@ __pycache__/
 *.pyc
 build/
 dist/
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
 
 # Local Output & Run Directories
 Merged_Output/
