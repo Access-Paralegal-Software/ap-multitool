@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "doc-chameleon"
+version = "0.8.0"
+description = "Offline-first legal document formatting engine for paralegals"
+requires-python = ">=3.12"
+dependencies = [
+    "python-docx>=1.1.0",
+    "click>=8.1.0",
+]
+
+[project.scripts]
+doc-chameleon = "doc_chameleon.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/doc_chameleon"]
