@@ -79,24 +79,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install \
-            pyinstaller \
-            pypdf \
-            reportlab \
-            pikepdf \
-            pillow \
-            PySide6 \
-            pymupdf \
-            extract-msg \
-            cryptography
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install workspace
+        run: uv sync --all-packages --extra packaging
 
       # ── Phase 3: Build (ACTIVE — unsigned probe mode) ───────────────────────
 
@@ -109,7 +101,7 @@ jobs:
         # produces an unsigned DMG. See SIGNING_HOOK and NOTARIZATION_HOOK
         # comments in packaging/macos/build_app.sh.
         run: |
-          bash packaging/macos/build_app.sh \
+          uv run bash packaging/macos/build_app.sh \
             "${{ github.event.inputs.app_version || '1.0.0' }}" \
             "${{ github.event.inputs.release_channel || '-alpha1' }}"
 
@@ -130,7 +122,7 @@ jobs:
       - name: "[FUTURE] Import Developer ID certificate into ephemeral keychain"
         # INACTIVE: Requires APPLE_DEV_ID_CERT and APPLE_DEV_ID_CERT_PASSWORD.
         # Creates a temporary keychain scoped to this runner job only.
-        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_DEV_ID_CERT_PASSWORD != '' }}
+        if: env.MACOS_SIGNING_ACTIVE == 'true'
         env:
           APPLE_DEV_ID_CERT:          ${{ secrets.APPLE_DEV_ID_CERT }}
           APPLE_DEV_ID_CERT_PASSWORD: ${{ secrets.APPLE_DEV_ID_CERT_PASSWORD }}
@@ -158,7 +150,7 @@ jobs:
       - name: "[FUTURE] Codesign app bundle and CLI binary (Hardened Runtime)"
         # INACTIVE: Requires APPLE_DEV_ID_CERT and APPLE_TEAM_ID.
         # Corresponds to SIGNING_HOOK in build_app.sh.
-        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' }}
+        if: env.MACOS_SIGNING_ACTIVE == 'true'
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
@@ -192,7 +184,7 @@ jobs:
 
       - name: "[FUTURE] Submit signed DMG to Apple notarytool"
         # INACTIVE: Requires all 4 notarization secrets.
-        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        if: env.MACOS_SIGNING_ACTIVE == 'true'
         env:
           APPLE_TEAM_ID:              ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APPLE_ID:             ${{ secrets.APPLE_APPLE_ID }}
@@ -206,13 +198,13 @@ jobs:
 
       - name: "[FUTURE] Staple notarization ticket to DMG"
         # INACTIVE: Stapling embeds the ticket so Gatekeeper verifies offline.
-        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        if: env.MACOS_SIGNING_ACTIVE == 'true'
         run: |
           xcrun stapler staple "${{ env.SIGNED_DMG }}"
 
       - name: "[FUTURE] Upload signed and notarized DMG artifact"
         # INACTIVE: Uploads the final notarized artifact.
-        if: ${{ secrets.APPLE_DEV_ID_CERT != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        if: env.MACOS_SIGNING_ACTIVE == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: macos-dmg-signed-notarized

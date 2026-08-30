@@ -30,18 +30,20 @@ pyinstaller --noconfirm --clean \
     --hidden-import="pypdf" \
     --hidden-import="reportlab" \
     --hidden-import="pikepdf" \
-    cli.py
+    --collect-submodules="ap_core" \
+    apps/cli/src/ap_cli/main.py
 
 # We compile the GUI as a windowed application (.app bundle)
 pyinstaller --noconfirm --clean \
     --name="Access_Paralegal_Multitool" \
     --windowed \
-    --add-data="logo_small.png:." \
-    --add-data="water_texture.png:." \
+    --add-data="apps/desktop/logo_small.png:." \
+    --add-data="apps/desktop/water_texture.png:." \
     --hidden-import="pypdf" \
     --hidden-import="reportlab" \
     --hidden-import="pikepdf" \
-    gui_apmultitool.py
+    --collect-submodules="ap_core" \
+    apps/desktop/gui_apmultitool_qt.py
 
 # 4. Codesign / Notarization guidelines
 echo "[4/4] Codesigning and Verification Guidelines..."

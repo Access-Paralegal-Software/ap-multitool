@@ -14,6 +14,8 @@ jobs:
     name: Build tarball (Linux x64)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      R2_UPLOAD_ENABLED: ${{ secrets.R2_ACCESS_KEY_ID != '' }}
 
     steps:
       - name: Checkout
@@ -22,7 +24,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Install system libraries (Qt6 / PySide6 runtime)
         run: |
@@ -42,10 +47,8 @@ jobs:
             libdbus-1-3 \
             libegl1
 
-      - name: Install Python dependencies
-        run: |
-          pip install --upgrade pip
-          pip install pyinstaller pyside6 pypdf reportlab pikepdf
+      - name: Install workspace
+        run: uv sync --all-packages --extra packaging
 
       - name: Parse version from tag (or default)
         id: version
@@ -67,27 +70,29 @@ jobs:
 
       - name: Build CLI binary
         run: |
-          pyinstaller --noconfirm --clean \
+          uv run pyinstaller --noconfirm --clean \
             --name="apmultitool" \
             --onefile \
             --console \
             --hidden-import="pypdf" \
             --hidden-import="reportlab" \
             --hidden-import="pikepdf" \
-            cli.py
+            --collect-submodules="ap_core" \
+            apps/cli/src/ap_cli/main.py
 
       - name: Build GUI app (onedir)
         run: |
-          pyinstaller --noconfirm --clean \
+          uv run pyinstaller --noconfirm --clean \
             --name="Access_Paralegal_Multitool" \
             --onedir \
             --windowed \
-            --add-data="logo_small.png:." \
-            --add-data="water_texture.png:." \
+            --add-data="apps/desktop/logo_small.png:." \
+            --add-data="apps/desktop/water_texture.png:." \
             --hidden-import="pypdf" \
             --hidden-import="reportlab" \
             --hidden-import="pikepdf" \
-            gui_apmultitool_qt.py
+            --collect-submodules="ap_core" \
+            apps/desktop/gui_apmultitool_qt.py
 
       - name: Package tarball
         run: |
@@ -111,7 +116,7 @@ jobs:
           retention-days: 30
 
       - name: Upload to Cloudflare R2
-        if: ${{ secrets.R2_ACCESS_KEY_ID != '' }}
+        if: env.R2_UPLOAD_ENABLED == 'true'
         env:
           R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}

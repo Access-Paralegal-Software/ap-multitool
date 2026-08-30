@@ -1,7 +1,7 @@
 # prepare_bundle.ps1 - Prepare the APMultitool installer folder layout
 # Run from repository root: powershell -File packaging/windows/prepare_bundle.ps1
 
-$version = python -c "from core import __version__, __channel__; print(f'v{__version__}{__channel__}')" 2>$null
+$version = python -c "from ap_core import __version__, __channel__; print(f'v{__version__}{__channel__}')" 2>$null
 if (-not $version) {
     $version = "v1.0.0-beta1"
 }
@@ -45,8 +45,8 @@ Copy-Item -Path $guiExe -Destination $bundleDir
 Copy-Item -Path $cliExe -Destination $bundleDir
 
 # Copy GUI assets
-Copy-Item -Path "logo_small.png" -Destination $bundleDir
-Copy-Item -Path "water_texture.png" -Destination $bundleDir
+Copy-Item -Path "apps\desktop\logo_small.png" -Destination $bundleDir
+Copy-Item -Path "apps\desktop\water_texture.png" -Destination $bundleDir
 
 # Create a draft LICENSE file
 $licenseContent = @"

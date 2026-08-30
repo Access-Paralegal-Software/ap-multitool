@@ -1,0 +1,56 @@
+[tool.uv.workspace]
+members = [
+    "packages/ap-core",
+    "packages/doc-chameleon",
+    "apps/cli",
+    "apps/desktop",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+ap-core = { workspace = true }
+doc-chameleon = { workspace = true }
+ap-multitool-cli = { workspace = true }
+ap-multitool-desktop = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.12.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = [
+    "tests",
+    "packages/doc-chameleon/tests",
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = [
+    ".",
+    "packages/ap-core/src",
+    "packages/doc-chameleon/src",
+    "apps/cli/src",
+    "apps/desktop",
+]
+markers = [
+    "slow: marks tests as slow-running",
+    "qt: tests requiring PySide6 GUI environment",
+    "core: tests covering business logic and non-GUI components",
+    "cli: tests covering command line interface",
+    "telemetry: tests covering application telemetry",
+    "packaging: tests covering pyinstaller builds and installer logic",
+    "conversion: tests covering docx/xlsx to pdf conversion and soffice bridge",
+    "integration: end-to-end multi-component tests",
+    "smoke: quick sanity checks for critical import and wiring paths",
+    "libreoffice: tests requiring LibreOffice on PATH",
+    "integration_windows: tests requiring Windows and Microsoft Office",
+    "integration_libreoffice: alias for the LibreOffice integration marker",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
