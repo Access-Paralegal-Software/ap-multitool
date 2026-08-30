@@ -15,9 +15,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-import config
-from core.job import Job, JobResult, JobStatus, ProvenanceRecord, OperationCancelled
-from core.operations import OPERATION_REGISTRY
+from ap_core import config
+from ap_core.job import Job, JobResult, JobStatus, ProvenanceRecord, OperationCancelled
+from ap_core.operations import OPERATION_REGISTRY
 
 
 class DocEngine:

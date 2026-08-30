@@ -19,7 +19,7 @@ import tempfile
 from enum import Enum
 from pathlib import Path
 
-from core.logging_config import get_logger, safe_filename
+from ap_core.logging_config import get_logger, safe_filename
 
 
 logger = get_logger("core.conversion.backend")

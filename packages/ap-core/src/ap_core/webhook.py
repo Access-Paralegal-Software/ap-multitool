@@ -9,7 +9,7 @@ import urllib.error
 from pathlib import Path
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from core.logging_config import get_logger
+from ap_core.logging_config import get_logger
 
 logger = get_logger("core.webhook")
 

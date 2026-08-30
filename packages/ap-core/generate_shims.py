@@ -22,8 +22,36 @@ for root, dirs, files in os.walk(src_dir):
             
             if mod_parts:
                 mod_name = ".".join(mod_parts)
-                target_file.write_text(f"from ap_core.{mod_name} import *\n", encoding="utf-8")
+                if mod_name == "operations":
+                    operation_modules = sorted(
+                        path.stem
+                        for path in (src_dir / "operations").glob("*.py")
+                        if path.stem != "__init__"
+                    )
+                    module_names = ",\n    ".join(repr(name) for name in operation_modules)
+                    target_file.write_text(
+                        "import sys as _sys\n"
+                        "from importlib import import_module as _import_module\n\n"
+                        "from ap_core.operations import *\n\n"
+                        "for _name in (\n"
+                        f"    {module_names},\n"
+                        "):\n"
+                        "    _sys.modules[f\"{__name__}.{_name}\"] = "
+                        "_import_module(f\"ap_core.operations.{_name}\")\n",
+                        encoding="utf-8",
+                    )
+                else:
+                    target_file.write_text(
+                        "import sys as _sys\n"
+                        "from importlib import import_module as _import_module\n\n"
+                        f"_sys.modules[__name__] = _import_module(\"ap_core.{mod_name}\")\n",
+                        encoding="utf-8",
+                    )
             else:
-                target_file.write_text("from ap_core import *\n", encoding="utf-8")
+                target_file.write_text(
+                    "from ap_core import *\n"
+                    "from ap_core import __channel__, __version__\n",
+                    encoding="utf-8",
+                )
 
 print("Generated core shim files successfully.")

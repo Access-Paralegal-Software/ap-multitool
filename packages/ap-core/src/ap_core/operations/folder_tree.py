@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Callable
 from datetime import datetime
 
-from core.job import Job, JobResult, JobStatus, OperationCancelled, FolderTreeParams
+from ap_core.job import Job, JobResult, JobStatus, OperationCancelled, FolderTreeParams
 
 
 def handle(job: Job, progress: Callable[[str, float], None]) -> JobResult:

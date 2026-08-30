@@ -16,6 +16,7 @@ dependencies = [
     "cryptography>=42.0.0",
     "requests>=2.31.0",
     "html2text>=2024.2.26",
+    "pywin32>=306; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

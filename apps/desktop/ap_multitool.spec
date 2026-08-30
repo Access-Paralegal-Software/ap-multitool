@@ -1,20 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 # ap_multitool.spec — PyInstaller bundle specification for APMultitool
 
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
 
 # ---------------------------------------------------------------------
 # Analysis & Build config for GUI
 # ---------------------------------------------------------------------
 a_gui = Analysis(
-    ['gui_apmultitool_qt.py'],
+    ['apps/desktop/gui_apmultitool_qt.py'],
     pathex=[],
     binaries=[],
     datas=[
-        ('logo_small.png', '.'), 
-        ('water_texture.png', '.')
+        ('apps/desktop/logo_small.png', '.'),
+        ('apps/desktop/water_texture.png', '.')
     ],
-    hiddenimports=[
+    hiddenimports=collect_submodules('ap_core') + [
         'win32com', 
         'win32com.client', 
         'pythoncom',
@@ -82,11 +84,11 @@ exe_gui = EXE(
 # Analysis & Build config for CLI
 # ---------------------------------------------------------------------
 a_cli = Analysis(
-    ['cli.py'],
+    ['apps/cli/src/ap_cli/main.py'],
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[
+    hiddenimports=collect_submodules('ap_core') + [
         'win32com', 
         'win32com.client', 
         'pythoncom',

@@ -15,7 +15,7 @@ from typing import Callable
 
 import pikepdf
 
-from core.job import Job, JobResult, ExtractParams
+from ap_core.job import Job, JobResult, ExtractParams
 
 
 def handle(job: Job, progress: Callable[[str, float], None]) -> JobResult:

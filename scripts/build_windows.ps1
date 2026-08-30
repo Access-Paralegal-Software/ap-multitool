@@ -34,9 +34,9 @@ Write-Host "Build directories cleaned successfully." -ForegroundColor Green
 # 3. Compile binaries using the spec file
 Write-Host "[3/4] Running PyInstaller compilation..." -ForegroundColor Yellow
 if ($usePythonModule) {
-    & python -m PyInstaller ap_multitool.spec --noconfirm
+    & python -m PyInstaller apps/desktop/ap_multitool.spec --noconfirm
 } else {
-    & pyinstaller ap_multitool.spec --noconfirm
+    & pyinstaller apps/desktop/ap_multitool.spec --noconfirm
 }
 
 if ($LASTEXITCODE -eq 0) {

@@ -19,9 +19,8 @@ from pathlib import Path
 from typing import Callable
 
 import pikepdf
-from core import email_processing
-
-from core.job import Job, JobResult, JobStatus, OperationCancelled, EmailToPdfParams
+from ap_core import email_processing
+from ap_core.job import Job, JobResult, JobStatus, OperationCancelled, EmailToPdfParams
 
 
 def _slugify(text: str) -> str:
@@ -113,7 +112,7 @@ def handle(job: Job, progress: Callable[[str, float], None]) -> JobResult:
                     if not success or not att_pdf_tmp.exists():
                         att_low = fname.lower()
                         if att_low.endswith(('.docx', '.doc')):
-                            from core.operations.merge import _word_to_pdf
+                            from ap_core.operations.merge import _word_to_pdf
                             _word_to_pdf(att_raw_tmp, att_pdf_tmp, warnings)
                             success = att_pdf_tmp.exists()
                 except Exception as att_exc:

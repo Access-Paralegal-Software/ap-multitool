@@ -3,7 +3,7 @@
 """Help & About View widget class for APMultitool Qt."""
 
 from PySide6 import QtWidgets, QtCore, QtGui
-import config
+from ap_core import config
 from apmultitool_qt.core_bridge import DiagnosticWorker
 from apmultitool_qt.components import SectionCard, ActionBar, HintLabel, dialogs
 

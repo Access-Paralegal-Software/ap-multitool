@@ -1,38 +1,6 @@
 # config.py
 
-"""Central configuration for Access Paralegal Multitool (APMultitool)."""
+"""Compatibility wrapper for the packaged AP Multitool configuration."""
 
-import os
-
-# Semantic version for the release – update as needed.
-__version__ = "v1.0.0-beta1"
-
-# Application name used throughout UI and docs.
-APP_NAME = "Access Paralegal Multitool"
-
-# ---------------------------------------------------------------------------
-# Document conversion settings
-# ---------------------------------------------------------------------------
-
-# Set APM_CONVERSION_BACKEND=libreoffice (or win32com) to override auto-detection.
-CONVERSION_BACKEND_OVERRIDE: str | None = os.environ.get("APM_CONVERSION_BACKEND")
-
-# Controls whether the LibreOffice/soffice fallback is enabled.
-# Default: "1" (enabled) — preserves backward compatibility.
-# Set APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK=0 to disable the fallback entirely.
-LIBREOFFICE_FALLBACK_ENABLED: bool = os.environ.get(
-    "APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK", "1"
-).lower() not in ("0", "false", "no", "off")
-
-# ---------------------------------------------------------------------------
-# Licensing / paywall rollout
-# ---------------------------------------------------------------------------
-
-# Feature flag gating the trial+license paywall. Default: ON for production go-live.
-# Set APM_PAYWALL_ENFORCED=0 to disable enforcement for dev/test runs.
-PAYWALL_ENFORCED: bool = os.environ.get(
-    "APM_PAYWALL_ENFORCED", "1"
-).lower() in ("1", "true", "yes", "on")
-
-# Length of the free trial in days. Override with APM_TRIAL_DAYS.
-TRIAL_DURATION_DAYS: int = int(os.environ.get("APM_TRIAL_DAYS", "14"))
+from ap_core.config import *
+from ap_core.config import __version__

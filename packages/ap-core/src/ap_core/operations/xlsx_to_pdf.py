@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Callable
 
 import pikepdf
-from core.job import Job, JobResult, JobStatus, OperationCancelled, XlsxToPdfParams
-from core.logging_config import get_logger, safe_filename
-from core.operations._conversion_backend import (
+from ap_core.job import Job, JobResult, JobStatus, OperationCancelled, XlsxToPdfParams
+from ap_core.logging_config import get_logger, safe_filename
+from ap_core.operations._conversion_backend import (
     ConversionBackend,
     detect_backend,
     libreoffice_fallback_enabled,

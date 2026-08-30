@@ -21,10 +21,9 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCAN_TARGETS = [
-    REPO_ROOT / "core",
-    REPO_ROOT / "apmultitool_qt",
-    REPO_ROOT / "cli.py",
-    REPO_ROOT / "email_processing.py",
+    REPO_ROOT / "packages" / "ap-core" / "src" / "ap_core",
+    REPO_ROOT / "apps" / "desktop" / "apmultitool_qt",
+    REPO_ROOT / "apps" / "cli" / "src" / "ap_cli" / "main.py",
 ]
 
 LOGGER_METHODS = {"debug", "info", "warning", "warn", "error", "exception", "critical"}
@@ -32,14 +31,12 @@ LOGGER_METHODS = {"debug", "info", "warning", "warn", "error", "exception", "cri
 
 def layer_for(path: Path) -> str:
     relative = path.relative_to(REPO_ROOT).as_posix()
-    if relative.startswith("core/"):
+    if relative.startswith("packages/ap-core/src/ap_core/"):
         return "core"
-    if relative.startswith("apmultitool_qt/"):
+    if relative.startswith("apps/desktop/apmultitool_qt/"):
         return "qt"
-    if relative == "cli.py":
+    if relative == "apps/cli/src/ap_cli/main.py":
         return "cli"
-    if relative == "email_processing.py":
-        return "legacy_email"
     return "unknown"
 
 

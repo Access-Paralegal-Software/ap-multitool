@@ -23,9 +23,9 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-import config
-import core
-from core.logging_config import configure_logging, flush_handlers, get_log_file_path, get_logger
+import ap_core as core
+from ap_core import config
+from ap_core.logging_config import configure_logging, flush_handlers, get_log_file_path, get_logger
 
 def get_log_dir() -> Path:
     """

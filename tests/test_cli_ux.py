@@ -12,8 +12,6 @@ import os
 def run_cli(args: list[str]) -> subprocess.CompletedProcess:
     """Helper to run the CLI as a subprocess."""
     cli_path = Path(__file__).parent.parent / "apps" / "cli" / "src" / "ap_cli" / "main.py"
-    if not cli_path.exists():
-        cli_path = Path(__file__).parent.parent / "cli.py"
     env = os.environ.copy()
     root_src = str(Path(__file__).parent.parent / "packages" / "ap-core" / "src")
     env["PYTHONPATH"] = root_src + os.pathsep + env.get("PYTHONPATH", "")

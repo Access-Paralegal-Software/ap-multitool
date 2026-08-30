@@ -17,7 +17,7 @@ from typing import Callable
 
 import pikepdf
 
-from core.job import Job, JobResult, MergeParams
+from ap_core.job import Job, JobResult, MergeParams
 
 _NOOP: Callable[[str, float], None] = lambda msg, val: None  # noqa: E731
 
@@ -159,7 +159,7 @@ def _text_to_pdf(src: Path, dest: Path) -> None:
 
 def _email_to_pdf(spec, dest: Path, params: MergeParams) -> None:
     import shutil
-    from core import email_processing
+    from ap_core import email_processing
     result_path = email_processing.process_email(
         Path(spec.path),
         dest.parent,
@@ -171,8 +171,8 @@ def _email_to_pdf(spec, dest: Path, params: MergeParams) -> None:
 
 
 def _word_to_pdf(src: Path, dest: Path, warnings: list[str]) -> None:
-    from core.operations.docx_to_pdf import handle as docx_handle
-    from core.job import InputSpec, DocxToPdfParams, OutputSpec
+    from ap_core.operations.docx_to_pdf import handle as docx_handle
+    from ap_core.job import InputSpec, DocxToPdfParams, OutputSpec
 
     job = Job(
         operation="docx_to_pdf",
@@ -187,8 +187,8 @@ def _word_to_pdf(src: Path, dest: Path, warnings: list[str]) -> None:
 
 
 def _excel_to_pdf(src: Path, dest: Path, warnings: list[str]) -> None:
-    from core.operations.xlsx_to_pdf import handle as xlsx_handle
-    from core.job import InputSpec, XlsxToPdfParams, OutputSpec
+    from ap_core.operations.xlsx_to_pdf import handle as xlsx_handle
+    from ap_core.job import InputSpec, XlsxToPdfParams, OutputSpec
 
     job = Job(
         operation="xlsx_to_pdf",

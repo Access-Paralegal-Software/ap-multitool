@@ -2,14 +2,14 @@ import os
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from core.licensing import (
+from ap_core.licensing import (
     Entitlement,
     TrialState,
     calculate_signature,
     calculate_trial_signature,
     get_machine_fingerprint,
 )
-from core.logging_config import get_logger
+from ap_core.logging_config import get_logger
 
 logger = get_logger("core.licensing_store")
 

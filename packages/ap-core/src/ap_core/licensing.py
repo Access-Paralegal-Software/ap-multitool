@@ -8,7 +8,7 @@ import subprocess
 import urllib.request
 import urllib.error
 from datetime import datetime, timedelta, timezone
-from core.logging_config import get_logger
+from ap_core.logging_config import get_logger
 
 logger = get_logger("core.licensing")
 

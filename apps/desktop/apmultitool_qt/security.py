@@ -19,7 +19,7 @@ from core.licensing_store import (
     clear_cached_entitlement,
     load_or_start_trial
 )
-from config import PAYWALL_ENFORCED, TRIAL_DURATION_DAYS
+from ap_core.config import PAYWALL_ENFORCED, TRIAL_DURATION_DAYS
 
 LICENSE_FILE = os.path.join(os.path.expanduser("~"), ".access_paralegal_license.json")
 CASE_VAULT_FILE = os.path.join(os.path.expanduser("~"), ".access_cases_vault.enc")
@@ -194,4 +194,3 @@ class VaultSecurityManager:
 
 # Singleton instance for easy import across Qt components
 vault = VaultSecurityManager()
-

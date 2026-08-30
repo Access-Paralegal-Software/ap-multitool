@@ -13,8 +13,8 @@ from typing import Callable
 
 import pikepdf
 
-from core.job import Job, JobResult, RotateParams
-from core.operations.extract import _resolve_selection
+from ap_core.job import Job, JobResult, RotateParams
+from ap_core.operations.extract import _resolve_selection
 
 
 def handle(job: Job, progress: Callable[[str, float], None]) -> JobResult:

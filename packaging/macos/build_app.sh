@@ -94,19 +94,21 @@ pyinstaller --noconfirm --clean \
     --hidden-import="pypdf" \
     --hidden-import="reportlab" \
     --hidden-import="pikepdf" \
-    cli.py
+    --collect-submodules="ap_core" \
+    apps/cli/src/ap_cli/main.py
 
 echo "  -> Compiling GUI app bundle..."
 # macOS uses ':' as path separator for --add-data (unlike Windows ';')
 pyinstaller --noconfirm --clean \
     --name="Access_Paralegal_Multitool" \
     --windowed \
-    --add-data="logo_small.png:." \
-    --add-data="water_texture.png:." \
+    --add-data="apps/desktop/logo_small.png:." \
+    --add-data="apps/desktop/water_texture.png:." \
     --hidden-import="pypdf" \
     --hidden-import="reportlab" \
     --hidden-import="pikepdf" \
-    gui_apmultitool_qt.py
+    --collect-submodules="ap_core" \
+    apps/desktop/gui_apmultitool_qt.py
 
 GUI_APP="dist/Access_Paralegal_Multitool.app"
 CLI_EXE="dist/apmultitool"

@@ -38,12 +38,18 @@ pythonpath = [
     "apps/desktop",
 ]
 markers = [
+    "slow: marks tests as slow-running",
     "qt: tests requiring PySide6 GUI environment",
     "core: tests covering business logic and non-GUI components",
     "cli: tests covering command line interface",
+    "telemetry: tests covering application telemetry",
     "packaging: tests covering pyinstaller builds and installer logic",
     "conversion: tests covering docx/xlsx to pdf conversion and soffice bridge",
     "integration: end-to-end multi-component tests",
+    "smoke: quick sanity checks for critical import and wiring paths",
+    "libreoffice: tests requiring LibreOffice on PATH",
+    "integration_windows: tests requiring Windows and Microsoft Office",
+    "integration_libreoffice: alias for the LibreOffice integration marker",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

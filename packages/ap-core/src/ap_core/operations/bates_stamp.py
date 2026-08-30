@@ -18,7 +18,7 @@ import pikepdf
 import pypdf
 from reportlab.pdfgen import canvas
 
-from core.job import Job, JobResult, JobStatus, OperationCancelled, BatesParams
+from ap_core.job import Job, JobResult, JobStatus, OperationCancelled, BatesParams
 
 # --- Stamp geometry constants (PDF points; 72 pts = 1 inch) ---
 _STAMP_MARGIN = 54   # half-inch inset — matches standard legal margin

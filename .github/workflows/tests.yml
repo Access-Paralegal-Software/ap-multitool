@@ -35,10 +35,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Install system dependencies (Linux — xvfb for Qt widget tests)
         # xvfb provides a virtual framebuffer so PySide6 can open windows
@@ -52,11 +55,8 @@ jobs:
             libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 \
             libxcb-xfixes0 libgl1-mesa-glx
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest pytest-qt PySide6 pypdf reportlab pikepdf \
-                      pymupdf extract-msg cryptography pillow
+      - name: Install workspace
+        run: uv sync --all-packages
 
       # ── Test runs ──────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ jobs:
         # Qt and all other tests run natively on these platforms.
         if: runner.os != 'Linux'
         run: >-
-          python scripts/run_core_tests.py
+          uv run python scripts/run_core_tests.py
           --subset ${{ matrix.subset }}
           --junit test-results-${{ matrix.os }}-${{ matrix.subset }}.xml
 
@@ -72,9 +72,11 @@ jobs:
         # xvfb-run wraps the process in a virtual framebuffer session.
         # Qt widget tests (--subset qt) can now instantiate QApplication.
         if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: >-
           xvfb-run --auto-servernum
-          python scripts/run_core_tests.py
+          uv run python scripts/run_core_tests.py
           --subset ${{ matrix.subset }}
           --junit test-results-${{ matrix.os }}-${{ matrix.subset }}.xml
 
