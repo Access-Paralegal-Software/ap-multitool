@@ -39,6 +39,44 @@ def configure_logging(args):
     logger = configure_cli_logging(args)
 
 
+def enforce_offline_license_gate(args) -> None:
+    """Gate CLI operations on cached entitlement / local trial — never call Keygen online.
+
+    ``--help`` / ``--version`` never reach this function (argparse exits first).
+    A valid signed cache runs fully air-gapped; only activation of a raw key
+    (desktop UI path) requires network.
+    """
+    from core.licensing import evaluate_offline_access
+
+    decision = evaluate_offline_access()
+    if decision.allowed:
+        if decision.reason == "trial" and logger is not None:
+            if not (
+                getattr(args, "silent", False)
+                or getattr(args, "quiet", False)
+                or getattr(args, "json", False)
+            ):
+                logger.info(
+                    "Running under offline trial (%s day(s) remaining).",
+                    decision.trial_days_remaining,
+                )
+        elif decision.reason == "licensed" and logger is not None:
+            logger.debug("Offline cached license accepted; skipping network verification.")
+        return
+
+    msg = (
+        "License required: no valid offline cache and trial has expired. "
+        "Activate a license online once (desktop), then reuse this CLI air-gapped."
+    )
+    if getattr(args, "json", False):
+        print(json.dumps({"status": "failed", "error": msg}))
+    elif logger is not None:
+        logger.error(msg)
+    else:
+        print(msg, file=sys.stderr)
+    sys.exit(ExitCode.FAILED)
+
+
 def get_progress_cb(args):
     if getattr(args, "silent", False) or getattr(args, "quiet", False) or getattr(args, "json", False):
         return lambda msg, val: None
@@ -393,6 +431,7 @@ Examples:
 
     args = parser.parse_args()
     configure_logging(args)
+    enforce_offline_license_gate(args)
 
     dispatch = {
         "email-to-pdf": handle_email_to_pdf,

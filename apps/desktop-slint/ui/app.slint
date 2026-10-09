@@ -1,0 +1,744 @@
+﻿import { VerticalBox, HorizontalBox, LineEdit, ListView, ComboBox, CheckBox } from "std-widgets.slint";
+
+export struct QueueItem {
+    filename: string,
+    filesize: string,
+    page_count: int,
+    status: string,
+    full_path: string,
+}
+
+export component AppWindow inherits Window {
+    title: "Access Paralegal // Legal Desktop Workstation v1.0";
+    min-width: 1120px;
+    min-height: 760px;
+    background: #090c10;
+    default-font-family: "Segoe UI";
+
+    in-out property <int> active-tab: 0;
+    in-out property <bool> show-about-modal: false;
+    in-out property <bool> batch-finished: false;
+    in-out property <string> output-folder-path: "";
+
+    // Bates Stamping Properties
+    in-out property <[QueueItem]> queue-model: [];
+    in-out property <string> bates-prefix: "CONF";
+    in-out property <int> bates-start-number: 1000;
+    in-out property <int> bates-padding: 6;
+    in-out property <string> selected-court-preset: "Texas eFile (Safe Top Margin)";
+    in-out property <bool> auto-shrink: true;
+    in-out property <bool> export-csv-index: true;
+
+    // Doc-Chameleon Properties
+    in-out property <string> attorney-info: "Jane Doe, Esq. (SBN 123456)\nACME LEGAL DEFENSE\n100 Pine St, Suite 500\nSan Francisco, CA 94111";
+    in-out property <string> court-title: "SUPERIOR COURT OF CALIFORNIA, COUNTY OF LOS ANGELES";
+    in-out property <string> case-caption: "JOHN DOE, Plaintiff,\nv.\nACME CORP, Defendant.";
+    in-out property <string> selected-pleading-preset: "California Rule 2.111 (28-Line Pleading)";
+
+    in-out property <string> status-message: "Engine ready. Add discovery documents to begin.";
+    in-out property <string> license-badge-text: "Commercial Founder Pass Active";
+    in-out property <bool> license-is-active: true;
+
+    callback add-files-clicked();
+    callback clear-queue-clicked();
+    callback execute-batch-processing();
+    callback format-pleading-clicked();
+    callback open-output-folder-clicked();
+    callback license-clicked();
+
+    // MAIN WORKSTATION VIEWPORT
+    VerticalBox {
+        padding: 20px;
+        spacing: 16px;
+
+        // TOP HEADER BAR
+        HorizontalLayout {
+            height: 44px;
+            spacing: 16px;
+            alignment: center;
+
+            // Brand Mark
+            HorizontalLayout {
+                spacing: 12px;
+                alignment: center;
+
+                Rectangle {
+                    width: 38px;
+                    height: 38px;
+                    background: #111722;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: #223247;
+
+                    Text {
+                        text: "AP";
+                        color: #5cb85c;
+                        font-size: 15px;
+                        font-weight: 900;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 1px;
+                    Text {
+                        text: "ACCESS PARALEGAL";
+                        color: #ffffff;
+                        font-size: 14px;
+                        font-weight: 800;
+                        letter-spacing: 0.5px;
+                    }
+                    Text {
+                        text: "LEGAL TECH DESKTOP";
+                        color: #5cb85c;
+                        font-size: 10px;
+                        font-weight: 700;
+                        letter-spacing: 1.0px;
+                    }
+                }
+            }
+
+            Rectangle { width: 16px; }
+
+            // Mode Switcher Pills
+            Rectangle {
+                background: #111622;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #1f2a3c;
+
+                HorizontalLayout {
+                    padding: 4px;
+                    spacing: 4px;
+
+                    Rectangle {
+                        background: root.active-tab == 0 ? #1c2738 : transparent;
+                        border-radius: 6px;
+                        border-width: root.active-tab == 0 ? 1px : 0px;
+                        border-color: root.active-tab == 0 ? #5cb85c : transparent;
+
+                        TouchArea {
+                            clicked => { root.active-tab = 0; }
+                            HorizontalLayout {
+                                padding-left: 18px;
+                                padding-right: 18px;
+                                alignment: center;
+                                Text {
+                                    text: "Discovery & Bates Stamping";
+                                    color: root.active-tab == 0 ? #ffffff : #8a9bb0;
+                                    font-size: 12px;
+                                    font-weight: root.active-tab == 0 ? 700 : 500;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        background: root.active-tab == 1 ? #1c2738 : transparent;
+                        border-radius: 6px;
+                        border-width: root.active-tab == 1 ? 1px : 0px;
+                        border-color: root.active-tab == 1 ? #5cb85c : transparent;
+
+                        TouchArea {
+                            clicked => { root.active-tab = 1; }
+                            HorizontalLayout {
+                                padding-left: 18px;
+                                padding-right: 18px;
+                                alignment: center;
+                                Text {
+                                    text: "Pleading Formatter (Doc-Chameleon)";
+                                    color: root.active-tab == 1 ? #ffffff : #8a9bb0;
+                                    font-size: 12px;
+                                    font-weight: root.active-tab == 1 ? 700 : 500;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle { horizontal-stretch: 1; }
+
+            // Modern Help & About Trigger
+            Rectangle {
+                height: 34px;
+                background: #111622;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: #1f2a3c;
+
+                TouchArea {
+                    clicked => { root.show-about-modal = true; }
+                    HorizontalLayout {
+                        padding-left: 14px;
+                        padding-right: 14px;
+                        spacing: 6px;
+                        alignment: center;
+                        Text {
+                            text: "? Help & About";
+                            color: #94a3b8;
+                            font-size: 11px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // License Badge Pill
+            Rectangle {
+                height: 34px;
+                background: #0d1a12;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: #1b3824;
+
+                TouchArea {
+                    clicked => { root.license-clicked(); }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        spacing: 8px;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 7px;
+                            height: 7px;
+                            background: root.license-is-active ? #5cb85c : #f59e0b;
+                            border-radius: 4px;
+                        }
+                        Text {
+                            text: root.license-badge-text;
+                            color: root.license-is-active ? #5cb85c : #f59e0b;
+                            font-size: 11px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // TAB 0: DISCOVERY & BATES STAMPING
+        if root.active-tab == 0: HorizontalLayout {
+            spacing: 18px;
+
+            // LEFT COLUMN: SETTINGS
+            Rectangle {
+                horizontal-stretch: 4;
+                background: #111622;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: #1e283a;
+
+                VerticalBox {
+                    padding: 22px;
+                    spacing: 14px;
+
+                    Text {
+                        text: "BATES SEQUENCE SPECIFICATION";
+                        font-size: 11px;
+                        font-weight: 800;
+                        color: #5cb85c;
+                        letter-spacing: 1.0px;
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        Text { text: "Prefix:"; color: #94a3b8; width: 85px; vertical-alignment: center; font-size: 12px; }
+                        LineEdit { text <=> root.bates-prefix; }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        Text { text: "Start No:"; color: #94a3b8; width: 85px; vertical-alignment: center; font-size: 12px; }
+                        LineEdit { text: root.bates-start-number; }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        Text { text: "Padding:"; color: #94a3b8; width: 85px; vertical-alignment: center; font-size: 12px; }
+                        LineEdit { text: root.bates-padding; }
+                    }
+
+                    Rectangle { height: 1px; background: #1e283a; }
+
+                    Text {
+                        text: "JURISDICTION CLEARANCE PRESET";
+                        font-size: 11px;
+                        font-weight: 800;
+                        color: #5cb85c;
+                        letter-spacing: 1.0px;
+                    }
+
+                    ComboBox {
+                        model: [
+                            "Texas eFile (Safe Top Margin)",
+                            "Federal CM/ECF (Bottom-Right)",
+                            "California Rule 2.111 (Footer Center)",
+                            "Florida e-Portal (Page 1 Safe)",
+                            "Custom Coordinates"
+                        ];
+                        current-value <=> root.selected-court-preset;
+                    }
+
+                    CheckBox {
+                        text: "Auto-shrink page (S=0.95, Ty=+36pt)";
+                        checked <=> root.auto-shrink;
+                    }
+
+                    CheckBox {
+                        text: "Export production_index.csv";
+                        checked <=> root.export-csv-index;
+                    }
+
+                    Rectangle { vertical-stretch: 1; }
+
+                    // Primary Action Button
+                    Rectangle {
+                        height: 48px;
+                        background: #18281d;
+                        border-radius: 8px;
+                        border-width: 1px;
+                        border-color: #2b5735;
+
+                        TouchArea {
+                            clicked => { root.execute-batch-processing(); }
+                            HorizontalLayout {
+                                alignment: center;
+                                Text {
+                                    text: "EXECUTE BATES STAMP PASS";
+                                    color: #5cb85c;
+                                    font-size: 13px;
+                                    font-weight: 800;
+                                    letter-spacing: 0.8px;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // RIGHT COLUMN: INGESTION & PRODUCTION QUEUE
+            Rectangle {
+                horizontal-stretch: 6;
+                background: #111622;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: #1e283a;
+
+                VerticalBox {
+                    padding: 22px;
+                    spacing: 14px;
+
+                    // Centered Box Title
+                    HorizontalLayout {
+                        alignment: center;
+                        Text {
+                            text: "INGESTION & PRODUCTION QUEUE";
+                            font-size: 12px;
+                            font-weight: 800;
+                            color: #ffffff;
+                            letter-spacing: 1.2px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Table Column Headers
+                    Rectangle {
+                        height: 32px;
+                        background: #0a0e17;
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: #17202e;
+
+                        HorizontalLayout {
+                            padding-left: 14px;
+                            padding-right: 14px;
+                            alignment: center;
+                            Text { text: "DOCUMENT"; width: 330px; font-size: 10px; font-weight: 700; color: #64748b; vertical-alignment: center; }
+                            Text { text: "SIZE"; width: 80px; font-size: 10px; font-weight: 700; color: #64748b; vertical-alignment: center; }
+                            Text { text: "PAGES"; width: 60px; font-size: 10px; font-weight: 700; color: #64748b; vertical-alignment: center; }
+                            Text { text: "STATUS"; horizontal-stretch: 1; font-size: 10px; font-weight: 700; color: #64748b; vertical-alignment: center; }
+                        }
+                    }
+
+                    // Document List Display
+                    Rectangle {
+                        vertical-stretch: 1;
+                        background: #0a0e17;
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: #17202e;
+
+                        if root.queue-model.length > 0: ListView {
+                            for item in root.queue-model: Rectangle {
+                                height: 42px;
+                                background: #0e141f;
+                                border-radius: 4px;
+                                border-width: 1px;
+                                border-color: #1a2536;
+
+                                HorizontalLayout {
+                                    padding-left: 14px;
+                                    padding-right: 14px;
+                                    alignment: center;
+                                    Text { text: item.filename; width: 330px; vertical-alignment: center; color: #f1f5f9; font-size: 12px; overflow: elide; }
+                                    Text { text: item.filesize; width: 80px; vertical-alignment: center; color: #8a9bb0; font-size: 12px; }
+                                    Text { text: item.page_count; width: 60px; vertical-alignment: center; color: #8a9bb0; font-size: 12px; }
+                                    Text { text: item.status; horizontal-stretch: 1; vertical-alignment: center; color: #5cb85c; font-size: 12px; font-weight: 700; }
+                                }
+                            }
+                        }
+
+                        if root.queue-model.length == 0: VerticalLayout {
+                            alignment: center;
+                            spacing: 8px;
+                            Text {
+                                text: "Queue is empty";
+                                color: #475569;
+                                font-size: 13px;
+                                font-weight: 600;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "Click \"+ Add Files...\" below to load discovery exhibits.";
+                                color: #334155;
+                                font-size: 11px;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+
+                    // BOTTOM ACTION BAR: CONTROLS MOVED BELOW THE BOX
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: center;
+
+                        // Styled Add Files Button
+                        Rectangle {
+                            width: 130px;
+                            height: 38px;
+                            background: #16202e;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #2b3e58;
+
+                            TouchArea {
+                                clicked => { root.add-files-clicked(); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    Text {
+                                        text: "+ Add Files...";
+                                        color: #ffffff;
+                                        font-size: 12px;
+                                        font-weight: 700;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Styled Clear Button
+                        Rectangle {
+                            width: 90px;
+                            height: 38px;
+                            background: #111722;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #1f2b3e;
+
+                            TouchArea {
+                                clicked => { root.clear-queue-clicked(); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    Text {
+                                        text: "Clear";
+                                        color: #94a3b8;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { horizontal-stretch: 1; }
+
+                        // Post-Run Reveal Button (Visible after execution)
+                        if root.batch-finished: Rectangle {
+                            height: 38px;
+                            background: #18281d;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #5cb85c;
+
+                            TouchArea {
+                                clicked => { root.open-output-folder-clicked(); }
+                                HorizontalLayout {
+                                    padding-left: 14px;
+                                    padding-right: 14px;
+                                    spacing: 8px;
+                                    alignment: center;
+                                    Text {
+                                        text: "📁 Open Stamped Output & CSV Index";
+                                        color: #5cb85c;
+                                        font-size: 12px;
+                                        font-weight: 800;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // TAB 1: PLEADING FORMATTER
+        if root.active-tab == 1: HorizontalLayout {
+            spacing: 18px;
+
+            Rectangle {
+                horizontal-stretch: 5;
+                background: #111622;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: #1e283a;
+
+                VerticalBox {
+                    padding: 22px;
+                    spacing: 14px;
+
+                    Text {
+                        text: "COURT RULE SPECIFICATION";
+                        font-size: 11px;
+                        font-weight: 800;
+                        color: #5cb85c;
+                        letter-spacing: 1.0px;
+                    }
+
+                    ComboBox {
+                        model: [
+                            "California Rule 2.111 (28-Line Pleading)",
+                            "Texas Rule of Civil Procedure 45",
+                            "Standard Appellate Double-Spaced (24pt)"
+                        ];
+                        current-value <=> root.selected-pleading-preset;
+                    }
+
+                    Text { text: "Attorney / Firm Block (Lines 1-4):"; color: #94a3b8; font-size: 12px; }
+                    LineEdit { text <=> root.attorney-info; }
+
+                    Text { text: "Court Title (Line 8):"; color: #94a3b8; font-size: 12px; }
+                    LineEdit { text <=> root.court-title; }
+
+                    Text { text: "Case Caption & Parties:"; color: #94a3b8; font-size: 12px; }
+                    LineEdit { text <=> root.case-caption; }
+
+                    Rectangle { vertical-stretch: 1; }
+
+                    Rectangle {
+                        height: 48px;
+                        background: #18281d;
+                        border-radius: 8px;
+                        border-width: 1px;
+                        border-color: #2b5735;
+
+                        TouchArea {
+                            clicked => { root.format-pleading-clicked(); }
+                            HorizontalLayout {
+                                alignment: center;
+                                Text {
+                                    text: "GENERATE COMPLIANT PLEADING (.DOCX / .PDF)";
+                                    color: #5cb85c;
+                                    font-size: 12px;
+                                    font-weight: 800;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                horizontal-stretch: 5;
+                background: #111622;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: #1e283a;
+
+                VerticalBox {
+                    padding: 22px;
+                    spacing: 14px;
+
+                    Text {
+                        text: "PLEADING GEOMETRY INVARIANTS";
+                        font-size: 11px;
+                        font-weight: 800;
+                        color: #ffffff;
+                        letter-spacing: 1.0px;
+                    }
+
+                    Rectangle {
+                        background: #0a0e17;
+                        border-radius: 8px;
+                        border-width: 1px;
+                        border-color: #17202e;
+
+                        VerticalBox {
+                            padding: 16px;
+                            spacing: 8px;
+                            Text { text: "• Line Spacing: Strictly 24.0 pt (Exact Double Space)"; color: #94a3b8; font-size: 12px; }
+                            Text { text: "• Left Number Column: 0.5 in (36 pt) with lines 1-28"; color: #94a3b8; font-size: 12px; }
+                            Text { text: "• Vertical Dividing Rule: Strictly 1.0 in (72 pt)"; color: #94a3b8; font-size: 12px; }
+                            Text { text: "• Right Margin: Strictly 0.5 in (36 pt)"; color: #94a3b8; font-size: 12px; }
+                            Text { text: "• Footer Space: Centered below line 28 (Y < 60 pt)"; color: #94a3b8; font-size: 12px; }
+                        }
+                    }
+
+                    Text {
+                        text: "Direct integration: Automatically parses caption blocks, calculates non-drifting baseline offsets, and normalizes typography.";
+                        color: #64748b;
+                        font-size: 12px;
+                        wrap: word-wrap;
+                    }
+
+                    Rectangle { vertical-stretch: 1; }
+                }
+            }
+        }
+
+        // STATUS FOOTER
+        Rectangle {
+            height: 24px;
+            background: #090c10;
+
+            HorizontalLayout {
+                alignment: center;
+                Text {
+                    text <=> root.status-message;
+                    font-size: 12px;
+                    color: #64748b;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+
+    // IN-APP HELP & ABOUT GLASS MODAL
+    if root.show-about-modal: Rectangle {
+        background: #000000cc;
+
+        TouchArea {
+            // Absorb background clicks
+        }
+
+        Rectangle {
+            width: 600px;
+            height: 480px;
+            background: #0e141f;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #223247;
+
+            VerticalBox {
+                padding: 28px;
+                spacing: 16px;
+
+                HorizontalLayout {
+                    Text {
+                        text: "Access Paralegal // Workstation v1.0";
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: #ffffff;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        background: #16202e;
+                        border-radius: 6px;
+                        TouchArea {
+                            clicked => { root.show-about-modal = false; }
+                            Text {
+                                text: "✕";
+                                color: #94a3b8;
+                                font-size: 13px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: #1f2b3e; }
+
+                VerticalBox {
+                    spacing: 10px;
+                    Text {
+                        text: "• 100% Local Air-Gap: Zero document exfiltration or background telemetry.";
+                        color: #cbd5e1;
+                        font-size: 12px;
+                    }
+                    Text {
+                        text: "• Non-Destructive Vector Scaling: Pages scale 95% (Ty=+36pt) to protect stamps.";
+                        color: #cbd5e1;
+                        font-size: 12px;
+                    }
+                    Text {
+                        text: "• Production Index: Emits production_index.csv mapping initial pages and serials.";
+                        color: #cbd5e1;
+                        font-size: 12px;
+                    }
+                    Text {
+                        text: "• Pleading Geometry: California Rule 2.111 28-line spacing & Texas TRCP 45.";
+                        color: #cbd5e1;
+                        font-size: 12px;
+                    }
+                    Text {
+                        text: "• Entitlement Storage: Sealed locally at ~/.access_paralegal_entitlement.json.";
+                        color: #cbd5e1;
+                        font-size: 12px;
+                    }
+                }
+
+                Rectangle { vertical-stretch: 1; }
+
+                HorizontalLayout {
+                    Rectangle { horizontal-stretch: 1; }
+                    Rectangle {
+                        width: 100px;
+                        height: 36px;
+                        background: #18281d;
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: #5cb85c;
+
+                        TouchArea {
+                            clicked => { root.show-about-modal = false; }
+                            HorizontalLayout {
+                                alignment: center;
+                                Text {
+                                    text: "Close";
+                                    color: #5cb85c;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

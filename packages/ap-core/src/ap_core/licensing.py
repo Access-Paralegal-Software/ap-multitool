@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import json
 import time
@@ -20,8 +20,9 @@ def get_machine_fingerprint() -> str:
     """Generates a unique hardware fingerprint for the current machine."""
     try:
         if platform.system() == "Windows":
-            cmd = 'wmic csproduct get uuid'
-            uuid = subprocess.check_output(cmd, shell=True).decode().split('\n')[1].strip()
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
+                uuid = str(winreg.QueryValueEx(key, "MachineGuid")[0]).strip()
             if uuid and len(uuid) > 5 and uuid != "00000000-0000-0000-0000-000000000000":
                 return uuid
         
@@ -169,13 +170,68 @@ def evaluate_access(
 ) -> AccessDecision:
     """Pure paywall decision: rollout flag, then license, then trial, else blocked."""
     if not enforced:
-        # Paywall not yet rolled out — ship dark, never block a user.
+        # Paywall not yet rolled out â€” ship dark, never block a user.
         return AccessDecision(True, "disabled")
     if licensed:
         return AccessDecision(True, "licensed")
     if trial and trial.is_active(trial_duration_days):
         return AccessDecision(True, "trial", trial.days_remaining(trial_duration_days))
     return AccessDecision(False, "trial_expired")
+
+
+def cached_license_is_active(entitlement: Entitlement | None = None) -> bool:
+    """Return True if a local cache grants licensed access with zero network I/O.
+
+    Accepts an already-loaded entitlement, or loads/validates the signed cache
+    via :func:`ap_core.licensing_store.load_cached_entitlement`. Honours the
+    offline grace window (``APM_LICENSE_OFFLINE_GRACE_DAYS``) when
+    ``expires_at`` has lapsed but ``last_verified_at`` is still fresh.
+    """
+    if entitlement is None:
+        # Local import avoids a circular dependency at module load time.
+        from ap_core.licensing_store import load_cached_entitlement
+
+        entitlement = load_cached_entitlement()
+    if entitlement is None:
+        return False
+    if entitlement.is_valid():
+        return True
+    if entitlement.status != "activated":
+        return False
+    if entitlement.machine_fingerprint != get_machine_fingerprint():
+        return False
+    try:
+        grace_days = int(os.getenv("APM_LICENSE_OFFLINE_GRACE_DAYS", "7"))
+    except ValueError:
+        grace_days = 7
+    try:
+        last_v = datetime.fromisoformat(
+            entitlement.last_verified_at.replace("Z", "+00:00")
+        )
+        now_dt = datetime.now(timezone.utc)
+        return (now_dt - last_v) <= timedelta(days=grace_days)
+    except Exception:
+        return False
+
+
+def evaluate_offline_access() -> AccessDecision:
+    """CLI / headless gate: cached license + local trial only â€” never hits the network.
+
+    Keygen / online verification is intentionally omitted so air-gapped machines
+    with a valid signed cache keep working without DNS or API reachability.
+    """
+    from ap_core.config import PAYWALL_ENFORCED, TRIAL_DURATION_DAYS
+    from ap_core.licensing_store import load_or_start_trial
+
+    licensed = cached_license_is_active()
+    trial = load_or_start_trial()
+    return evaluate_access(
+        licensed=licensed,
+        trial=trial,
+        enforced=PAYWALL_ENFORCED,
+        trial_duration_days=TRIAL_DURATION_DAYS,
+    )
+
 
 def verify_license_online(license_key: str, verify_url: str = DEFAULT_VERIFY_URL, timeout_seconds: int = 5) -> Entitlement:
     """
@@ -220,3 +276,4 @@ def verify_license_online(license_key: str, verify_url: str = DEFAULT_VERIFY_URL
     except Exception as e:
         # Network timeout or DNS failure - raise so caller knows to fall back to offline cache
         raise ConnectionError(f"Licensing server unreachable: {e}")
+

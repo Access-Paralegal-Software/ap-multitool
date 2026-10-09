@@ -24,3 +24,5 @@ bates_test_run/
 final_production_run/
 sop_compliance_test/
 scratch/
+target/
+apps/desktop-slint/target/

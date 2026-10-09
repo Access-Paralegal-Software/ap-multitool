@@ -1,0 +1,20 @@
+﻿[package]
+name = "ap-desktop-slint"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+slint = { version = "1.7", features = ["renderer-femtovg", "compat-1-2"] }
+rayon = "1.10"
+crossbeam-channel = "0.5"
+rfd = "0.14"
+lopdf = "0.34"
+sha2 = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dirs = "5.0"
+webbrowser = "1.0"
+
+[build-dependencies]
+slint-build = "1.7"

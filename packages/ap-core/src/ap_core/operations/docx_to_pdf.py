@@ -32,7 +32,7 @@ logger = get_logger("core.conversion.docx")
 
 
 # ---------------------------------------------------------------------------
-# Private backend implementation — Windows COM
+# Private backend implementation — Windows COM (delegates to converters.docx)
 # ---------------------------------------------------------------------------
 
 def _convert_via_win32com_word(src_path: Path, out_path: Path) -> None:
@@ -40,34 +40,15 @@ def _convert_via_win32com_word(src_path: Path, out_path: Path) -> None:
     Convert *src_path* (Word document) to PDF at *out_path* via win32com COM automation.
 
     Requires Windows OS, Microsoft Word installed, and the pywin32 package.
+    Prefer :func:`ap_core.converters.docx.convert_docx_file_to_pdf` for the
+    COM → python-docx failover path used by the public converter.
 
     Raises:
         Exception: Any COM-level or win32com error propagates to the caller.
     """
-    import win32com.client
-    import pythoncom
+    from ap_core.converters.docx import _convert_via_win32com
 
-    pythoncom.CoInitialize()
-    word = None
-    doc = None
-    try:
-        word = win32com.client.DispatchEx("Word.Application")
-        word.Visible = False
-        word.DisplayAlerts = False
-        doc = word.Documents.Open(str(src_path.resolve()), ReadOnly=True)
-        doc.SaveAs(str(out_path.resolve()), FileFormat=17)  # 17 = wdFormatPDF
-    finally:
-        if doc:
-            try:
-                doc.Close(SaveChanges=0)
-            except Exception:
-                pass
-        if word:
-            try:
-                word.Quit()
-            except Exception:
-                pass
-        pythoncom.CoUninitialize()
+    _convert_via_win32com(src_path, out_path)
 
 
 # ---------------------------------------------------------------------------
@@ -88,9 +69,11 @@ def convert_docx_to_pdf(
 
     Backend cascade on Windows:
       1. Attempt win32com (Microsoft Word COM automation).
-      2. If win32com fails AND APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK is enabled
+      2. If COM fails (Word missing / ImportError / COM error): fall back to
+         python-docx + ReportLab text extraction.
+      3. If both fail AND APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK is enabled
          AND soffice is on PATH: fall back to LibreOffice and emit a warning.
-      3. If both fail (or fallback is disabled): raise RuntimeError.
+      4. If all fail (or LibreOffice fallback is disabled): raise RuntimeError.
 
     Backend on non-Windows:
       - LibreOffice soffice is used directly if available and enabled.
@@ -124,28 +107,32 @@ def convert_docx_to_pdf(
     )
 
     if backend == ConversionBackend.WIN32COM:
+        from ap_core.converters.docx import convert_docx_file_to_pdf as _com_or_docx
+
         try:
-            _convert_via_win32com_word(src_path, out_path)
+            warnings.extend(_com_or_docx(src_path, out_path))
         except Exception as win32_exc:
             if libreoffice_fallback_enabled() and soffice_available():
                 logger.warning(
-                    "docx_conversion_primary_failed backend=win32com input_filename=%s reason=%s fallback=libreoffice",
+                    "docx_conversion_primary_failed backend=win32com+python-docx "
+                    "input_filename=%s reason=%s fallback=libreoffice",
                     safe_filename(src_path),
                     type(win32_exc).__name__,
                 )
                 warnings.append(
-                    f"Win32com Word export failed: {win32_exc}. "
+                    f"Word COM / python-docx export failed: {win32_exc}. "
                     "Using LibreOffice fallback."
                 )
                 run_soffice_convert(src_path, out_path)
             else:
                 logger.error(
-                    "docx_conversion_failed backend=win32com input_filename=%s reason=%s fallback=unavailable",
+                    "docx_conversion_failed backend=win32com+python-docx "
+                    "input_filename=%s reason=%s fallback=unavailable",
                     safe_filename(src_path),
                     type(win32_exc).__name__,
                 )
                 raise RuntimeError(
-                    f"Word conversion failed (win32com): {win32_exc}. "
+                    f"Word conversion failed (win32com/python-docx): {win32_exc}. "
                     "LibreOffice fallback is disabled or unavailable "
                     "(set APM_MULTITOOL_USE_LIBREOFFICE_FALLBACK=1 to enable)."
                 ) from win32_exc
