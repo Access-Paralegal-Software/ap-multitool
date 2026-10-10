@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <rect id="bg-doc" width="512" height="512" rx="112" fill="#171003"/>
+    <rect id="bezel-doc" x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#f59e0b" stroke-width="14" stroke-opacity="0.9"/>
+    <rect id="pill-doc" x="186" y="380" width="140" height="64" rx="16" fill="#332104" stroke="#f59e0b" stroke-width="6"/>
+  </defs>
+  <use href="#bg-doc"/>
+  <use href="#bezel-doc"/>
+  <use href="#pill-doc"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#fde68a" text-anchor="middle" letter-spacing="4">DOC</text>
+  <g id="icon-layer-doc" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="256" cy="210" r="105" fill="none" stroke="#78350f" stroke-width="4" stroke-dasharray="6 8"/>
+    <line x1="256" y1="88" x2="256" y2="110" stroke="#fbbf24" stroke-width="5"/>
+    <line x1="256" y1="310" x2="256" y2="332" stroke="#fbbf24" stroke-width="5"/>
+    <line x1="134" y1="210" x2="156" y2="210" stroke="#fbbf24" stroke-width="5"/>
+    <line x1="356" y1="210" x2="378" y2="210" stroke="#fbbf24" stroke-width="5"/>
+    <path d="M 256,125 L 325,160 L 325,230 C 325,278 256,305 256,305 C 256,305 187,278 187,230 L 187,160 Z" fill="#451a03" stroke="#f59e0b" stroke-width="8"/>
+    <path d="M 248,165 L 248,190 L 220,190 L 220,225 L 248,225 L 248,255 L 248,165" fill="#e11d48"/>
+    <path d="M 264,165 L 264,190 L 292,190 L 292,225 L 264,225 L 264,255 L 264,165" fill="#10b981"/>
+    <line x1="256" y1="150" x2="256" y2="275" stroke="#fffbeb" stroke-width="4"/>
+    <circle cx="256" cy="210" r="16" fill="#171003" stroke="#fde68a" stroke-width="4"/>
+    <path d="M 249,210 L 254,215 L 264,204" fill="none" stroke="#fde68a" stroke-width="3"/>
+  </g>
+</svg>

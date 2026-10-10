@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#0a141d"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#38bdf8" stroke-width="14" stroke-opacity="0.9"/>
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="145" y="110" width="44" height="65" rx="6" fill="#0f2b3c" stroke="#0284c7" stroke-width="5"/>
+    <rect x="202" y="95" width="44" height="80" rx="6" fill="#0f2b3c" stroke="#0284c7" stroke-width="5"/>
+    <rect x="266" y="125" width="44" height="50" rx="6" fill="#0f2b3c" stroke="#0284c7" stroke-width="5"/>
+    <rect x="323" y="105" width="44" height="70" rx="6" fill="#0f2b3c" stroke="#0284c7" stroke-width="5"/>
+    <line x1="135" y1="285" x2="377" y2="285" stroke="#0369a1" stroke-width="6"/>
+    <path d="M 145,265 Q 210,240 256,180 T 367,230" fill="none" stroke="#38bdf8" stroke-width="8"/>
+    <circle cx="145" cy="265" r="8" fill="#38bdf8"/>
+    <circle cx="256" cy="180" r="10" fill="#bae6fd" stroke="#0284c7" stroke-width="4"/>
+    <circle cx="367" cy="230" r="8" fill="#38bdf8"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#0e2a3b" stroke="#38bdf8" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#e0f2fe" text-anchor="middle" letter-spacing="4">CHT</text>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#070e17"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#38bdf8" stroke-width="14" stroke-opacity="0.9"/>
+  <g stroke="#38bdf8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 180 120 H 332 C 365 120 365 185 332 185 H 180 C 147 185 147 250 180 250 H 332" fill="none" stroke-width="10"/>
+    <polygon points="340,185 320,175 320,195" fill="#38bdf8" stroke-width="0"/>
+    <polygon points="172,250 192,240 192,260" fill="#38bdf8" stroke-width="0"/>
+    <rect x="226" y="278" width="60" height="52" rx="10" fill="#070e17" stroke-width="8"/>
+    <path d="M 256 250 V 278" fill="none" stroke-width="8"/>
+    <path d="M 160 304 H 226 M 286 304 H 352" fill="none" stroke-width="6"/>
+    <circle cx="150" cy="304" r="8" fill="#38bdf8" stroke-width="0"/>
+    <circle cx="362" cy="304" r="8" fill="#38bdf8" stroke-width="0"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#0b1c2e" stroke="#38bdf8" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#bae6fd" text-anchor="middle" letter-spacing="4">KPP</text>
+</svg>

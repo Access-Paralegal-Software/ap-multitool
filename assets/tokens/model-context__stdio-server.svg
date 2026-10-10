@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Container Background -->
+  <rect width="512" height="512" rx="112" fill="#120c1d"/>
+  
+  <!-- Outer Bezel Frame -->
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#8b5cf6" stroke-width="14" stroke-opacity="0.9"/>
+  
+  <!-- Central Icon Glyph (Centered at X=256, Y=210) -->
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <!-- External Boundary Polygon (Vault Containment Boundary) -->
+    <polygon points="256,92 368,160 368,260 256,328 144,260 144,160" 
+             fill="none" stroke="#a78bfa" stroke-width="8" stroke-dasharray="14 10"/>
+
+    <!-- Tool Bus Connector Hub Lines -->
+    <line x1="256" y1="92" x2="256" y2="182" stroke="#8b5cf6" stroke-width="10"/>
+    <line x1="368" y1="260" x2="282" y2="224" stroke="#8b5cf6" stroke-width="10"/>
+    <line x1="144" y1="260" x2="230" y2="224" stroke="#8b5cf6" stroke-width="10"/>
+
+    <!-- Peripheral Client Tool Sockets -->
+    <circle cx="256" cy="92" r="16" fill="#c4b5fd" stroke="#7c3aed" stroke-width="6"/>
+    <circle cx="368" cy="260" r="16" fill="#c4b5fd" stroke="#7c3aed" stroke-width="6"/>
+    <circle cx="144" cy="260" r="16" fill="#c4b5fd" stroke="#7c3aed" stroke-width="6"/>
+
+    <!-- Core MCP Stdio Valve Core -->
+    <circle cx="256" cy="210" r="32" fill="#24153f" stroke="#ddd6fe" stroke-width="8"/>
+    <circle cx="256" cy="210" r="12" fill="#ede9fe"/>
+  </g>
+  
+  <!-- Lower Monogram Pill -->
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#1f1338" stroke="#8b5cf6" stroke-width="6"/>
+  <text x="256" y="425" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" 
+        font-size="34" 
+        font-weight="900" 
+        fill="#ede9fe" 
+        text-anchor="middle" 
+        letter-spacing="4">MCP</text>
+</svg>

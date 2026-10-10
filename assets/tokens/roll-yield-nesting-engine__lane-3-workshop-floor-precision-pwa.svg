@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Container Background -->
+  <rect width="512" height="512" rx="112" fill="#081611"/>
+
+  <!-- Outer Bezel Frame -->
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#10b981" stroke-width="14" stroke-opacity="0.9"/>
+
+  <!-- Central Icon Glyph: Bolt Unrolling & 2D Pattern Layout (Centered around X=256, Y=210) -->
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Rolled Fabric Core (Top Left) -->
+    <ellipse cx="160" cy="120" rx="28" ry="18" fill="#047857" stroke="#10b981" stroke-width="8"/>
+    <path d="M132 120 V255 C132 265 145 273 160 273 C175 273 188 265 188 255 V120" 
+          fill="#065f46" stroke="#10b981" stroke-width="8"/>
+
+    <!-- Unspooled Fabric Run Surface -->
+    <path d="M160 273 H365 V138 H188" fill="none" stroke="#10b981" stroke-width="8"/>
+
+    <!-- Nested Panel Alpha -->
+    <rect x="195" y="148" width="85" height="115" rx="4" fill="#09382a" stroke="#34d399" stroke-width="6"/>
+    <line x1="205" y1="160" x2="235" y2="160" stroke="#6ee7b7" stroke-width="4"/>
+
+    <!-- Nested Panel Beta (Stacked) -->
+    <rect x="290" y="148" width="65" height="52" rx="4" fill="#09382a" stroke="#34d399" stroke-width="6"/>
+
+    <!-- Nested Panel Gamma (Off-Cut Optimization) -->
+    <rect x="290" y="210" width="65" height="53" rx="4" fill="#09382a" stroke="#34d399" stroke-width="6"/>
+
+    <!-- Seam Allowance / Kerf Cut Indicator -->
+    <line x1="285" y1="140" x2="285" y2="270" stroke="#facc15" stroke-width="4" stroke-dasharray="4 6"/>
+  </g>
+
+  <!-- Lower Monogram Pill -->
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#0b2e21" stroke="#10b981" stroke-width="6"/>
+  <text x="256" y="425" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" 
+        font-size="34" 
+        font-weight="900" 
+        fill="#a7f3d0" 
+        text-anchor="middle" 
+        letter-spacing="4">NEST</text>
+</svg>

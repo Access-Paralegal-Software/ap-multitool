@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Container Background -->
+  <rect width="512" height="512" rx="112" fill="#0b0f17"/>
+  
+  <!-- Outer Bezel Frame -->
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#f8fafc" stroke-width="14" stroke-opacity="0.9"/>
+  
+  <!-- Central Icon Glyph (Centered around X=256, Y=210) -->
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Unpack Funnel -->
+    <path d="M 160 110 L 352 110 L 290 200 L 222 200 Z" fill="none" stroke="#f8fafc" stroke-width="12"/>
+    <!-- Extracted Document Stream -->
+    <rect x="220" y="225" width="72" height="95" rx="6" fill="#141a24" stroke="#f8fafc" stroke-width="8"/>
+    <line x1="238" y1="250" x2="274" y2="250" stroke="#f8fafc" stroke-width="6"/>
+    <line x1="238" y1="270" x2="274" y2="270" stroke="#f8fafc" stroke-width="6"/>
+    <line x1="238" y1="290" x2="260" y2="290" stroke="#f8fafc" stroke-width="6"/>
+    <!-- Local Arrow Ground -->
+    <path d="M 180 330 L 332 330" stroke="#94a3b8" stroke-width="10"/>
+    <polyline points="246,150 256,165 266,150" fill="none" stroke="#f8fafc" stroke-width="8"/>
+  </g>
+  
+  <!-- Lower Monogram Pill -->
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#141a24" stroke="#f8fafc" stroke-width="6"/>
+  <text x="256" y="425" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" 
+        font-size="34" 
+        font-weight="900" 
+        fill="#f8fafc" 
+        text-anchor="middle" 
+        letter-spacing="4">NXT</text>
+</svg>

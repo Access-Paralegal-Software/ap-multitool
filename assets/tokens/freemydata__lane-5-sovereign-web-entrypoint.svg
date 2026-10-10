@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Container Background -->
+  <rect width="512" height="512" rx="112" fill="#07170e"/>
+  
+  <!-- Outer Bezel Frame -->
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#22c55e" stroke-width="14" stroke-opacity="0.9"/>
+  
+  <!-- Central Icon Glyph -->
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="160" y="115" width="192" height="190" rx="16" fill="#0b2416" stroke="#22c55e" stroke-width="10"/>
+    <line x1="224" y1="115" x2="224" y2="305" stroke="#15803d" stroke-width="6"/>
+    <line x1="288" y1="115" x2="288" y2="305" stroke="#15803d" stroke-width="6"/>
+    <line x1="160" y1="180" x2="352" y2="180" stroke="#15803d" stroke-width="6"/>
+    <line x1="160" y1="242" x2="352" y2="242" stroke="#15803d" stroke-width="6"/>
+    <circle cx="320" cy="148" r="8" fill="#4ade80"/>
+    <path d="M 288 274 L 375 274 L 350 250" fill="none" stroke="#4ade80" stroke-width="10"/>
+  </g>
+  
+  <!-- Lower Monogram Pill -->
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#0e2a1b" stroke="#22c55e" stroke-width="6"/>
+  <text x="256" y="425" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" 
+        font-size="34" 
+        font-weight="900" 
+        fill="#86efac" 
+        text-anchor="middle" 
+        letter-spacing="4">DAT</text>
+</svg>

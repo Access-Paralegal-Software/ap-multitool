@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <rect id="canvas-squircle" width="512" height="512" rx="112" fill="#08141d" />
+    <rect id="outer-bezel" x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#0ea5e9" stroke-width="14" stroke-opacity="0.9" />
+    <rect id="monogram-pill" x="186" y="380" width="140" height="64" rx="16" fill="#102331" stroke="#0ea5e9" stroke-width="6" />
+    <linearGradient id="horizonGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="arcStroke" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#7dd3fc" />
+    </linearGradient>
+  </defs>
+  <use href="#canvas-squircle" />
+  <use href="#outer-bezel" />
+  <use href="#monogram-pill" />
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#bae6fd" text-anchor="middle" letter-spacing="4">TRV</text>
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="130" y1="210" x2="382" y2="210" stroke="url(#horizonGlow)" stroke-width="4" stroke-dasharray="6 8" />
+    <line x1="140" y1="210" x2="372" y2="210" stroke="#38bdf8" stroke-width="3" stroke-opacity="0.6" />
+    <line x1="256" y1="88" x2="256" y2="330" stroke="#0369a1" stroke-width="2" stroke-dasharray="4 6" stroke-opacity="0.5" />
+    <path d="M 140,202 L 140,218" stroke="#38bdf8" stroke-width="4" />
+    <path d="M 372,202 L 372,218" stroke="#38bdf8" stroke-width="4" />
+    <circle cx="256" cy="100" r="14" fill="#0c4a6e" stroke="#38bdf8" stroke-width="4" />
+    <circle cx="256" cy="100" r="5" fill="#e0f2fe" />
+    <line x1="256" y1="114" x2="256" y2="328" stroke="#f0f9ff" stroke-width="6" />
+    <line x1="256" y1="100" x2="162" y2="280" stroke="#0284c7" stroke-width="7" />
+    <line x1="256" y1="100" x2="350" y2="280" stroke="#0284c7" stroke-width="7" />
+    <path d="M 162,285 A 208 208 0 0 0 350,285" fill="none" stroke="url(#arcStroke)" stroke-width="12" />
+    <path d="M 172,302 A 226 226 0 0 0 340,302" fill="none" stroke="#0369a1" stroke-width="3" stroke-dasharray="3 5" />
+    <line x1="256" y1="285" x2="256" y2="304" stroke="#f0f9ff" stroke-width="4" />
+    <line x1="224" y1="282" x2="221" y2="299" stroke="#7dd3fc" stroke-width="3" />
+    <line x1="192" y1="274" x2="188" y2="291" stroke="#7dd3fc" stroke-width="3" />
+    <line x1="288" y1="282" x2="291" y2="299" stroke="#7dd3fc" stroke-width="3" />
+    <line x1="320" y1="274" x2="324" y2="291" stroke="#7dd3fc" stroke-width="3" />
+    <rect x="204" y="196" width="14" height="28" rx="2" fill="#082f49" stroke="#38bdf8" stroke-width="3" />
+    <rect x="246" y="302" width="20" height="22" rx="4" fill="#0369a1" stroke="#bae6fd" stroke-width="3" />
+    <circle cx="256" cy="313" r="3" fill="#ffffff" />
+  </g>
+</svg>

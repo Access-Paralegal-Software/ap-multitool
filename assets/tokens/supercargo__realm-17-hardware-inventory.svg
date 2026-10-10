@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#11160a"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#84cc16" stroke-width="14" stroke-opacity="0.9"/>
+  <g id="icon-layer-sup" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="256" cy="95" r="14" fill="none" stroke="#84cc16" stroke-width="6"/>
+    <path d="M 256,109 L 256,140 Q 256,160 238,160 Q 220,160 220,145" fill="none" stroke="#bef264" stroke-width="8"/>
+    <rect x="166" y="160" width="180" height="150" rx="18" fill="#1f2910" stroke="#84cc16" stroke-width="10"/>
+    <path d="M 166,195 L 201,160" stroke="#4d7c0f" stroke-width="6"/>
+    <path d="M 346,195 L 311,160" stroke="#4d7c0f" stroke-width="6"/>
+    <path d="M 166,275 L 201,310" stroke="#4d7c0f" stroke-width="6"/>
+    <path d="M 346,275 L 311,310" stroke="#4d7c0f" stroke-width="6"/>
+    <line x1="256" y1="160" x2="256" y2="310" stroke="#bef264" stroke-width="6"/>
+    <line x1="166" y1="235" x2="346" y2="235" stroke="#bef264" stroke-width="6"/>
+    <line x1="190" y1="265" x2="190" y2="285" stroke="#a3e635" stroke-width="4"/>
+    <line x1="200" y1="265" x2="200" y2="285" stroke="#a3e635" stroke-width="2"/>
+    <line x1="208" y1="265" x2="208" y2="285" stroke="#a3e635" stroke-width="5"/>
+    <line x1="220" y1="265" x2="220" y2="285" stroke="#a3e635" stroke-width="3"/>
+    <line x1="230" y1="265" x2="230" y2="285" stroke="#a3e635" stroke-width="4"/>
+    <circle cx="316" cy="275" r="10" fill="#11160a" stroke="#bef264" stroke-width="4"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#24330e" stroke="#84cc16" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#ecfccb" text-anchor="middle" letter-spacing="4">SUP</text>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#0d1117"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#64748b" stroke-width="14" stroke-opacity="0.9"/>
+  <g id="icon-layer-log" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="256" cy="210" r="105" fill="#161e29" stroke="#64748b" stroke-width="10"/>
+    <circle cx="256" cy="210" r="88" fill="none" stroke="#94a3b8" stroke-width="3" stroke-dasharray="4 8"/>
+    <line x1="256" y1="122" x2="256" y2="142" stroke="#f1f5f9" stroke-width="6"/>
+    <line x1="256" y1="278" x2="256" y2="298" stroke="#94a3b8" stroke-width="6"/>
+    <line x1="168" y1="210" x2="188" y2="210" stroke="#94a3b8" stroke-width="6"/>
+    <line x1="324" y1="210" x2="344" y2="210" stroke="#94a3b8" stroke-width="6"/>
+    <path d="M 256,210 L 332,154 A 95 95 0 0 1 346,242 Z" fill="#334155" stroke="#38bdf8" stroke-width="3" opacity="0.75"/>
+    <line x1="256" y1="210" x2="200" y2="140" stroke="#38bdf8" stroke-width="6"/>
+    <circle cx="200" cy="140" r="7" fill="#38bdf8"/>
+    <circle cx="256" cy="210" r="14" fill="#0f172a" stroke="#f1f5f9" stroke-width="6"/>
+    <circle cx="256" cy="210" r="4" fill="#38bdf8"/>
+    <rect x="272" y="198" width="34" height="24" rx="4" fill="#0f172a" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="280" y1="210" x2="298" y2="210" stroke="#f1f5f9" stroke-width="3"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#1e293b" stroke="#64748b" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#f1f5f9" text-anchor="middle" letter-spacing="4">LOG</text>
+</svg>

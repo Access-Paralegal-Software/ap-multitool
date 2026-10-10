@@ -1,0 +1,11 @@
+{
+  "name": "ap-multitool-landing",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "astro build"
+  },
+  "dependencies": {
+    "astro": "^5.0.0"
+  }
+}

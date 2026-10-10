@@ -26,3 +26,7 @@ sop_compliance_test/
 scratch/
 target/
 apps/desktop-slint/target/
+
+apps/desktop-slint/bates_production/
+
+test_docs/

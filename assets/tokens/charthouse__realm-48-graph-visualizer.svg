@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Canvas -->
+    <rect id="canvas-squircle" width="512" height="512" rx="112" fill="#120b18" />
+
+    <!-- Outer Bezel Frame -->
+    <rect id="outer-bezel" x="14" y="14" width="484" height="484" rx="100" 
+          fill="none" stroke="#a855f7" stroke-width="14" stroke-opacity="0.9" />
+
+    <!-- Monogram Pill Base -->
+    <rect id="monogram-pill" x="186" y="380" width="140" height="64" rx="16" 
+          fill="#221230" stroke="#a855f7" stroke-width="6" />
+  </defs>
+
+  <!-- Base Structure -->
+  <use href="#canvas-squircle" />
+  <use href="#outer-bezel" />
+
+  <!-- Monogram Pill Container & Typography -->
+  <use href="#monogram-pill" />
+  <text x="256" y="425" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" 
+        font-size="34" 
+        font-weight="900" 
+        fill="#e9d5ff" 
+        text-anchor="middle" 
+        letter-spacing="4">GRP</text>
+
+  <!-- Central Icon Glyph: Charthouse Graph Visualizer (Centered at X=256, Y=210) -->
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Graph Edges / Relational Topology -->
+    <line x1="256" y1="210" x2="256" y2="108" stroke="#7e22ce" stroke-width="8" opacity="0.8" />
+    <line x1="256" y1="210" x2="352" y2="155" stroke="#7e22ce" stroke-width="8" opacity="0.8" />
+    <line x1="256" y1="210" x2="352" y2="265" stroke="#7e22ce" stroke-width="8" opacity="0.8" />
+    <line x1="256" y1="210" x2="256" y2="312" stroke="#7e22ce" stroke-width="8" opacity="0.8" />
+    <line x1="256" y1="210" x2="160" y2="265" stroke="#7e22ce" stroke-width="8" opacity="0.8" />
+    <line x1="256" y1="210" x2="160" y2="155" stroke="#7e22ce" stroke-width="8" opacity="0.8" />
+
+    <!-- Secondary Outer Ring Relationships -->
+    <line x1="256" y1="108" x2="352" y2="155" stroke="#9333ea" stroke-width="4" stroke-dasharray="6 6" opacity="0.6" />
+    <line x1="352" y1="155" x2="352" y2="265" stroke="#9333ea" stroke-width="4" stroke-dasharray="6 6" opacity="0.6" />
+    <line x1="352" y1="265" x2="256" y2="312" stroke="#9333ea" stroke-width="4" stroke-dasharray="6 6" opacity="0.6" />
+    <line x1="256" y1="312" x2="160" y2="265" stroke="#9333ea" stroke-width="4" stroke-dasharray="6 6" opacity="0.6" />
+    <line x1="160" y1="265" x2="160" y2="155" stroke="#9333ea" stroke-width="4" stroke-dasharray="6 6" opacity="0.6" />
+    <line x1="160" y1="155" x2="256" y2="108" stroke="#9333ea" stroke-width="4" stroke-dasharray="6 6" opacity="0.6" />
+
+    <!-- Satellite Nodes -->
+    <circle cx="256" cy="108" r="16" fill="#c084fc" stroke="#581c87" stroke-width="4" />
+    <circle cx="352" cy="155" r="14" fill="#a855f7" stroke="#581c87" stroke-width="4" />
+    <circle cx="352" cy="265" r="16" fill="#c084fc" stroke="#581c87" stroke-width="4" />
+    <circle cx="256" cy="312" r="14" fill="#a855f7" stroke="#581c87" stroke-width="4" />
+    <circle cx="160" cy="265" r="16" fill="#c084fc" stroke="#581c87" stroke-width="4" />
+    <circle cx="160" cy="155" r="14" fill="#a855f7" stroke="#581c87" stroke-width="4" />
+
+    <!-- Central Focal Nexus Node -->
+    <circle cx="256" cy="210" r="26" fill="#d8b4fe" stroke="#3b0764" stroke-width="6" />
+    <circle cx="256" cy="210" r="10" fill="#a855f7" />
+  </g>
+</svg>

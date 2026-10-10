@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#05131a"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#06b6d4" stroke-width="14" stroke-opacity="0.9"/>
+  <g id="icon-layer-msp" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 256,120 L 175,190 L 140,285" fill="none" stroke="#0891b2" stroke-width="8"/>
+    <path d="M 175,190 L 210,285" fill="none" stroke="#0891b2" stroke-width="8"/>
+    <path d="M 256,120 L 337,190 L 302,285" fill="none" stroke="#0891b2" stroke-width="8"/>
+    <path d="M 337,190 L 372,285" fill="none" stroke="#0891b2" stroke-width="8"/>
+    <circle cx="140" cy="285" r="12" fill="#164e63" stroke="#22d3ee" stroke-width="4"/>
+    <circle cx="210" cy="285" r="12" fill="#164e63" stroke="#22d3ee" stroke-width="4"/>
+    <circle cx="302" cy="285" r="12" fill="#164e63" stroke="#22d3ee" stroke-width="4"/>
+    <circle cx="372" cy="285" r="12" fill="#164e63" stroke="#22d3ee" stroke-width="4"/>
+    <circle cx="175" cy="190" r="15" fill="#0891b2" stroke="#67e8f9" stroke-width="4"/>
+    <circle cx="337" cy="190" r="15" fill="#0891b2" stroke="#67e8f9" stroke-width="4"/>
+    <path d="M 248,80 L 264,80 L 270,175 L 256,335 L 242,175 Z" fill="#e0f2fe" stroke="#06b6d4" stroke-width="5"/>
+    <circle cx="256" cy="100" r="6" fill="#05131a"/>
+    <line x1="250" y1="150" x2="262" y2="150" stroke="#0891b2" stroke-width="3"/>
+    <line x1="252" y1="200" x2="260" y2="200" stroke="#0891b2" stroke-width="3"/>
+    <line x1="253" y1="250" x2="259" y2="250" stroke="#0891b2" stroke-width="3"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#0a2533" stroke="#06b6d4" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#a5f3fc" text-anchor="middle" letter-spacing="4">MSP</text>
+</svg>

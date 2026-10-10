@@ -1,0 +1,74 @@
+---
+const downloadUrl = "https://github.com/Access-Paralegal-Software/ap-multitool/releases/tag/v1.0.0";
+const sha256 = "7F308FAAC383D8331D58852B8A4F2D122C8DFBF4E7F510783AFFDF074694D4E4";
+---
+<!DOCTYPE html>
+<html lang="en" style="background:#0a0a0a;color:#ededed;font-family:system-ui,-apple-system,sans-serif;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Access Paralegal Software | Air-Gapped Discovery Automation</title>
+  <meta name="description" content="Local-first, air-gapped PDF Bates stamping, pleading geometry, and discovery unbundling." />
+  <style>
+    body { max-width: 820px; margin: 0 auto; padding: 48px 24px; line-height: 1.5; }
+    .badge { background: #262626; color: #a3a3a3; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-family: monospace; }
+    .card { background: #171717; border: 1px solid #262626; border-radius: 6px; padding: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .btn { background: #f5f5f5; color: #0a0a0a; padding: 10px 18px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 13px; display: inline-block; }
+    .btn:hover { background: #ffffff; }
+    .hash { font-family: monospace; font-size: 11px; color: #737373; word-break: break-all; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header style="border-bottom: 1px solid #262626; padding-bottom: 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h1 style="font-size: 18px; margin:0; letter-spacing: 0.05em;">ACCESS PARALEGAL SOFTWARE</h1>
+      <span class="badge">v1.0.0 ALPHA</span>
+    </div>
+    <p style="color: #a3a3a3; font-size: 13px; margin: 8px 0 0 0;">Air-gapped discovery packaging. Zero telemetry. Zero remote data egress.</p>
+  </header>
+
+  <main style="padding: 36px 0;">
+    <section>
+      <h2 style="font-size: 22px; margin-top:0;">AP-Multitool</h2>
+      <p style="color: #d4d4d4; font-size: 14px;">
+        Litigation discovery bundles require strict client confidentiality. AP-Multitool executes entirely on local hardware, compiling pleadings and applying vector Bates numbering without opening a network connection.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <h3 style="font-size: 14px; margin:0 0 8px 0;">Vector Bates Numbering</h3>
+          <p style="font-size: 12px; color: #a3a3a3; margin:0;">Injected directly into PDF page coordinate streams. Retains OCR layers without rasterization.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size: 14px; margin:0 0 8px 0;">Pleading Geometry</h3>
+          <p style="font-size: 12px; color: #a3a3a3; margin:0;">Pre-configured margin coordinates strictly compliant with California Rule 2.111 and Texas civil pleading standards.</p>
+        </div>
+        <div class="card">
+          <h3 style="font-size: 14px; margin:0 0 8px 0;">Attachment Extraction</h3>
+          <p style="font-size: 12px; color: #a3a3a3; margin:0;">Unbundles embedded attachments from multi-tier discovery bundles and emails into indexed directories.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 24px;">
+      <h3 style="font-size: 13px; margin:0 0 16px 0; letter-spacing: 0.05em; color: #a3a3a3;">OFFLINE ALPHA RELEASE</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <div>
+          <div style="font-family: monospace; font-size: 14px; color: #34d399;">ap-multitool-v1.0.0-windows-x64.exe</div>
+          <div class="hash">SHA256: {sha256}</div>
+        </div>
+        <a href={downloadUrl} class="btn">DOWNLOAD BINARY</a>
+      </div>
+      <p style="font-size: 11px; color: #737373; margin: 16px 0 0 0; border-top: 1px solid #262626; padding-top: 12px;">
+        Requires an offline HMAC evaluation key during the alpha verification run. Issued directly to solo contractors upon request.
+      </p>
+    </section>
+  </main>
+
+  <footer style="border-top: 1px solid #262626; padding-top: 24px; font-size: 12px; color: #737373; display:flex; justify-content:space-between;">
+    <div>&copy; 2026 Access Paralegal Software. Maintained by Alan Woodyard.</div>
+    <div>Local-First &bull; Sovereign &bull; Air-Gapped</div>
+  </footer>
+</body>
+</html>

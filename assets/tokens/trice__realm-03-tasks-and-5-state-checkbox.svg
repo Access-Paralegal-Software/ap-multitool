@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#180a0a"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#ef4444" stroke-width="14" stroke-opacity="0.9"/>
+  <g id="icon-layer-trc" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="156" y="110" width="200" height="200" rx="36" fill="#260e0e" stroke="#ef4444" stroke-width="12"/>
+    <line x1="176" y1="290" x2="336" y2="130" stroke="#f87171" stroke-width="8" stroke-dasharray="12 12" stroke-opacity="0.4"/>
+    <polyline points="196,214 236,254 316,164" fill="none" stroke="#fee2e2" stroke-width="18"/>
+    <circle cx="186" cy="140" r="9" fill="#94a3b8" stroke="#fee2e2" stroke-width="3"/>
+    <circle cx="326" cy="140" r="9" fill="#38bdf8" stroke="#fee2e2" stroke-width="3"/>
+    <circle cx="326" cy="280" r="9" fill="#22c55e" stroke="#fee2e2" stroke-width="3"/>
+    <circle cx="186" cy="280" r="9" fill="#ef4444" stroke="#fee2e2" stroke-width="3"/>
+    <circle cx="256" cy="130" r="9" fill="#f59e0b" stroke="#fee2e2" stroke-width="3"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#301111" stroke="#ef4444" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#fee2e2" text-anchor="middle" letter-spacing="4">TRC</text>
+</svg>

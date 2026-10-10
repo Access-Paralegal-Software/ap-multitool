@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <rect width="512" height="512" rx="112" fill="#120c1a"/>
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#a855f7" stroke-width="14" stroke-opacity="0.9"/>
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 256,120 L 170,185" stroke="#7e22ce" stroke-width="8"/>
+    <path d="M 256,120 L 342,185" stroke="#7e22ce" stroke-width="8"/>
+    <path d="M 170,185 L 180,285" stroke="#7e22ce" stroke-width="8"/>
+    <path d="M 170,185 L 290,245" stroke="#9333ea" stroke-width="7" stroke-dasharray="8 8"/>
+    <path d="M 342,185 L 332,285" stroke="#7e22ce" stroke-width="8"/>
+    <path d="M 180,285 L 332,285" stroke="#7e22ce" stroke-width="8"/>
+    <circle cx="256" cy="210" r="118" fill="none" stroke="#a855f7" stroke-width="4" stroke-opacity="0.35" stroke-dasharray="10 14"/>
+    <circle cx="256" cy="120" r="22" fill="#a855f7"/>
+    <circle cx="256" cy="120" r="13" fill="#120c1a"/>
+    <circle cx="256" cy="120" r="6" fill="#c084fc"/>
+    <circle cx="170" cy="185" r="19" fill="#c084fc"/>
+    <circle cx="170" cy="185" r="11" fill="#120c1a"/>
+    <circle cx="342" cy="185" r="19" fill="#c084fc"/>
+    <circle cx="342" cy="185" r="11" fill="#120c1a"/>
+    <circle cx="290" cy="245" r="12" fill="#e9d5ff"/>
+    <circle cx="180" cy="285" r="16" fill="#9333ea"/>
+    <circle cx="180" cy="285" r="9" fill="#120c1a"/>
+    <circle cx="332" cy="285" r="16" fill="#9333ea"/>
+    <circle cx="332" cy="285" r="9" fill="#120c1a"/>
+  </g>
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#201131" stroke="#a855f7" stroke-width="6"/>
+  <text x="256" y="425" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" font-size="34" font-weight="900" fill="#e9d5ff" text-anchor="middle" letter-spacing="4">GRP</text>
+</svg>

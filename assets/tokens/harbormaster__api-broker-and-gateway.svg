@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Container Background -->
+  <rect width="512" height="512" rx="112" fill="#130d08"/>
+  
+  <!-- Outer Bezel Frame -->
+  <rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="#f97316" stroke-width="14" stroke-opacity="0.9"/>
+  
+  <!-- Central Icon Glyph (Centered at X=256, Y=210) -->
+  <g id="icon-layer" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Radar Graticule Rings -->
+    <circle cx="256" cy="210" r="110" fill="none" stroke="#f97316" stroke-width="6" stroke-opacity="0.25"/>
+    <circle cx="256" cy="210" r="70" fill="none" stroke="#f97316" stroke-width="8" stroke-opacity="0.45"/>
+    <circle cx="256" cy="210" r="30" fill="none" stroke="#f97316" stroke-width="10" stroke-opacity="0.7"/>
+
+    <!-- Crosshair Axes -->
+    <line x1="130" y1="210" x2="382" y2="210" stroke="#f97316" stroke-width="8" stroke-opacity="0.6"/>
+    <line x1="256" y1="84" x2="256" y2="336" stroke="#f97316" stroke-width="8" stroke-opacity="0.6"/>
+
+    <!-- Control Mast & Gateway Terminal -->
+    <line x1="256" y1="210" x2="335" y2="131" stroke="#ffedd5" stroke-width="10"/>
+    <circle cx="335" cy="131" r="14" fill="#ffedd5" stroke="#f97316" stroke-width="6"/>
+
+    <!-- Antenna Array Head -->
+    <path d="M 226,110 L 256,80 L 286,110" fill="none" stroke="#fed7aa" stroke-width="10"/>
+    <circle cx="256" cy="210" r="10" fill="#ffedd5"/>
+  </g>
+  
+  <!-- Lower Monogram Pill -->
+  <rect x="186" y="380" width="140" height="64" rx="16" fill="#241409" stroke="#f97316" stroke-width="6"/>
+  <text x="256" y="425" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace" 
+        font-size="34" 
+        font-weight="900" 
+        fill="#ffedd5" 
+        text-anchor="middle" 
+        letter-spacing="4">HBM</text>
+</svg>
