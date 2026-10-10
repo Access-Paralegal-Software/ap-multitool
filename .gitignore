@@ -30,3 +30,6 @@ apps/desktop-slint/target/
 apps/desktop-slint/bates_production/
 
 test_docs/
+
+node_modules/
+apps/landing/node_modules/
