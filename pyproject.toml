@@ -2,6 +2,10 @@
 members = [
     "packages/ap-core",
     "packages/doc-chameleon",
+    "packages/ap-ediscovery",
+    "packages/paralegal-time",
+    "packages/trial-deck",
+    "packages/title-toolkit",
     "apps/cli",
     "apps/desktop",
 ]
@@ -12,11 +16,16 @@ package = false
 [tool.uv.sources]
 ap-core = { workspace = true }
 doc-chameleon = { workspace = true }
+ap-ediscovery = { workspace = true }
+paralegal-time = { workspace = true }
+trial-deck = { workspace = true }
+title-toolkit = { workspace = true }
 ap-multitool-cli = { workspace = true }
 ap-multitool-desktop = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "pyside6>=6.11.2",
     "pytest>=8.0.0",
     "pytest-mock>=3.12.0",
 ]
@@ -26,6 +35,10 @@ minversion = "7.0"
 testpaths = [
     "tests",
     "packages/doc-chameleon/tests",
+    "packages/ap-ediscovery/tests",
+    "packages/paralegal-time/tests",
+    "packages/trial-deck/tests",
+    "packages/title-toolkit/tests",
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
@@ -34,6 +47,10 @@ pythonpath = [
     ".",
     "packages/ap-core/src",
     "packages/doc-chameleon/src",
+    "packages/ap-ediscovery/src",
+    "packages/paralegal-time/src",
+    "packages/trial-deck/src",
+    "packages/title-toolkit/src",
     "apps/cli/src",
     "apps/desktop",
 ]
