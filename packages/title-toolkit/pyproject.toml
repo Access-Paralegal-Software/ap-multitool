@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "title-toolkit"
+version = "0.1.0"
+description = "Metes-and-bounds deed parser and Bowditch closure calculator for AP-Suite"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/title_toolkit"]

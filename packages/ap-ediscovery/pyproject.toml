@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ap-ediscovery"
+version = "0.1.0"
+description = "SQLite FTS5 local search appliance and BLAKE3 deduplication engine"
+requires-python = ">=3.12"
+dependencies = [
+    "blake3>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ap_ediscovery"]

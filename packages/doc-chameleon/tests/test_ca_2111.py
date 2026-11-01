@@ -9,7 +9,16 @@ from doc_chameleon.rules.ca.transformer import transform as transform_2108
 from doc_chameleon.rules.ca.transformer_2111 import (
     ATTORNEY_PLACEHOLDER_LINES,
     CLERK_SPACE_LABEL,
+    CRC_2111_BASE_OFFSET_PT,
+    CRC_2111_LINE_COUNT,
+    CRC_2111_LINE_PITCH_PT,
+    LINE_COUNT,
+    LINE_PITCH_PT,
+    PAGE_LINES,
+    TOTAL_LINES,
+    calculate_baseline_y,
     transform_2111,
+    transform_ca_2111,
 )
 from doc_chameleon.rules.ca.validator import validate, validate_2111
 
@@ -144,3 +153,31 @@ def test_cover_page_fixture_survives_full_ca_transform(tmp_path: Path) -> None:
     assert len(reloaded_record.paragraphs) == original_count
     assert "doc-chameleon-ca-line-numbers" in reloaded.sections[0].header._element.xml
     assert "doc-chameleon-ca-2111" in reloaded.sections[0].first_page_header._element.xml
+
+
+def test_calculate_baseline_y_boundary_values() -> None:
+    """CRC 2.111 baseline positioning: line 1 == 720.0 pt and line 28 == 72.0 pt."""
+    assert calculate_baseline_y(1) == 720.0
+    assert calculate_baseline_y(28) == 72.0
+    assert calculate_baseline_y(2) == 696.0
+    assert CRC_2111_LINE_COUNT == 28
+    assert CRC_2111_LINE_PITCH_PT == 24.0
+    assert CRC_2111_BASE_OFFSET_PT == 744.0
+    assert TOTAL_LINES == 28
+    assert PAGE_LINES == 28
+    assert LINE_COUNT == 28
+    assert LINE_PITCH_PT == 24.0
+    assert transform_ca_2111 is transform_2111
+
+
+def test_calculate_baseline_y_out_of_bounds() -> None:
+    """CRC 2.111 raises ValueError when line number is out of bounds."""
+    import pytest
+
+    with pytest.raises(ValueError, match="out of bounds"):
+        calculate_baseline_y(0)
+    with pytest.raises(ValueError, match="out of bounds"):
+        calculate_baseline_y(29)
+    with pytest.raises(ValueError, match="out of bounds"):
+        calculate_baseline_y(-5)
+

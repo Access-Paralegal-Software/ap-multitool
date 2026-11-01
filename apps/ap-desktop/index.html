@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AP-Suite</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <script defer src="https://analytics.alanwoodyard.com/script.js" data-website-id="66a6e7bc-eae4-41df-939f-698d428a7330"></script>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>AP-Suite</h1>
+      <span class="badge">Desktop v0.1.0 (Tauri v2)</span>
+    </header>
+    <main>
+      <nav class="sidebar">
+        <button class="nav-btn active">Doc Chameleon</button>
+        <button class="nav-btn">AP-eDiscovery</button>
+        <button class="nav-btn">Paralegal Time</button>
+        <button class="nav-btn">Trial Deck</button>
+        <button class="nav-btn">Title Toolkit</button>
+      </nav>
+      <section class="content-view">
+        <div class="card">
+          <h2>Active Suite Modules</h2>
+          <p>Local appliance connectivity: <span id="appliance-status" class="status-online">Connecting...</span></p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
