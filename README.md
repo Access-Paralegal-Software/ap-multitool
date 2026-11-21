@@ -51,3 +51,8 @@ Source-available. License posture: Proprietary / source-available (All Rights Re
 Air gap: production PDFs, Bates plans, and support bundles are written to local directories. `--dry-run` prints the merge or Bates plan without writing. `--grayscale` exists for PACER-style email output. The offline license gate runs before an operation. Do not point this CLI at a remote matter store.
 
 The Loft is archived and is not the live Bates engine. Queue ordering and audit-log behavior that used to live there now live in this repository's docs and core.
+
+## Release Integrity & Local Verification
+
+See [`RELEASE_VERIFICATION.md`](./RELEASE_VERIFICATION.md) for the **Binary Integrity & Custody Block** (`ap-multitool-v1.0.0-windows-x64.exe`, `16,217,600` bytes / `15.47 MiB`, SHA-256 `7F308FAAC383D8331D58852B8A4F2D122C8DFBF4E7F510783AFFDF074694D4E4`), offline licensing posture, and a **3-Minute Local Evaluation Walkthrough** using `$0` synthetic matter fixtures. AP-Multitool is a local document preparation utility and makes no claim of e-discovery certification or court approval.
+
