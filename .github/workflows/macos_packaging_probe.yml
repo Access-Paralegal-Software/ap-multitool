@@ -156,13 +156,18 @@ jobs:
         run: |
           SIGN_IDENTITY="Developer ID Application: Access Paralegal Systems LLC ($APPLE_TEAM_ID)"
           GUI_APP="dist/Access_Paralegal_Multitool.app"
-          CLI_EXE="dist/apmultitool"
+          CLI_DIR="dist/apmultitool"
+          CLI_EXE="${CLI_DIR}/apmultitool"
 
           find "$GUI_APP" -type f \( -name "*.so" -o -name "*.dylib" -o -name "Python" \) | \
             while read -r lib; do
               codesign --force --options runtime --sign "$SIGN_IDENTITY" "$lib"
             done
 
+          find "$CLI_DIR" -type f \( -name "*.so" -o -name "*.dylib" -o -name "Python" \) | \
+            while read -r lib; do
+              codesign --force --options runtime --sign "$SIGN_IDENTITY" "$lib"
+            done
           codesign --force --options runtime --sign "$SIGN_IDENTITY" "$CLI_EXE"
           codesign --force --options runtime --deep --sign "$SIGN_IDENTITY" "$GUI_APP"
           codesign --verify --verbose=2 "$GUI_APP"

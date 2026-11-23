@@ -110,11 +110,17 @@ pyinstaller --noconfirm --clean \
     --collect-submodules="ap_core" \
     apps/desktop/gui_apmultitool_qt.py
 
+# PyInstaller defaults to onedir: CLI COLLECT → dist/apmultitool/apmultitool
+# GUI --windowed BUNDLE → dist/Access_Paralegal_Multitool.app
 GUI_APP="dist/Access_Paralegal_Multitool.app"
-CLI_EXE="dist/apmultitool"
+CLI_DIR="dist/apmultitool"
+CLI_EXE="${CLI_DIR}/apmultitool"
 
-if [ ! -d "$GUI_APP" ] || [ ! -f "$CLI_EXE" ]; then
+if [ ! -d "$GUI_APP" ] || [ ! -d "$CLI_DIR" ] || [ ! -f "$CLI_EXE" ]; then
     echo "❌ Error: PyInstaller failed to produce required macOS outputs."
+    echo "   Expected GUI bundle:  $GUI_APP (dir)"
+    echo "   Expected CLI onedir:  $CLI_DIR/ with binary $CLI_EXE"
+    ls -la dist/ 2>/dev/null || true
     exit 1
 fi
 echo "✅ Compilation complete."
@@ -144,7 +150,11 @@ if [ -n "$SIGN_IDENTITY" ]; then
             codesign --force --options runtime --sign "$SIGN_IDENTITY" "$lib"
         done
 
-    echo "  -> Signing CLI binary..."
+    echo "  -> Signing CLI onedir libraries and binary..."
+    find "$CLI_DIR" -type f \( -name "*.so" -o -name "*.dylib" -o -name "Python" \) | \
+        while read -r lib; do
+            codesign --force --options runtime --sign "$SIGN_IDENTITY" "$lib"
+        done
     codesign --force --options runtime --sign "$SIGN_IDENTITY" "$CLI_EXE"
 
     echo "  -> Signing outer app bundle..."
