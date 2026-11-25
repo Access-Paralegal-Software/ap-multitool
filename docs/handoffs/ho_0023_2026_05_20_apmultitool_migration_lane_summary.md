@@ -2,7 +2,7 @@
 id: ho-apmultitool-migration-lane-summary
 title: "APMultitool Qt Migration Lane: Complete Handoff Summary"
 type: handoff
-project: the_sweatshop / access_paralegal
+project: seewhatsticks / access_paralegal
 status: active
 created_at: 2026-05-20T03:55:00Z
 updated_at: 2026-05-20T03:55:00Z

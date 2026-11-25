@@ -33,3 +33,6 @@ test_docs/
 
 node_modules/
 apps/landing/node_modules/
+
+# Native debug symbols from local builds
+*.pdb

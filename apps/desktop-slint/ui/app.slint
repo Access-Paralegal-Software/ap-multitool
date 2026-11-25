@@ -36,8 +36,11 @@ export component AppWindow inherits Window {
     in-out property <string> selected-pleading-preset: "California Rule 2.111 (28-Line Pleading)";
 
     in-out property <string> status-message: "Engine ready. Add discovery documents to begin.";
-    in-out property <string> license-badge-text: "Commercial Founder Pass Active";
-    in-out property <bool> license-is-active: true;
+    in-out property <string> license-badge-text: "14-day evaluation active";
+    in-out property <bool> license-is-active: false;
+    in-out property <bool> show-activation-modal: false;
+    in-out property <string> activation-key-input: "";
+    in-out property <string> activation-feedback: "";
 
     callback add-files-clicked();
     callback clear-queue-clicked();
@@ -45,6 +48,8 @@ export component AppWindow inherits Window {
     callback format-pleading-clicked();
     callback open-output-folder-clicked();
     callback license-clicked();
+    callback submit-activation-key(string);
+    callback open-purchase-page();
 
     // MAIN WORKSTATION VIEWPORT
     VerticalBox {
@@ -728,6 +733,147 @@ export component AppWindow inherits Window {
                                 alignment: center;
                                 Text {
                                     text: "Close";
+                                    color: #5cb85c;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if root.show-activation-modal: Rectangle {
+        background: #000000cc;
+
+        TouchArea {}
+
+        Rectangle {
+            width: 560px;
+            height: 390px;
+            background: #0e141f;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #223247;
+
+            VerticalBox {
+                padding: 28px;
+                spacing: 14px;
+
+                HorizontalLayout {
+                    Text {
+                        text: "Offline license";
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: #ffffff;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        background: #16202e;
+                        border-radius: 6px;
+                        TouchArea {
+                            clicked => { root.show-activation-modal = false; }
+                            Text {
+                                text: "x";
+                                color: #94a3b8;
+                                font-size: 13px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: #1f2b3e; }
+
+                Text {
+                    text: "Paste the license key for this workstation. The check runs on this computer. Document processing stays on local files.";
+                    color: #cbd5e1;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                }
+
+                LineEdit {
+                    text <=> root.activation-key-input;
+                    placeholder-text: "License key";
+                    font-size: 13px;
+                }
+
+                Text {
+                    text: root.activation-feedback;
+                    color: #f59e0b;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                }
+
+                Rectangle { vertical-stretch: 1; }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: end;
+
+                    Rectangle {
+                        width: 90px;
+                        height: 36px;
+                        background: #16202e;
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: #223247;
+                        TouchArea {
+                            clicked => { root.show-activation-modal = false; }
+                            HorizontalLayout {
+                                alignment: center;
+                                Text {
+                                    text: "Close";
+                                    color: #94a3b8;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 160px;
+                        height: 36px;
+                        background: #16202e;
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: #223247;
+                        TouchArea {
+                            clicked => { root.open-purchase-page(); }
+                            HorizontalLayout {
+                                alignment: center;
+                                Text {
+                                    text: "Open purchase page";
+                                    color: #94a3b8;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 110px;
+                        height: 36px;
+                        background: #18281d;
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: #5cb85c;
+                        TouchArea {
+                            clicked => { root.submit-activation-key(root.activation-key-input); }
+                            HorizontalLayout {
+                                alignment: center;
+                                Text {
+                                    text: "Activate";
                                     color: #5cb85c;
                                     font-size: 12px;
                                     font-weight: 700;

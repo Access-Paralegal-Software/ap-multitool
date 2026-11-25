@@ -251,7 +251,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         app.set_status_message("Generated compliant pleading template to working directory.".into());
     });
 
-    // License Badge Action
+    // License badge opens the local activation modal.
     let app_weak = app.as_weak();
     let lic_clone = license_mgr.clone();
     app.on_license_clicked(move || {
@@ -260,11 +260,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             None => return,
         };
         let (active, msg) = lic_clone.verify_offline();
+        app.set_license_is_active(active);
+        app.set_license_badge_text(msg.clone().into());
         if active {
-            app.set_status_message(format!("License status: {} (Air-Gapped)", msg).into());
+            app.set_status_message(format!("License status: {msg}. Local check only.").into());
         } else {
-            licensing::LicenseManager::open_store();
+            app.set_activation_feedback("Enter the offline key. The check runs on this computer.".into());
+            app.set_show_activation_modal(true);
         }
+    });
+
+    let app_weak = app.as_weak();
+    let lic_clone = license_mgr.clone();
+    app.on_submit_activation_key(move |key| {
+        let app = match app_weak.upgrade() {
+            Some(a) => a,
+            None => return,
+        };
+        match lic_clone.activate_offline_key(key.as_str()) {
+            Ok(msg) => {
+                app.set_license_is_active(true);
+                app.set_license_badge_text(msg.clone().into());
+                app.set_status_message(format!("License status: {msg}. Local check only.").into());
+                app.set_activation_feedback(msg.into());
+                app.set_show_activation_modal(false);
+            }
+            Err(err) => {
+                app.set_license_is_active(false);
+                app.set_activation_feedback(err.clone().into());
+                app.set_status_message(err.into());
+            }
+        }
+    });
+
+    app.on_open_purchase_page(move || {
+        licensing::LicenseManager::open_store();
     });
 
     #[cfg(target_os = "windows")]
